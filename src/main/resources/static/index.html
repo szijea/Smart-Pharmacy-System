@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="css/theme-lightwide.css" />
   <link rel="stylesheet" href="css/ui-enhanced.css" />
   <link rel="stylesheet" href="css/ui-modern.css" />
+  <!-- avoid CDN blocked by Tracking Prevention -->
+  <link rel="stylesheet" href="css/font-awesome.min.css" />
 
   <!-- 高级感配色配置 (安全包装，避免 tailwind 未定义时报错) -->
   <script>
@@ -217,7 +219,11 @@
         </div>
         <div class="foot">
           <div>© 2026 智能药房收银系统</div>
-          <div><a href="privacy-policy.html">隐私政策</a> · <a href="terms-of-service.html">服务条款</a></div>
+          <div class="mt-2 text-xs opacity-70">
+            <a href="privacy-policy.html" class="hover:underline">隐私政策</a> ·
+            <a href="terms-of-service.html" class="hover:underline">服务条款</a> ·
+            <a href="boss-login.html" class="hover:underline text-blue-600 font-medium ml-2"><i class="fa fa-user-secret"></i> BOSS后台</a>
+          </div>
         </div>
       </div>
     </main>

@@ -49,11 +49,15 @@ public class StockInItem {
     public StockIn getStockIn() { return stockIn; }
     public void setStockIn(StockIn stockIn) { this.stockIn = stockIn; }
 
+    // Expose medicineId getter/setter for manual binding
     public String getMedicineId() { return medicineId; }
     public void setMedicineId(String medicineId) { this.medicineId = medicineId; }
 
     public Medicine getMedicine() { return medicine; }
-    public void setMedicine(Medicine medicine) { this.medicine = medicine; if (medicine!=null) this.medicineId = medicine.getMedicineId(); }
+    public void setMedicine(Medicine medicine) {
+        this.medicine = medicine;
+        if(medicine != null) this.medicineId = medicine.getMedicineId();
+    }
 
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }

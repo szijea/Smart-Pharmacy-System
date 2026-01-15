@@ -436,6 +436,11 @@ public class OrderServiceImpl implements OrderService {
         if (medicineOpt.isPresent()) {
             Medicine medicine = medicineOpt.get();
             response.setProductName(medicine.getGenericName());
+            response.setSpec(medicine.getSpec());
+            response.setManufacturer(medicine.getManufacturer());
+            response.setProductCode(medicine.getProductCode());
+            response.setDosageForm(medicine.getDosageForm());
+            response.setBarcode(medicine.getBarcode());
         } else {
             response.setProductName("未知药品");
         }

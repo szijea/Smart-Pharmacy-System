@@ -32,6 +32,27 @@ public class Inventory {
     @Column(name = "purchase_price", precision = 10, scale = 2)
     private BigDecimal purchasePrice;
 
+    @Column(name = "warehouse", length = 50)
+    private String warehouse;
+
+    @Column(name = "inbound_date")
+    private LocalDateTime inboundDate;
+
+    @Column(name = "acceptance_no", length = 50)
+    private String acceptanceNo;
+
+    @Column(name = "invoice_no", length = 50)
+    private String invoiceNo;
+
+    @Column(name = "invoice_date")
+    private LocalDateTime invoiceDate;
+
+    @Column(name = "acceptance_date")
+    private LocalDateTime acceptanceDate;
+
+    @Column(name = "status", length = 20)
+    private String status;
+
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
 
@@ -96,8 +117,34 @@ public class Inventory {
     public LocalDateTime getUpdateTime() { return updateTime; }
     public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
 
-    public Medicine getMedicine() { return medicine; }
-    public void setMedicine(Medicine medicine) { this.medicine = medicine; }
+    public String getWarehouse() { return warehouse; }
+    public void setWarehouse(String warehouse) { this.warehouse = warehouse; }
+
+    public LocalDateTime getInboundDate() { return inboundDate; }
+    public void setInboundDate(LocalDateTime inboundDate) { this.inboundDate = inboundDate; }
+
+    public String getAcceptanceNo() { return acceptanceNo; }
+    public void setAcceptanceNo(String acceptanceNo) { this.acceptanceNo = acceptanceNo; }
+
+    public String getInvoiceNo() { return invoiceNo; }
+    public void setInvoiceNo(String invoiceNo) { this.invoiceNo = invoiceNo; }
+
+    public LocalDateTime getInvoiceDate() { return invoiceDate; }
+    public void setInvoiceDate(LocalDateTime invoiceDate) { this.invoiceDate = invoiceDate; }
+
+    public LocalDateTime getAcceptanceDate() { return acceptanceDate; }
+    public void setAcceptanceDate(LocalDateTime acceptanceDate) { this.acceptanceDate = acceptanceDate; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Medicine getMedicine() {
+        return medicine;
+    }
+
+    public void setMedicine(Medicine medicine) {
+        this.medicine = medicine;
+    }
 
     @PrePersist
     public void prePersist() {
@@ -125,3 +172,4 @@ public class Inventory {
         return expiryDate != null && expiryDate.isBefore(LocalDate.now());
     }
 }
+

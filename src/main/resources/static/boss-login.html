@@ -3,36 +3,118 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BOSS 后台登录</title>
+  <title>BOSS 后台登录 - 智慧药房</title>
   <link rel="stylesheet" href="css/tailwind.css" />
   <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/ui-modern.css" />
+  <!-- avoid CDN blocked by Tracking Prevention -->
+  <link rel="stylesheet" href="css/font-awesome.min.css" />
   <style>
-    body {
-      background-color: #f3f4f6;
+    /* 继承 index.html 的现代设计 */
+    .login-shell { display:grid; grid-template-columns: 1fr; min-height: 100vh; }
+    @media(min-width:1024px){ .login-shell{ grid-template-columns: 1fr 1fr; } }
+
+    .hero-side { display:none; }
+    @media(min-width:1024px){
+      .hero-side{
+        display:block;
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); /* 深色专业背景 */
+        position:relative;
+        overflow: hidden;
+      }
+      .hero-side::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
+            radial-gradient(circle at 85% 85%, rgba(255, 255, 255, 0.05) 0%, transparent 20%);
+      }
+      .hero-side .hero-content {
+          position:absolute; inset:0; display:flex; flex-direction: column;
+          align-items:center; justify-content:center; padding:4rem; color:#fff; text-align: center;
+      }
+      .hero-side .title { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; text-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+      .hero-side .subtitle { font-size: 1.25rem; font-weight: 300; opacity: 0.9; max-width: 80%; line-height: 1.6; }
     }
+
+    .login-side { display:flex; align-items:center; justify-content:center; padding:2rem; background:#f8fafc; }
     .login-card {
-      max-width: 400px;
-      width: 100%;
+        width: 100%; max-width: 480px; padding: 3rem 2.5rem;
+        background: #fff; border-radius: 20px;
+        box-shadow: 0 20px 40px -8px rgba(30, 58, 138, 0.1), 0 10px 15px -3px rgba(0,0,0,0.05);
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .brand-logo { text-align:center; margin-bottom: 2.5rem; }
+    .brand-logo i { font-size: 3rem; color: #1e3a8a; margin-bottom: 0.75rem; display: inline-block; }
+    .brand-logo h1 { font-size: 1.75rem; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
+    .brand-logo p { color: #64748b; margin-top: 0.5rem; font-size: 0.95rem; }
+
+    .input-group { margin-bottom: 1.25rem; }
+    .input-label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: #475569; }
+    .input-field {
+        width: 100%; padding: 0.875rem 1rem; border: 1px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; color: #1e293b; background: #fff; transition: all 0.2s;
+    }
+    .input-field:focus { border-color: #3b82f6; ring: 3px solid rgba(59, 130, 246, 0.1); outline: none; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+
+    .btn-submit {
+        width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: 600; color: white;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        border: none; border-radius: 12px; cursor: pointer; transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4); }
+    .btn-submit:active { transform: translateY(1px); }
+    .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .error-msg {
+        margin-top: 1rem; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; text-align: center;
+        background-color: #fee2e2; color: #991b1b; display: none;
+    }
+    .return-link { text-align: center; margin-top: 1.5rem; }
+    .return-link a { color: #64748b; font-size: 0.9rem; text-decoration: none; transition: color 0.2s; }
+    .return-link a:hover { color: #3b82f6; }
   </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
+<body class="font-inter text-gray-800 enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
 
-  <div class="login-card bg-white p-8 rounded-lg shadow-md">
-    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">BOSS 后台登录</h2>
-    <form id="login-form">
-      <div class="mb-4">
-        <label for="username" class="block text-sm font-medium text-gray-700">用户名</label>
-        <input type="text" id="username" name="username" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="boss" required>
-      </div>
-      <div class="mb-6">
-        <label for="password" class="block text-sm font-medium text-gray-700">密码</label>
-        <input type="password" id="password" name="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="123456" required>
-      </div>
-      <button type="submit" id="login-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">登录</button>
-      <p id="error-message" class="mt-4 text-center text-sm text-red-600"></p>
-    </form>
-  </div>
+<div class="login-shell">
+    <aside class="hero-side">
+        <div class="hero-content">
+            <div class="title">BOSS 管理后台</div>
+            <div class="subtitle">全面掌握运营数据 · 统一管理多店库存</div>
+        </div>
+    </aside>
+    <main class="login-side">
+        <div class="login-card">
+            <div class="brand-logo">
+                <i class="fa fa-user-secret"></i>
+                <h1>BOSS 登录</h1>
+                <p>请输入管理员账号进行身份验证</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label class="input-label" for="username">用户名</label>
+                    <input type="text" id="username" name="username" class="input-field" value="boss" required placeholder="请输入账号">
+                </div>
+                <div class="input-group">
+                    <label class="input-label" for="password">密码</label>
+                    <input type="password" id="password" name="password" class="input-field" value="123456" required placeholder="请输入密码">
+                </div>
+                <button type="submit" id="login-button" class="btn-submit">
+                    <i class="fa fa-sign-in mr-2"></i> 立即登录
+                </button>
+                <div id="error-message" class="error-msg"></div>
+            </form>
+            <div class="return-link">
+                <a href="index.html"><i class="fa fa-arrow-left mr-1"></i> 返回药店收银系统</a>
+            </div>
+        </div>
+    </main>
+</div>
 
   <script>
     document.getElementById('login-form').addEventListener('submit', async function(event) {
@@ -43,9 +125,10 @@
       const errorMessage = document.getElementById('error-message');
       const loginButton = document.getElementById('login-button');
 
+      errorMessage.style.display = 'none';
       errorMessage.textContent = '';
       loginButton.disabled = true;
-      loginButton.textContent = '登录中...';
+      loginButton.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 登录中...';
 
       try {
         const response = await fetch('/api/boss/login', {
@@ -63,12 +146,14 @@
           window.location.href = 'boss.html';
         } else {
           errorMessage.textContent = data.message || '登录失败，请重试。';
+          errorMessage.style.display = 'block';
         }
       } catch (error) {
         errorMessage.textContent = '发生网络错误，请稍后重试。';
+        errorMessage.style.display = 'block';
       } finally {
         loginButton.disabled = false;
-        loginButton.textContent = '登录';
+        loginButton.innerHTML = '<i class="fa fa-sign-in mr-2"></i> 立即登录';
       }
     });
   </script>

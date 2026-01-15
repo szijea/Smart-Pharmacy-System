@@ -19,7 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -272,7 +274,21 @@ public class StockInController {
                     if (sheet == null) {
                         return ResponseEntity.badRequest().body("Excel 文件没有工作表");
                     }
-                    int headerIdx = sheet.getFirstRowNum();
+                    // Auto-detect header row index
+                    int headerIdx = -1;
+                    String[] headerCandidates = new String[]{"通用名","generic","genericname","商品名","trade","数量","qty","quantity","进货价","unitprice","price","批号","batch","到期日期","expiry","条形码","barcode","批准文号","approvalno","规格","spec","药品名称","货号"};
+                    for (int r = sheet.getFirstRowNum(); r <= Math.min(sheet.getFirstRowNum()+5, sheet.getLastRowNum()); r++) {
+                        Row row = sheet.getRow(r);
+                        if (row == null) continue;
+                        int hits = 0;
+                        for (int c = 0; c < row.getLastCellNum(); c++) {
+                             String val = cellToString(row.getCell(c)).toLowerCase();
+                             for(String cand : headerCandidates) { if (val.contains(cand)) hits++; }
+                        }
+                        if (hits >= 2) { headerIdx = r; break; }
+                    }
+                    if (headerIdx < 0) headerIdx = sheet.getFirstRowNum(); // fallback
+
                     Row headerRow = sheet.getRow(headerIdx);
                     java.util.Map<String, Integer> hdrMap = new java.util.HashMap<>();
                     if (headerRow != null) {
@@ -282,33 +298,71 @@ public class StockInController {
                         }
                     }
                     int dataStart = headerIdx + 1;
+
                     for (int r = dataStart; r <= sheet.getLastRowNum(); r++) {
                         Row row = sheet.getRow(r);
                         if (row == null) continue;
                         // 允许空行跳过
-                        String medId = getByAliasesExcel(row, hdrMap, 0, "medicineid","条形码","barcode","approvalno");
-                        String qtyS = getByAliasesExcel(row, hdrMap, 1, "数量","qty","quantity");
-                        String priceS = getByAliasesExcel(row, hdrMap, 2, "进货价","unitprice","price","cost");
+                        String medId = getByAliasesExcel(row, hdrMap, 0, "medicineid","条形码","barcode","approvalno","药品名称","货号");
+                        // 增加空行检查逻辑，如果全部关键列都为空，则跳过
+                        if (medId == null && getByAliasesExcel(row, hdrMap, -1, "通用名","generic","genericname","药品名称") == null) {
+                             boolean hasContent = false;
+                             for(int c=0; c<row.getLastCellNum(); c++){
+                                 if(row.getCell(c)!=null && !row.getCell(c).toString().isBlank()) { hasContent=true; break; }
+                             }
+                             if(!hasContent) continue;
+                        }
+                        String qtyS = getByAliasesExcel(row, hdrMap, 1, "数量","qty","quantity","库存","inventory","stock");
+                        String priceS = getByAliasesExcel(row, hdrMap, 2, "进货价","unitprice","price","cost","成本");
                         String batch = getByAliasesExcel(row, hdrMap, 3, "批号","batch");
-                        String expiry = getByAliasesExcel(row, hdrMap, 4, "到期日期","expiry","expirydate");
-                        String generic = getByAliasesExcel(row, hdrMap, -1, "通用名","generic","genericname");
+                        String expiry = getByAliasesExcel(row, hdrMap, 4, "到期日期","expiry","expirydate","有效期");
+                        String generic = getByAliasesExcel(row, hdrMap, -1, "通用名","generic","genericname","药品名称");
+
+                        // Prevent importing summary rows
+                        if (medId != null && medId.contains("合计")) continue;
+                        if (generic != null && generic.contains("合计")) continue;
+
                         String trade = getByAliasesExcel(row, hdrMap, -1, "商品名","trade","tradename");
                         String spec = getByAliasesExcel(row, hdrMap, -1, "规格","spec");
                         String manu = getByAliasesExcel(row, hdrMap, -1, "生产厂家","manufacturer");
                         String approval = getByAliasesExcel(row, hdrMap, -1, "批准文号","approvalno");
-                        String barcode = getByAliasesExcel(row, hdrMap, -1, "条形码","barcode");
+                        String barcode = getByAliasesExcel(row, hdrMap, -1, "条形码","barcode","条码");
                         String retailS = getByAliasesExcel(row, hdrMap, -1, "零售价","retail","retailprice");
                         String memberS = getByAliasesExcel(row, hdrMap, -1, "会员价","memberprice");
                         String unit = getByAliasesExcel(row, hdrMap, -1, "单位","unit");
+
+                        // 智能补全：如果有名无ID，尝试查；如果有ID无名，尝试查
+                        if((medId!=null && !medId.isBlank()) && (generic==null || generic.isBlank() || generic.equals(medId))){
+                             Optional<com.pharmacy.entity.Medicine> mOpt = medicineRepository.findById(medId);
+                             if(mOpt.isPresent()){
+                                 com.pharmacy.entity.Medicine m = mOpt.get();
+                                 if(generic==null || generic.isBlank() || generic.equals(medId)) generic = m.getGenericName();
+                                 if(trade==null || trade.isBlank()) trade = m.getTradeName();
+                                 if(spec==null || spec.isBlank()) spec = m.getSpec();
+                                 if(manu==null || manu.isBlank()) manu = m.getManufacturer();
+                                 if(approval==null || approval.isBlank()) approval = m.getApprovalNo();
+                                 if(barcode==null || barcode.isBlank()) barcode = m.getBarcode();
+                                 if(priceS==null || priceS.isBlank()) priceS = "0"; // 默认
+                                 if((retailS==null || retailS.isBlank()) && m.getRetailPrice()!=null) retailS = m.getRetailPrice().toString();
+                                 if(unit==null || unit.isBlank()) unit = m.getUnit();
+                             }
+                        }
+
                         int qty = 0; double price = 0.0; double retail = 0.0; double memberPrice = 0.0;
                         try { if (qtyS != null && !qtyS.isBlank()) qty = (int)Math.round(Double.parseDouble(qtyS)); } catch (Exception ignored) {}
                         try { if (priceS != null && !priceS.isBlank()) price = Double.parseDouble(priceS); } catch (Exception ignored) {}
                         try { if (retailS != null && !retailS.isBlank()) retail = Double.parseDouble(retailS); } catch (Exception ignored) {}
                         try { if (memberS != null && !memberS.isBlank()) memberPrice = Double.parseDouble(memberS); } catch (Exception ignored) {}
+
+                        if(batch==null || batch.isBlank()){
+                            batch = "B"+java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE)+"001";
+                        }
+
                         rows.add(new SimpleImportRow(medId, generic, trade, spec, manu, approval, barcode, qty, price, retail, batch, expiry));
                         rows.get(rows.size()-1).memberPrice = memberPrice;
                         rows.get(rows.size()-1).unit = (unit != null && !unit.isBlank()) ? unit : "盒";
                     }
+
                 }
             } else {
                 // plain text / CSV with optional header mapping
@@ -363,6 +417,9 @@ public class StockInController {
 
         if (rows.isEmpty()) return ResponseEntity.badRequest().body("未解析到有效数据");
 
+        List<String> errors = new ArrayList<>();
+        int successCount = 0;
+
         try {
             // build StockIn
             StockIn stockIn = new StockIn();
@@ -377,61 +434,82 @@ public class StockInController {
             stockIn.setStockInNo(generateStockInNo());
             stockIn.setStatus(1);
             // create items
-            for (SimpleImportRow r : rows) {
-                String medId = r.medicineId!=null? r.medicineId.trim() : "";
-                com.pharmacy.entity.Medicine med = null;
-                if (!medId.isBlank()) {
-                    Optional<com.pharmacy.entity.Medicine> medOpt = medicineRepository.findById(medId);
-                    if (medOpt.isPresent()) med = medOpt.get();
-                }
-                // Try by barcode
-                if (med == null && r.barcode != null && !r.barcode.isBlank()){
-                    List<com.pharmacy.entity.Medicine> byBc = medicineRepository.searchByKeyword(r.barcode);
-                    if(byBc != null && !byBc.isEmpty()) med = byBc.get(0);
-                }
-                // Try by generic+spec+manufacturer
-                if (med == null && r.genericName != null && !r.genericName.isBlank()){
-                    com.pharmacy.entity.Medicine found = medicineRepository.findByGenericNameAndSpecAndManufacturer(r.genericName, r.spec==null?"":r.spec, r.manufacturer==null?"":r.manufacturer);
-                    if (found != null) med = found;
-                }
-                // If not found, auto-create medicine if we have a genericName or tradeName
-                if (med == null) {
-                    if ((r.genericName==null || r.genericName.isBlank()) && (r.medicineId==null || r.medicineId.isBlank())){
-                        return ResponseEntity.badRequest().body("导入行药品不存在且缺少可用的通用名或ID: " + r.medicineId);
+            
+            // 使用临时列表存储有效的 stockInItem，避免因为一个失败导致都不添加
+            List<StockInItem> validItems = new ArrayList<>();
+
+            for (int i=0; i<rows.size(); i++) {
+                SimpleImportRow r = rows.get(i);
+                int rowNum = i + 1; // 简单标记，假设 header 是0或者1
+                try {
+                    String medId = r.medicineId!=null? r.medicineId.trim() : "";
+                    com.pharmacy.entity.Medicine med = null;
+                    if (!medId.isBlank()) {
+                        Optional<com.pharmacy.entity.Medicine> medOpt = medicineRepository.findById(medId);
+                        if (medOpt.isPresent()) med = medOpt.get();
                     }
-                    // create new medicine
-                    com.pharmacy.entity.Medicine newMed = new com.pharmacy.entity.Medicine();
-                    String newId = "M" + System.currentTimeMillis() + (int)(Math.random()*900+100);
-                    newMed.setMedicineId(newId);
-                    newMed.setGenericName(r.genericName!=null && !r.genericName.isBlank()? r.genericName : (r.tradeName!=null? r.tradeName : newId));
-                    newMed.setTradeName(r.tradeName!=null? r.tradeName : null);
-                    newMed.setSpec(r.spec!=null? r.spec : null);
-                    newMed.setManufacturer(r.manufacturer!=null? r.manufacturer : null);
-                    // approvalNo is non-nullable; generate if missing
-                    String apr = (r.approvalNo!=null && !r.approvalNo.isBlank())? r.approvalNo : ("AUTO-"+System.currentTimeMillis());
-                    newMed.setApprovalNo(apr);
-                    newMed.setCategoryId( (r.categoryId!=null)? r.categoryId : 1 );
-                    newMed.setRetailPrice(java.math.BigDecimal.valueOf(r.retailPrice>0? r.retailPrice : 0.0));
-                    if (r.memberPrice>0) newMed.setMemberPrice(java.math.BigDecimal.valueOf(r.memberPrice));
-                    newMed.setIsRx(false);
-                    newMed.setUnit((r.unit!=null && !r.unit.isBlank())? r.unit : "盒");
-                    newMed.setBarcode((r.barcode!=null && !r.barcode.isBlank())? r.barcode : null);
-                    newMed.setStatus("ACTIVE");
-                    medicineRepository.save(newMed);
-                    med = newMed;
+                    // Try by barcode
+                    if (med == null && r.barcode != null && !r.barcode.isBlank()){
+                        List<com.pharmacy.entity.Medicine> byBc = medicineRepository.searchByKeyword(r.barcode);
+                        if(byBc != null && !byBc.isEmpty()) med = byBc.get(0);
+                    }
+                    // Try by generic+spec+manufacturer
+                    if (med == null && r.genericName != null && !r.genericName.isBlank()){
+                        com.pharmacy.entity.Medicine found = medicineRepository.findByGenericNameAndSpecAndManufacturer(r.genericName, r.spec==null?"":r.spec, r.manufacturer==null?"":r.manufacturer);
+                        if (found != null) med = found;
+                    }
+                    // If not found, auto-create medicine if we have a genericName or tradeName
+                    if (med == null) {
+                        if ((r.genericName==null || r.genericName.isBlank()) && (r.medicineId==null || r.medicineId.isBlank())){
+                            errors.add("第 " + rowNum + " 行: 药品不存在且缺少通用名/ID");
+                            continue;
+                        }
+                        // create new medicine
+                        com.pharmacy.entity.Medicine newMed = new com.pharmacy.entity.Medicine();
+                        String newId = "M" + System.currentTimeMillis() + (int)(Math.random()*900+100);
+                        newMed.setMedicineId(newId);
+                        newMed.setGenericName(r.genericName!=null && !r.genericName.isBlank()? r.genericName : (r.tradeName!=null? r.tradeName : newId));
+                        newMed.setTradeName(r.tradeName!=null? r.tradeName : null);
+                        newMed.setSpec(r.spec!=null? r.spec : null);
+                        newMed.setManufacturer(r.manufacturer!=null? r.manufacturer : null);
+                        // approvalNo is non-nullable; generate if missing
+                        String apr = (r.approvalNo!=null && !r.approvalNo.isBlank())? r.approvalNo : ("AUTO-"+System.currentTimeMillis());
+                        newMed.setApprovalNo(apr);
+                        newMed.setCategoryId( (r.categoryId!=null)? r.categoryId : 1 );
+                        newMed.setRetailPrice(java.math.BigDecimal.valueOf(r.retailPrice>0? r.retailPrice : 0.0));
+                        if (r.memberPrice>0) newMed.setMemberPrice(java.math.BigDecimal.valueOf(r.memberPrice));
+                        newMed.setIsRx(false);
+                        newMed.setUnit((r.unit!=null && !r.unit.isBlank())? r.unit : "盒");
+                        newMed.setBarcode((r.barcode!=null && !r.barcode.isBlank())? r.barcode : null);
+                        newMed.setStatus("ACTIVE");
+                        medicineRepository.save(newMed);
+                        med = newMed;
+                    }
+
+                    StockInItem item = new StockInItem();
+                    item.setMedicine(med);
+                    item.setMedicineId(med.getMedicineId());
+                    item.setQuantity(r.quantity);
+                    item.setUnitPrice(r.unitPrice);
+                    item.setBatchNumber(r.batchNumber==null || r.batchNumber.isBlank()? "DEFAULT_BATCH" : r.batchNumber);
+                     if (r.expiryDate != null && !r.expiryDate.isBlank()){
+                         try{ item.setExpiryDate(LocalDate.parse(r.expiryDate)); }catch(Exception ex){ /* ignore parse, leave null */ }
+                     }
+                     item.setStockIn(stockIn);
+                     validItems.add(item);
+                     successCount++;
+
+                } catch (Exception e) {
+                     errors.add("第 " + rowNum + " 行处理失败: " + e.getMessage());
                 }
-                StockInItem item = new StockInItem();
-                item.setMedicine(med);
-                item.setMedicineId(med.getMedicineId());
-                item.setQuantity(r.quantity);
-                item.setUnitPrice(r.unitPrice);
-                item.setBatchNumber(r.batchNumber==null || r.batchNumber.isBlank()? "DEFAULT_BATCH" : r.batchNumber);
-                 if (r.expiryDate != null && !r.expiryDate.isBlank()){
-                     try{ item.setExpiryDate(LocalDate.parse(r.expiryDate)); }catch(Exception ex){ /* ignore parse, leave null */ }
-                 }
-                 item.setStockIn(stockIn);
-                 stockIn.getItems().add(item);
             }
+
+            if (validItems.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("code",400, "message", "所有行导入失败", "errors", errors));
+            }
+
+            stockIn.getItems().addAll(validItems);
+            
             stockIn.calculateTotalAmount();
             StockIn saved = stockInRepository.save(stockIn);
             // update inventory same as createStockIn
@@ -450,18 +528,33 @@ public class StockInController {
                         matched.setStockQuantity(matched.getStockQuantity() + qty);
                         inventoryRepository.save(matched);
                     } else {
+                        // create new batch inventory
                         com.pharmacy.entity.Inventory newInv = new com.pharmacy.entity.Inventory(med.getMedicineId(), batch, qty, expiry);
                         newInv.setPurchasePrice(item.getUnitPrice()!=null? java.math.BigDecimal.valueOf(item.getUnitPrice()) : null);
+                        newInv.setMinStock(10); // default min stock
+                        newInv.setMaxStock(1000); // default max stock
+                        newInv.setSupplier(stockIn.getSupplier()!=null?stockIn.getSupplier().getSupplierName():"Unknown");
+
                         inventoryRepository.save(newInv);
                     }
-                } catch (Exception updEx) {
-                    System.err.println("[bulk-import] 更新库存失败: "+updEx.getMessage());
+                } catch (Exception ex) {
+                   // log update inventory error but don't fail the request
+                   System.err.println("Failed to update inventory for item: " + item.getItemId() + " - " + ex.getMessage());
                 }
             }
-            return ResponseEntity.ok(saved);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", 200);
+            response.put("message", "导入完成");
+            response.put("totalParsed", rows.size());
+            response.put("successCount", successCount);
+            response.put("failedCount", errors.size());
+            response.put("errors", errors);
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("批量导入失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("导入处理失败: " + e.getMessage());
         }
     }
 

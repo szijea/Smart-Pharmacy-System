@@ -89,4 +89,18 @@ public class BossController {
         // The BossAuthFilter already validates the token.
         return ResponseEntity.ok(bossDataService.getAggregatedDashboardData());
     }
+
+    @GetMapping("/stats")
+    public ResponseEntity<?> getAllTenantStats(@RequestHeader("Authorization") String token) {
+        return ResponseEntity.ok(bossDataService.getAllTenantStats());
+    }
+
+    @GetMapping("/inventory/{tenantId}")
+    public ResponseEntity<?> getTenantInventory(@RequestHeader("Authorization") String token,
+                                                @PathVariable String tenantId,
+                                                @RequestParam(defaultValue = "0") int page,
+                                                @RequestParam(defaultValue = "10") int size,
+                                                @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(bossDataService.getTenantInventory(tenantId, page, size, keyword));
+    }
 }

@@ -3,161 +3,435 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BOSS - 管理后台</title>
+  <title>BOSS 管理后台 - 智慧药房</title>
   <link rel="stylesheet" href="css/tailwind.css" />
   <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/theme-enhanced.css" />
+  <link rel="stylesheet" href="css/theme-premium.css" />
+  <link rel="stylesheet" href="css/theme-lightwide.css" />
+  <link rel="stylesheet" href="css/ui-enhanced.css" />
+  <link rel="stylesheet" href="css/ui-modern.css" />
+  <link rel="stylesheet" href="css/font-awesome.min.css" />
   <style>
-    body { background-color: #f9fafb; }
-    .stat-card { background-color: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
-    .stat-title { font-size: 0.875rem; color: #6b7280; }
-    .stat-value { font-size: 1.875rem; font-weight: bold; color: #111827; }
+    body { background-color: #f8fafc; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* Layout */
+    .app-shell { display: flex; flex: 1; overflow: hidden; }
+    .sidebar { width: 260px; background: #fff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; flex-shrink: 0; }
+    .content-area { flex: 1; overflow-y: auto; padding: 2rem; background: #f8fafc; }
+
+    /* Navigation */
+    .nav-item { padding: 0.85rem 1.5rem; display: flex; align-items: center; color: #64748b; font-weight: 500; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
+    .nav-item:hover { background-color: #f1f5f9; color: #334155; }
+    .nav-item.active { background-color: #eff6ff; color: #2563eb; border-left-color: #2563eb; font-weight: 600; }
+    .nav-item i { width: 24px; text-align: center; margin-right: 0.75rem; }
+
+    /* Cards */
+    .stat-card { background: #fff; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .stat-card .label { color: #64748b; font-size: 0.875rem; font-weight: 500; }
+    .stat-card .value { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-top: 0.5rem; }
+    .stat-card .meta { margin-top: 0.5rem; font-size: 0.75rem; color: #94a3b8; }
+
+    .tenant-card { background: #fff; border-radius: 10px; padding: 1.25rem; border: 1px solid #e2e8f0; transition: transform 0.2s; }
+    .tenant-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-color: #cbd5e1; }
+    .tenant-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; }
+    .tenant-name { font-weight: 700; color: #1e293b; font-size: 1.1rem; }
+    .metric-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
+    .metric-label { color: #64748b; }
+    .metric-val { font-weight: 600; color: #334155; font-family: 'Inter', monospace; }
+
+    /* Tables */
+    .data-table-wrapper { background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .data-table { width: 100%; text-align: left; border-collapse: collapse; }
+    .data-table th { background: #f8fafc; padding: 1rem; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: #475569; border-bottom: 1px solid #e2e8f0; }
+    .data-table td { padding: 1rem; font-size: 0.9rem; color: #334155; border-bottom: 1px solid #f1f5f9; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background-color: #f8fafc; }
+
+    .search-bar { position: relative; width: 300px; }
+    .search-bar i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .search-bar input { padding-left: 2.5rem; border-radius: 99px; }
+
+    /* Views */
+    .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+    .view-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
+  <script>
+      (function(){ if(!localStorage.getItem('boss_token')) window.location.href = 'boss-login.html'; })();
+  </script>
 </head>
-<body class="p-4 sm:p-6 lg:p-8">
+<body class="font-inter">
 
-  <div class="max-w-7xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">BOSS 管理后台</h1>
-      <button id="logout-button" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">登出</button>
-    </div>
+  <div class="app-shell">
+    <aside class="sidebar shadow-lg z-10">
+      <div class="h-16 flex items-center px-6 border-b border-gray-100">
+        <div class="flex items-center gap-2 text-primary font-bold text-xl">
+           <i class="fa fa-user-secret"></i> BOSS
+        </div>
+      </div>
+      <nav class="flex-1 py-4">
+        <div class="nav-item active" onclick="switchView('dashboard')"><i class="fa fa-dashboard"></i> 经营概况</div>
+        <div class="nav-item" onclick="switchView('inventory')"><i class="fa fa-cubes"></i> 跨店库存</div>
+        <div class="nav-item" onclick="switchView('logs')"><i class="fa fa-exchange"></i> 调货日志</div>
+        <div class="nav-item" onclick="switchView('users')"><i class="fa fa-users"></i> 账户管理</div>
+      </nav>
+      <div class="p-4 border-t border-gray-100">
+        <button id="logout-button" class="w-full btn-modern btn-danger justify-center text-sm py-2">
+            <i class="fa fa-sign-out mr-2"></i> 退出登录
+        </button>
+      </div>
+    </aside>
 
-    <!-- Stats -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-      <div class="stat-card">
-        <p class="stat-title">总销售额</p>
-        <p id="total-revenue" class="stat-value">加载中...</p>
-      </div>
-      <div class="stat-card">
-        <p class="stat-title">总库存量</p>
-        <p id="total-inventory" class="stat-value">加载中...</p>
-      </div>
-      <div class="stat-card">
-        <p class="stat-title">租户总数</p>
-        <p id="tenant-count" class="stat-value">加载中...</p>
-      </div>
-    </div>
+    <main class="content-area">
+      <!-- 1. Dashboard View -->
+      <div id="view-dashboard" class="view-section active">
+        <header class="mb-8 flex justify-between items-center">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800">经营概况</h1>
+            <p class="text-gray-500 text-sm mt-1">系统全域数据实时监控</p>
+          </div>
+          <button class="btn-modern bg-white text-gray-600 border border-gray-200" onclick="loadDashboardData()">
+            <i class="fa fa-refresh"></i> 刷新数据
+          </button>
+        </header>
 
-    <!-- Sections -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Transfer Logs -->
-      <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
-        <h2 class="text-xl font-semibold mb-4">调货记录</h2>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+        <!-- Global Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="stat-card border-l-4 border-l-blue-500">
+            <div class="label">平台总销售额</div>
+            <div class="value" id="global-revenue">¥0.00</div>
+            <div class="meta">所有租户累计</div>
+          </div>
+          <div class="stat-card border-l-4 border-l-green-500">
+            <div class="label">总库存数量</div>
+            <div class="value" id="global-inventory">0</div>
+            <div class="meta">全平台商品总数</div>
+          </div>
+          <div class="stat-card border-l-4 border-l-purple-500">
+            <div class="label">入驻商户数</div>
+            <div class="value" id="global-tenants">0</div>
+            <div class="meta">活跃运营中</div>
+          </div>
+        </div>
+
+        <!-- Tenant Stats Grid -->
+        <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
+           <i class="fa fa-shop text-blue-500"></i> 各店经营数据
+        </h2>
+        <div id="tenant-stats-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+           <div class="p-8 text-center text-gray-400">
+             <i class="fa fa-circle-o-notch fa-spin text-3xl mb-3"></i><br>正在加载各店数据...
+           </div>
+        </div>
+      </div>
+
+      <!-- 2. Inventory View -->
+      <div id="view-inventory" class="view-section">
+        <header class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">库存查询</h1>
+          <p class="text-gray-500 text-sm mt-1">跨门店实时库存检索</p>
+        </header>
+
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-wrap gap-8 items-center">
+           <div class="w-48">
+             <label class="block text-xs font-medium text-gray-500 mb-1">选择店铺</label>
+             <select id="inv-tenant-select" class="input-modern h-10 py-1 text-sm bg-gray-50">
+               <option value="" disabled selected>加载中...</option>
+             </select>
+           </div>
+           <div class="w-64">
+             <label class="block text-xs font-medium text-gray-500 mb-1">搜索药品 (名称/条码)</label>
+             <div class="search-bar w-full">
+               <i class="fa fa-search"></i>
+               <input type="text" id="inv-search-input" class="input-modern h-10 text-sm" placeholder="输入药品名称、通用名或条码...">
+             </div>
+           </div>
+           <div class="pt-5 ml-auto">
+             <button class="btn-modern btn-primary h-10 px-6" onclick="searchInventory()">
+               <i class="fa fa-search mr-1"></i> 查询
+             </button>
+           </div>
+        </div>
+
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">从</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">至</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">药品ID</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作员</th>
+                <th class="w-16">ID</th>
+                <th>药品名称</th>
+                <th>规格 / 厂家</th>
+                <th>批号</th>
+                <th>有效期</th>
+                <th class="text-right">库存数量</th>
+                <th class="text-right">零售价</th>
               </tr>
             </thead>
-            <tbody id="transfer-logs-body" class="bg-white divide-y divide-gray-200">
-              <!-- Logs will be inserted here -->
+            <tbody id="inventory-table-body">
+              <tr><td colspan="7" class="text-center py-12 text-gray-400">请选择店铺并点击查询</td></tr>
+            </tbody>
+          </table>
+          <div class="p-3 border-t border-gray-100 flex justify-between items-center bg-gray-50" id="inv-pagination">
+             <span class="text-xs text-gray-500" id="inv-total-text">共 0 条记录</span>
+             <div class="flex gap-2">
+               <button id="p-prev" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50" disabled>上一页</button>
+               <button id="p-next" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50" disabled>下一页</button>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Logs View -->
+      <div id="view-logs" class="view-section">
+        <header class="mb-6 flex justify-between items-center">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800">调货日志</h1>
+            <p class="text-gray-500 text-sm mt-1">全平台跨店调拨记录</p>
+          </div>
+          <button class="btn-modern bg-white text-gray-600 border border-gray-200" onclick="loadTransferLogs()">
+             <i class="fa fa-refresh"></i>
+          </button>
+        </header>
+
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>调拨时间</th>
+                <th>调出方</th>
+                <th>调入方</th>
+                <th>药品ID</th>
+                <th>调拨批号</th>
+                <th>数量</th>
+                <th>操作员</th>
+                <th>备注</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table-body">
+              <tr><td colspan="8" class="text-center py-12 text-gray-400">加载中...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Settings -->
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h2 class="text-xl font-semibold mb-4">后台设置</h2>
-        <div>
-          <h3 class="text-lg font-medium mb-2">修改密码</h3>
-          <div class="space-y-3">
-            <div>
-              <label for="new-password" class="text-sm font-medium text-gray-700">新密码</label>
-              <input type="password" id="new-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+      <!-- 4. Users/Settings View -->
+      <div id="view-users" class="view-section">
+        <div class="max-w-2xl mx-auto mt-10">
+          <div class="card-modern shadow-md">
+            <div class="border-b border-gray-100 px-6 py-4">
+              <h2 class="text-lg font-bold text-gray-800">安全设置</h2>
             </div>
-            <button id="change-password-button" class="w-full py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">确认修改</button>
-            <p id="password-message" class="text-sm"></p>
+            <div class="p-8">
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">修改管理员密码</label>
+                <input type="password" id="new-password" class="input-modern mb-3" placeholder="输入新密码">
+                <button id="btn-change-pwd" class="btn-modern btn-primary w-full justify-center">
+                  确认修改
+                </button>
+                <p id="pwd-msg" class="text-xs mt-2 text-center h-4"></p>
+              </div>
+              <div class="bg-blue-50 text-blue-800 text-sm p-4 rounded-lg">
+                <i class="fa fa-info-circle mr-1"></i> BOSS 账号具有最高权限，请定期更换密码并妥善保管。
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+    </main>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const token = localStorage.getItem('boss_token');
-      if (!token) {
-        window.location.href = 'boss-login.html';
-        return;
-      }
+    const token = localStorage.getItem('boss_token');
+    if(!token) window.location.href = 'boss-login.html';
+    const headers = { 'Authorization': token, 'Content-Type': 'application/json' };
+    const formatMoney = (v) => '¥' + (Number(v)||0).toLocaleString('zh-CN', {minimumFractionDigits: 2});
 
-      const headers = { 'Authorization': token };
+    // View Switcher
+    window.switchView = function(viewId) {
+       document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+       document.getElementById('view-' + viewId).classList.add('active');
+       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+       event.currentTarget.classList.add('active');
 
-      // Fetch and display dashboard data
-      fetch('/api/boss/dashboard', { headers })
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('total-revenue').textContent = `¥${data.totalRevenue.toFixed(2)}`;
-          document.getElementById('total-inventory').textContent = data.totalInventoryCount;
-          document.getElementById('tenant-count').textContent = data.tenantCount;
-        })
-        .catch(error => console.error('Error fetching dashboard data:', error));
+       if(viewId === 'dashboard') loadDashboardData();
+       if(viewId === 'inventory') loadTenantList();
+       if(viewId === 'logs') loadTransferLogs();
+    };
 
-      // Fetch and display transfer logs
-      fetch('/api/boss/transfer-logs', { headers })
-        .then(response => response.json())
-        .then(logs => {
-          const logsBody = document.getElementById('transfer-logs-body');
-          if (logs.length === 0) {
-            logsBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">没有调货记录</td></tr>';
-            return;
+    // --- Dashboard ---
+    async function loadDashboardData() {
+      try {
+        // Global
+        const dRes = await fetch('/api/boss/dashboard', { headers });
+        if(dRes.status === 401) return logout();
+        const dData = await dRes.json();
+        document.getElementById('global-revenue').textContent = formatMoney(dData.totalRevenue);
+        document.getElementById('global-inventory').textContent = (dData.totalInventoryCount||0).toLocaleString();
+        document.getElementById('global-tenants').textContent = dData.tenantCount;
+
+        // Tenants Stats
+        const sRes = await fetch('/api/boss/stats', { headers });
+        const sData = await sRes.json();
+        const grid = document.getElementById('tenant-stats-grid');
+        grid.innerHTML = '';
+
+        // Tenant Names Mapping (Mock or fetch from somewhere if API provides names)
+        const tenantNames = { 'bht': '🏥 百和堂药店', 'wx': '💊 万欣药店', 'rzt': '🏬 仁智堂药店', 'default': '📦 总仓库' };
+
+        Object.keys(sData).forEach(tid => {
+           // Show all tenants including default
+           const st = sData[tid];
+           const name = tenantNames[tid] || tid.toUpperCase();
+
+           grid.innerHTML += `
+             <div class="tenant-card">
+               <div class="tenant-header">
+                 <span class="tenant-name">${name}</span>
+                 <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">运营中</span>
+               </div>
+               <div class="metric-row">
+                 <span class="metric-label">今日销售</span>
+                 <span class="metric-val text-blue-600">${formatMoney(st.dailySales)}</span>
+               </div>
+               <div class="metric-row">
+                 <span class="metric-label">本月销售</span>
+                 <span class="metric-val text-gray-800">${formatMoney(st.monthlySales)}</span>
+               </div>
+               <div class="metric-row">
+                 <span class="metric-label">本年累计</span>
+                 <span class="metric-val text-gray-800">${formatMoney(st.yearlySales)}</span>
+               </div>
+               <div class="metric-row border-t border-dashed border-gray-200 pt-2 mt-2">
+                 <span class="metric-label">当前库存</span>
+                 <span class="metric-val text-gray-600">${(st.stockCount||0).toLocaleString()} 件</span>
+               </div>
+             </div>
+           `;
+        });
+      } catch(e) { console.error(e); }
+    }
+
+    // --- Inventory ---
+    let invPage = 0;
+    const invSize = 10;
+    let invTenant = '';
+
+    async function loadTenantList() {
+      const sel = document.getElementById('inv-tenant-select');
+      if(sel.options.length > 1) return; // already loaded
+      try {
+        const res = await fetch('/api/boss/tenants', { headers });
+        const tenants = await res.json();
+        const tenantNames = { 'bht': '百和堂药店', 'wx': '万欣药店', 'rzt': '仁智堂药店' };
+
+        sel.innerHTML = '<option value="" disabled selected>请选择店铺</option>';
+        tenants.forEach(t => {
+           const label = tenantNames[t] || t.toUpperCase();
+           sel.innerHTML += `<option value="${t}">${label}</option>`;
+        });
+      } catch(e){}
+    }
+
+    window.searchInventory = function(page = 0) {
+       const tenant = document.getElementById('inv-tenant-select').value;
+       if(!tenant) { alert('请先选择一个店铺'); return; }
+       invTenant = tenant;
+       invPage = page;
+       const keyword = document.getElementById('inv-search-input').value;
+
+       const table = document.getElementById('inventory-table-body');
+       table.innerHTML = '<tr><td colspan="7" class="text-center py-8"><i class="fa fa-spinner fa-spin"></i> 查询中...</td></tr>';
+
+       fetch(`/api/boss/inventory/${tenant}?page=${page}&size=${invSize}&keyword=${encodeURIComponent(keyword)}`, { headers })
+         .then(r => r.json())
+         .then(data => {
+            if(data.error) throw new Error(data.error);
+            const list = data.content || [];
+            if(list.length === 0) {
+               table.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">未找到相关库存数据</td></tr>';
+               return;
+            }
+
+            table.innerHTML = list.map(item => {
+               const inv = item.inventory;
+               const med = item.medicine || {};
+               return `
+                 <tr class="transition-colors hover:bg-slate-50">
+                    <td class="text-xs font-mono text-gray-400">${inv.id}</td>
+                    <td class="font-medium text-gray-800">${med.commonName || med.genericName || '未知药品'}
+                        ${med.tradeName ? `<span class="text-xs text-gray-500 ml-1">(${med.tradeName})</span>` : ''}</td>
+                    <td class="text-sm text-gray-600">${med.spec||'-'} <br> <span class="text-xs text-gray-400">${med.manufacturer||'-'}</span></td>
+                    <td class="text-sm font-mono">${inv.batchNo}</td>
+                    <td class="text-sm">${inv.expiryDate || '-'}</td>
+                    <td class="text-right font-bold ${inv.stockQuantity < (inv.minStock||10) ? 'text-red-500' : 'text-gray-700'}">${inv.stockQuantity}</td>
+                    <td class="text-right font-mono text-sm">${formatMoney(med.retailPrice || 0)}</td>
+                 </tr>
+               `;
+            }).join('');
+
+            // Pagination
+            document.getElementById('inv-total-text').textContent = `共 ${data.totalElements || list.length} 条记录 (第 ${data.currentPage+1}/${data.totalPages} 页)`;
+            document.getElementById('p-prev').disabled = data.currentPage === 0;
+            document.getElementById('p-next').disabled = data.currentPage >= (data.totalPages - 1);
+            document.getElementById('p-prev').onclick = () => searchInventory(data.currentPage - 1);
+            document.getElementById('p-next').onclick = () => searchInventory(data.currentPage + 1);
+         })
+         .catch(e => {
+            table.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-500">查询出错: ${e.message}</td></tr>`;
+         });
+    };
+
+    // --- Logs ---
+    async function loadTransferLogs() {
+       const body = document.getElementById('logs-table-body');
+       try {
+          const res = await fetch('/api/boss/transfer-logs', { headers });
+          const logs = await res.json();
+          if(!logs || logs.length === 0) {
+             body.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-gray-400">暂无调货记录</td></tr>';
+             return;
           }
-          logsBody.innerHTML = logs.map(log => `
-            <tr>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(log.transferTime).toLocaleString()}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.fromTenant}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.toTenant}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.medicineId}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.quantity}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.operatorId}</td>
-            </tr>
+          body.innerHTML = logs.map(l => `
+             <tr>
+               <td class="text-sm text-gray-600">${new Date(l.transferTime).toLocaleString()}</td>
+               <td><span class="px-2 py-1 rounded bg-red-50 text-red-600 text-xs font-bold">${l.fromTenant}</span></td>
+               <td><span class="px-2 py-1 rounded bg-green-50 text-green-600 text-xs font-bold">${l.toTenant}</span></td>
+               <td class="font-mono text-xs text-gray-500">${l.medicineId}</td>
+               <td class="font-mono text-xs text-gray-500">${l.batchNo||'-'}</td>
+               <td class="font-bold text-gray-700">${l.quantity}</td>
+               <td class="text-xs text-gray-500">${l.operatorId}</td>
+               <td class="text-xs text-gray-400">${l.remark||'-'}</td>
+             </tr>
           `).join('');
-        })
-        .catch(error => console.error('Error fetching transfer logs:', error));
+       } catch(e) {
+          body.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-red-400">加载失败</td></tr>';
+       }
+    }
 
-      // Logout button
-      document.getElementById('logout-button').addEventListener('click', () => {
-        localStorage.removeItem('boss_token');
-        window.location.href = 'boss-login.html';
-      });
+    // --- Others ---
+    function logout(){ localStorage.removeItem('boss_token'); window.location.href = 'boss-login.html'; }
+    document.getElementById('logout-button').onclick = () => { if(confirm('确认退出?')) logout(); };
 
-      // Change password
-      document.getElementById('change-password-button').addEventListener('click', async () => {
-        const newPassword = document.getElementById('new-password').value;
-        const passwordMessage = document.getElementById('password-message');
-        if (!newPassword) {
-          passwordMessage.textContent = '新密码不能为空。';
-          passwordMessage.style.color = 'red';
-          return;
-        }
+    document.getElementById('btn-change-pwd').onclick = async () => {
+       const pwd = document.getElementById('new-password').value;
+       const msg = document.getElementById('pwd-msg');
+       if(!pwd) { msg.textContent = '密码不能为空'; msg.className = 'text-xs mt-2 text-center h-4 text-red-500'; return; }
 
-        try {
-          const response = await fetch('/api/boss/change-password', {
-            method: 'POST',
-            headers: { ...headers, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ newPassword })
-          });
-          const data = await response.json();
-          if (response.ok) {
-            passwordMessage.textContent = '密码修改成功！';
-            passwordMessage.style.color = 'green';
-            document.getElementById('new-password').value = '';
-          } else {
-            throw new Error(data.message || '修改失败');
-          }
-        } catch (error) {
-          passwordMessage.textContent = `错误: ${error.message}`;
-          passwordMessage.style.color = 'red';
-        }
-      });
-    });
+       try {
+         const r = await fetch('/api/boss/change-password', {
+            method: 'POST', headers, body: JSON.stringify({ newPassword: pwd })
+         });
+         const d = await r.json();
+         msg.textContent = d.message || (r.ok ? '修改成功' : '失败');
+         msg.className = `text-xs mt-2 text-center h-4 ${r.ok ? 'text-green-500' : 'text-red-500'}`;
+         if(r.ok) document.getElementById('new-password').value = '';
+       } catch(e) { msg.textContent = '网络错误'; }
+    };
+
+    // Init with Dashboard
+    loadDashboardData();
   </script>
-
 </body>
 </html>
+

@@ -20,13 +20,19 @@ public class Medicine {
     @Column(name = "trade_name", length = 100)
     private String tradeName;
 
+    @Column(name = "product_code", length = 50)
+    private String productCode;
+
+    @Column(name = "dosage_form", length = 50)
+    private String dosageForm;
+
     @Column(length = 50)
     private String spec;
 
     @Column(name = "approval_no", nullable = false, length = 50, unique = true)
     private String approvalNo;
 
-    @Column(name = "category_id", nullable = false)
+    @Column(name = "category_id")
     private Integer categoryId;
 
     @Column(length = 100)
@@ -40,6 +46,9 @@ public class Medicine {
 
     @Column(name = "is_rx", nullable = false)
     private Boolean isRx = false;
+
+    @Column(length = 64)
+    private String barcode;
 
     @Column(length = 20)
     private String unit;
@@ -57,9 +66,6 @@ public class Medicine {
     @JoinColumn(name = "supplier_id")
     @JsonIgnore
     private Supplier supplier;
-
-    @Column(name = "barcode", length = 64)
-    private String barcode;
 
     @Column(name = "production_date")
     private java.time.LocalDate productionDate;
@@ -90,6 +96,12 @@ public class Medicine {
     public String getTradeName() { return tradeName; }
     public void setTradeName(String tradeName) { this.tradeName = tradeName; }
 
+    public String getProductCode() { return productCode; }
+    public void setProductCode(String productCode) { this.productCode = productCode; }
+
+    public String getDosageForm() { return dosageForm; }
+    public void setDosageForm(String dosageForm) { this.dosageForm = dosageForm; }
+
     public String getSpec() { return spec; }
     public void setSpec(String spec) { this.spec = spec; }
 
@@ -111,6 +123,9 @@ public class Medicine {
     public Boolean getIsRx() { return isRx; }
     public void setIsRx(Boolean isRx) { this.isRx = isRx; }
 
+    public String getBarcode() { return barcode; }
+    public void setBarcode(String barcode) { this.barcode = barcode; }
+
     public String getUnit() { return unit; }
     public void setUnit(String unit) { this.unit = unit; }
 
@@ -131,8 +146,6 @@ public class Medicine {
         this.supplier = supplier;
     }
 
-    public String getBarcode() { return barcode; }
-    public void setBarcode(String barcode) { this.barcode = barcode; }
 
     public java.time.LocalDate getProductionDate() { return productionDate; }
     public void setProductionDate(java.time.LocalDate productionDate) { this.productionDate = productionDate; }
@@ -156,7 +169,7 @@ public class Medicine {
     public void prePersist() {
         this.createTime = LocalDateTime.now();
         this.updateTime = LocalDateTime.now();
-        if (this.status == null || (this.status instanceof String && ((String)this.status).isBlank())) {
+        if (this.status == null || this.status.isBlank()) {
             this.status = "ACTIVE";
         }
         if (this.deleted == null) {

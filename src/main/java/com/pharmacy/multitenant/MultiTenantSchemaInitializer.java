@@ -295,6 +295,8 @@ public class MultiTenantSchemaInitializer {
                     "unit VARCHAR(20), " +
                     "description TEXT, " +
                     "supplier_id INT, " +
+                    "dosage_form VARCHAR(50), " +
+                    "product_code VARCHAR(50), " +
                     "usage_dosage VARCHAR(255), " +
                     "contraindication VARCHAR(255), " +
                     "create_time DATETIME DEFAULT CURRENT_TIMESTAMP, " +
@@ -314,6 +316,9 @@ public class MultiTenantSchemaInitializer {
             addColumnIfMissing(conn, "medicine", "supplier_id", "INT");
             addColumnIfMissing(conn, "medicine", "usage_dosage", "VARCHAR(255)");
             addColumnIfMissing(conn, "medicine", "contraindication", "VARCHAR(255)");
+            addColumnIfMissing(conn, "medicine", "dosage_form", "VARCHAR(50)");
+            addColumnIfMissing(conn, "medicine", "product_code", "VARCHAR(50)");
+            addColumnIfMissing(conn, "medicine", "manufacturer", "VARCHAR(100)");
         }
     }
     private void ensureInventoryTable(Connection conn, String catalog) throws SQLException {
@@ -330,6 +335,13 @@ public class MultiTenantSchemaInitializer {
                     "purchase_price DECIMAL(10,2), " +
                     "supplier VARCHAR(100), " +
                     "update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                    "warehouse VARCHAR(50), " +
+                    "inbound_date DATETIME, " +
+                    "acceptance_no VARCHAR(50), " +
+                    "invoice_no VARCHAR(50), " +
+                    "invoice_date DATETIME, " +
+                    "acceptance_date DATETIME, " +
+                    "status VARCHAR(20), " +
                     "KEY idx_med(medicine_id)" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
             try (Statement st = conn.createStatement()) { st.executeUpdate(ddl); System.out.println("[SchemaInit] 已创建表 inventory"); }
@@ -338,6 +350,14 @@ public class MultiTenantSchemaInitializer {
             addColumnIfMissing(conn, "inventory", "min_stock", "INT DEFAULT 10");
             addColumnIfMissing(conn, "inventory", "purchase_price", "DECIMAL(10,2)");
             addColumnIfMissing(conn, "inventory", "supplier", "VARCHAR(100)");
+            // 新增：入库与库存明细字段
+            addColumnIfMissing(conn, "inventory", "warehouse", "VARCHAR(50)");
+            addColumnIfMissing(conn, "inventory", "inbound_date", "DATETIME");
+            addColumnIfMissing(conn, "inventory", "acceptance_no", "VARCHAR(50)");
+            addColumnIfMissing(conn, "inventory", "invoice_no", "VARCHAR(50)");
+            addColumnIfMissing(conn, "inventory", "invoice_date", "DATETIME");
+            addColumnIfMissing(conn, "inventory", "acceptance_date", "DATETIME");
+            addColumnIfMissing(conn, "inventory", "status", "VARCHAR(20)");
         }
     }
     private void ensureOrderTable(Connection conn, String catalog) throws SQLException {

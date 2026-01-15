@@ -55,18 +55,25 @@
       totalCost += Number(i.unitPrice||0) * Number(i.quantity||0);
       totalPrice += Number((i.retailPrice||0)) * Number(i.quantity||0);
       const removeKey = (i.internalId!=null? String(i.internalId) : String(i.medicineId||''));
+      const specDisplay = (i.spec||'-') + (i.dosageForm ? (' <span class="text-gray-500 text-xs text-nowrap">[' + i.dosageForm + ']</span>') : '');
+      const codeDisplay = i.productCode ? ('<div class="text-xs text-blue-600 font-mono"><i class="fa fa-tag"></i> '+i.productCode+'</div>') : '';
+      const nameDisplay = i.medicineName||i.medicineId;
+      const tradeDisplay = i.tradeName ? ('<div class="text-xs text-gray-500">(' + i.tradeName + ')</div>') : '';
+
       rows += '<tr>'+
         '<td class="px-6 py-3">'+(seq++)+'</td>'+
-        '<td class="px-6 py-3">'+(i.medicineName||i.medicineId)+'</td>'+
+        '<td class="px-6 py-3">'+codeDisplay+'<div>'+(i.barcode||'')+'</div></td>'+
+        '<td class="px-6 py-3 font-medium text-gray-900"><div>'+nameDisplay+'</div>'+tradeDisplay+'</td>'+
+        '<td class="px-6 py-3">'+(i.dosageForm||'-')+'</td>'+
         '<td class="px-6 py-3">'+(i.spec||'-')+'</td>'+
-        '<td class="px-6 py-3">'+(i.manufacturer||'-')+'</td>'+
-        '<td class="px-6 py-3">'+(i.batchNumber||'-')+'</td>'+
-        '<td class="px-6 py-3">'+(i.expiryDate||'-')+'</td>'+
-        '<td class="px-6 py-3">'+(i.quantity||0)+'</td>'+
+        '<td class="px-6 py-3 text-xs">'+(i.manufacturer||'-')+'</td>'+
+        '<td class="px-6 py-3 text-xs font-mono">'+(i.batchNumber||'-')+'</td>'+
+        '<td class="px-6 py-3 text-xs">'+(i.expiryDate||'-')+'</td>'+
+        '<td class="px-6 py-3 font-bold">'+(i.quantity||0)+'</td>'+
         '<td class="px-6 py-3">'+toCurrency(i.unitPrice||0)+'</td>'+
-        '<td class="px-6 py-3">'+toCurrency(i.retailPrice||0) + (i.memberPrice!=null? (' / 会员价 '+toCurrency(i.memberPrice)): '') +'</td>'+
+        '<td class="px-6 py-3">'+toCurrency(i.retailPrice||0) + (i.memberPrice!=null? (' / <span class="text-xs text-orange-600">M:'+toCurrency(i.memberPrice)+'</span>'): '') +'</td>'+
         '<td class="px-6 py-3">'+toCurrency(profit*(i.quantity||0))+'</td>'+
-        '<td class="px-6 py-3"><button class="btn btn-outline btn-sm" data-remove="'+removeKey+'">移除</button></td>'+
+        '<td class="px-6 py-3"><button class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 hover:border-red-200" data-remove="'+removeKey+'"><i class="fa fa-trash"></i></button></td>'+
       '</tr>';
     });
     tbody.innerHTML = rows;
@@ -193,6 +200,9 @@
         internalId: med.id,
         medicineId: med.medicineId || String(med.id||''),
         medicineName: med.genericName||med.tradeName||med.medicineId,
+        tradeName: med.tradeName,
+        productCode: med.productCode,
+        dosageForm: med.dosageForm,
         spec: med.spec,
         manufacturer: med.manufacturer,
         batchNumber: batch,
@@ -292,8 +302,15 @@
     const bar = document.getElementById('import-progress-bar');
     const box = document.getElementById('import-progress');
     const txt = document.getElementById('import-progress-text');
-    if(box){ box.style.display = 'block'; box.classList.remove('hidden'); }
-    if(bar){ bar.style.width = Math.min(Math.max(percent,0),100) + '%'; }
+    if(box){
+        box.style.display = 'flex'; // Modal requires flex for centering
+        box.classList.remove('hidden');
+    }
+    if(bar){
+        const p = Math.min(Math.max(percent,0),100);
+        bar.style.width = p + '%';
+        bar.textContent = Math.floor(p) + '%';
+    }
     if(txt && text){ txt.textContent = text; }
   }
   function hideImportProgress(){
@@ -306,45 +323,211 @@
     return text.split(/\r?\n/).map(line => line.split(','));
   }
 
-  function processRowsArray(rows, filename){
+  async function processRowsArray(rows, filename){
     if(!rows || !rows.length) return;
-    let start = 0;
-    // 简单判断首行是否标题
-    if(rows[0] && rows[0].some(c => String(c).includes('名称') || String(c).includes('Name'))) start = 1;
+
+    // Improved Header Detection
+    let headerIdx = -1;
+    let map = {
+        name: -1, trade: -1, spec: -1, manuf: -1, qty: -1, cost: -1, price: -1,
+        batch: -1, expiry: -1, approval: -1, barcode: -1, production: -1, unit: -1, tempCode: -1, dosageForm: -1
+    };
+
+    // 1. Score rows to find the best header candidate (up to 100 rows)
+    let bestScore = 0;
+    let bestRowIdx = -1;
+
+    for(let i=0; i<Math.min(rows.length, 100); i++){
+        const r = rows[i].map(x => String(x).trim());
+        let score = 0;
+        // Weighted keywords
+        if(r.some(c => c.includes('名称') || c.includes('品名') || c.match(/name|product/i))) score += 3;
+        if(r.some(c => c.includes('货号') || c.includes('编码') || c.includes('代码') || c.match(/code|no\./i))) score += 3;
+        if(r.some(c => c.includes('规格') || c.match(/spec|standard/i))) score += 2;
+        if(r.some(c => c.includes('数量') || c.includes('库存') || c.match(/qt|count|stock/i))) score += 2;
+        if(r.some(c => c.includes('厂家') || c.includes('企业') || c.includes('产地') || c.match(/manuf|factory/i))) score += 2;
+        if(r.some(c => c.includes('批号') || c.match(/batch/i))) score += 2;
+        if(r.some(c => c.includes('有效期') || c.includes('失效') || c.match(/exp/i))) score += 2;
+        if(r.some(c => c.includes('批准') || c.includes('注册') || c.includes('文号') || c.match(/approv|license/i))) score += 2;
+        if(r.some(c => c.includes('条形码') || c.includes('条码') || c.match(/bar|code/i))) score += 2;
+        if(r.some(c => c.includes('零售价') || c.includes('售价'))) score += 2;
+        if(r.some(c => c.includes('进货价') || c.includes('购进'))) score += 2;
+
+        if(score > bestScore) {
+            bestScore = score;
+            bestRowIdx = i;
+        }
+    }
+
+    // Threshold: 3 (Matches at least one strong keyword like Name or Code)
+    if(bestScore >= 3) {
+        headerIdx = bestRowIdx;
+        const r = rows[headerIdx].map(x => String(x).trim());
+        console.log('[import] Found header at row', headerIdx, r, 'Score:', bestScore);
+
+        r.forEach((c, idx) => {
+            if(!c) return;
+            const s = String(c).toLowerCase().trim();
+            // Specific overrides for User's "总库存.xls" structure
+            if(s === '商品名') map.trade = idx;
+            else if(s === '产品名称') map.name = idx; // Should be generic name
+            else if(s === '商品货号') map.tempCode = idx;
+            else if(s === '剂型') map.dosageForm = idx;
+            else if(s.includes('名称') || s.includes('品名') || s.match(/name|product/i)) { if(map.name === -1) map.name = idx; }
+            else if(s.includes('通用名') || s.match(/generic/i)) map.name = idx;
+            else if(s.includes('商品名') || s.match(/trade/i)) { if(map.trade === -1) map.trade = idx; }
+            else if(s.includes('货号') || s.includes('编码') || s.includes('代码') || s.match(/code|no\./i)) map.tempCode = idx;
+            else if(s.includes('规格') || s.match(/spec|standard/i)) map.spec = idx;
+            else if(s.includes('厂家') || s.includes('企业') || s.includes('产地') || s.includes('厂商') || s.match(/manuf|factory/i)) map.manuf = idx;
+            else if(s.includes('单位') || s.match(/unit/i)) { if(s!=='供货单位') map.unit = idx; } // 排除供货单位
+
+            else if(s.includes('数量') || s.includes('库存') || s.match(/qt|count|stock/i)) map.qty = idx;
+            else if(s.includes('进价') || s.includes('成本') || s.includes('购进') || s.match(/cost|buy|in.*price/i)) map.cost = idx;
+            else if(s.includes('售价') || s.includes('零售') || s.match(/retail|sale|out.*price/i)) map.price = idx;
+            else if(s.includes('批号') || s.match(/batch/i)) map.batch = idx;
+            else if(s.includes('有效期') || s.includes('失效') || s.match(/exp|valid|date/i)) map.expiry = idx;
+            else if(s.includes('批准') || s.includes('注册') || s.includes('文号') || s.match(/approv|license/i)) map.approval = idx;
+            else if(s.includes('条形码') || s.includes('条码') || s.match(/bar|code/i)) map.barcode = idx;
+            else if(s.includes('生产') && (s.includes('日期') || s.includes('时间'))) map.production = idx;
+        });
+    }
+
+    // Default mapping if no header found
+    if(headerIdx === -1) {
+        console.warn('[import] No header found, using default mapping');
+        // Try to respect standard layout: Name, Spec, Manuf, Qty...
+        map = { name: 0, spec: 1, manuf: 2, qty: 3, cost: 4, price: 5, batch: 6, expiry: 7, approval: 8, barcode: -1, production: -1, unit: -1, tempCode: -1, dosageForm: -1 };
+        headerIdx = -1;
+    }
 
     let count = 0;
-    for(let i=start; i<rows.length; i++){
+    let skipped = 0;
+    const totalRows = rows.length;
+    for(let i = headerIdx + 1; i < rows.length; i++){
+      if(i % 20 === 0) {
+        setImportProgress(60 + Math.floor((i / totalRows) * 30), `正在处理第 ${i}/${totalRows} 行...`);
+        await new Promise(r => setTimeout(r, 0));
+      }
       const row = rows[i];
       if(!row || row.length < 1) continue;
-      // 默认顺序：名称(0), 规格(1), 厂家(2), 数量(3), 进价(4), 售价(5), 批号(6), 有效期(7), 批准文号(8)
-      const name = row[0];
-      if(!name) continue;
 
-      const spec = row[1] || '';
-      const manufacturer = row[2] || '';
-      const qty = Number(row[3] || 10);
-      const unitPrice = Number(row[4] || 0);
-      const retailPrice = Number(row[5] || 0);
-      const batch = row[6] || ('B'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'001');
-      const expiry = row[7] || '';
-      const approvalNo = row[8] || ('TMP'+Date.now()+Math.floor(Math.random()*1000));
+      const getValue = (idx) => (idx >= 0 && row[idx] != null) ? String(row[idx]).trim() : '';
+
+      // Skip total rows
+      if(row.some(c => {
+          const s = String(c);
+          return s.includes('合计') || s.includes('总计') || s.includes('Total') || s.startsWith('Count');
+      })) {
+          console.log('[import] Skipping total/summary row', i, row);
+          continue;
+      }
+
+      let name = getValue(map.name);
+      // Fallback to trade name if generic name is empty
+      if(!name && map.trade >= 0) name = getValue(map.trade);
+      // Fallback to Code if Name is empty (e.g. file only has ID)
+      if(!name && map.tempCode >= 0) name = getValue(map.tempCode);
+
+      // If row has content
+      const hasContent = row.some(c => c && String(c).trim().length > 0);
+      if(!hasContent) continue;
+
+      if(!name) {
+          // If we have any data but missing name, try hard to keep it
+          let filled = 0; row.forEach(c=>{ if(c && String(c).trim().length>0) filled++; });
+
+          if (filled >= 2) { // Relaxed from 3 to 2
+               // Try using other columns as name
+               if(row[1]) name = String(row[1]).trim();
+               else if(row[0]) name = String(row[0]).trim();
+               else if(row[2]) name = String(row[2]).trim();
+
+               if(!name) name = '[待补录 ' + (i) + ']'; // Always generate a name if row has content
+          }
+
+          if(!name){
+             // Only skip if almost empty (filled < 2)
+             console.warn('[import] Row', i, 'skipped: not enough data. Content:', row);
+             skipped++;
+             continue;
+          }
+      }
+
+      const spec = getValue(map.spec);
+      const manufacturer = getValue(map.manuf);
+      const unit = getValue(map.unit) || '盒';
+      const qty = Number(getValue(map.qty) || 10);
+      const unitPrice = Number(getValue(map.cost) || 0);
+      const retailPrice = Number(getValue(map.price) || 0);
+
+      // 处理日期格式，Excel日期可能是数字
+      const formatDate = (val) => {
+          if(!val) return null;
+          if(val instanceof Date) return val.toISOString().slice(0,10);
+          if(!isNaN(val) && Number(val) > 20000 && Number(val) < 60000) { // Excel serial date
+              const d = new Date((Number(val) - 25569) * 86400 * 1000);
+              return d.toISOString().slice(0,10);
+          }
+          let s = String(val).trim();
+          if(!s) return null;
+          // Replace / and . with -
+          s = s.replace(/[\/\.]/g, '-');
+          // 处理 YYYYMMDD
+          if(/^\d{8}$/.test(s)) return s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8);
+          // Handle YYYY-M-D
+          const parts = s.split(/[\-\s]/);
+          if(parts.length >= 3){
+             const y = parts[0];
+             const m = parts[1].padStart(2,'0');
+             const d = parts[2].padStart(2,'0');
+             if(y.length === 4 && !isNaN(y) && !isNaN(m) && !isNaN(d)) return `${y}-${m}-${d}`;
+          }
+          // Try to extract strict date pattern YYYY-MM-DD
+          const match = s.match(/(\d{4})[\-\/](\d{1,2})[\-\/](\d{1,2})/);
+          if(match){
+             const y = match[1];
+             const m = match[2].padStart(2,'0');
+             const d = match[3].padStart(2,'0');
+             return `${y}-${m}-${d}`;
+          }
+          return null;
+      };
+
+      const batch = getValue(map.batch) || ('B'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'001');
+      const expiry = formatDate(getValue(map.expiry));
+      const approvalNo = getValue(map.approval) || ('TMP'+Date.now()+Math.floor(Math.random()*1000));
+      const barcode = getValue(map.barcode);
+      const productionDate = formatDate(getValue(map.production));
+
+      // New fields mapping
+      const productCode = getValue(map.tempCode);
+      const dosageForm = (map.dosageForm >= 0) ? getValue(map.dosageForm) : '';
+      const tradeName = (map.trade >= 0) ? getValue(map.trade) : '';
 
       state.items.push({
         internalId: 'IMP'+Date.now()+i,
         medicineId: 'IMP'+Date.now()+i,
         medicineName: name,
+        tradeName: tradeName, // Store trade name
+        productCode: productCode,
+        dosageForm: dosageForm,
         spec: spec,
         manufacturer: manufacturer,
+        unit: unit,
         batchNumber: batch,
         expiryDate: expiry,
         quantity: qty,
         unitPrice: unitPrice,
         retailPrice: retailPrice,
-        approvalNo: approvalNo
+        approvalNo: approvalNo,
+        barcode: barcode,
+        productionDate: productionDate
       });
       count++;
     }
-    showToast('已导入 ' + count + ' 条数据');
+    let msg = '已导入 ' + count + ' 条数据';
+    if(skipped > 0) msg += ' (跳过 ' + skipped + ' 条无效/空名行)';
+    showToast(msg);
     renderTable();
   }
 
@@ -370,7 +553,7 @@
         const rows = parseCsvToRows(text);
         if(!rows || rows.length === 0){ alert('未读取到有效数据，请检查 CSV 文件'); hideImportProgress(); return; }
         setImportProgress(60, '映射数据...');
-        processRowsArray(rows, fcheck.name || 'csv');
+        await processRowsArray(rows, fcheck.name || 'csv');
         setImportProgress(100, '完成');
         setTimeout(hideImportProgress, 500);
         return;
@@ -388,7 +571,7 @@
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
       if(!rows || rows.length === 0){ alert('未读取到有效数据，请检查表格格式'); hideImportProgress(); return; }
       setImportProgress(70, '映射数据...');
-      processRowsArray(rows, f.name);
+      await processRowsArray(rows, f.name);
       setImportProgress(100, '完成');
       setTimeout(hideImportProgress, 500);
     }catch(err){ console.error('[bulk-import] parse error', err); alert('解析表格失败: '+(err && err.message)); hideImportProgress(); }
@@ -437,7 +620,11 @@
 
     async function ensureRealMedicineIds(items){
     const result = [];
-    for(const item of items){
+    const total = items.length;
+    for(let i=0; i<total; i++){
+      const item = items[i];
+      setImportProgress(10 + Math.floor((i/total)*50), `创建药品 ${i+1}/${total}`);
+
       if(item.medicineId && !String(item.medicineId).startsWith('IMP')){ result.push(item); continue; }
       const name = item.medicineName || '未命名';
       const payload = {
@@ -446,6 +633,8 @@
         spec: item.spec || '',
         manufacturer: item.manufacturer || '',
         unit: item.unit || '盒',
+        dosageForm: item.dosageForm || undefined,
+        productCode: item.productCode || undefined,
         isRx: false,
         approvalNo: item.approvalNo || ('TMP' + Date.now()),
         retailPrice: Number(item.retailPrice||0),

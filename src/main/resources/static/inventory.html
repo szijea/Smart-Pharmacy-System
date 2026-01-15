@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="css/ui-enhanced.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/ui-modern.css" />
+  <!-- avoid CDN blocked by Tracking Prevention -->
+  <link rel="stylesheet" href="css/font-awesome.min.css" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <style>
     /* 覆盖旧样式为现代布局 */
@@ -115,6 +117,8 @@
             <div class="flex flex-col"><span class="text-gray-500">到期日期</span><input id="inline-expiryDate" type="date" class="input-modern w-full"/></div>
             <div class="flex flex-col"><span class="text-gray-500">单位</span><input id="inline-unit" class="input-modern w-full" placeholder="盒 / 瓶"/></div>
             <div class="flex flex-col"><span class="text-gray-500">厂家</span><input id="inline-manufacturer" class="input-modern w-full" placeholder="生产厂家"/></div>
+            <div class="flex flex-col"><span class="text-gray-500">剂型</span><input id="inline-dosageForm" class="input-modern w-full" placeholder="片剂/胶囊..."/></div>
+            <div class="flex flex-col"><span class="text-gray-500">货号</span><input id="inline-productCode" class="input-modern w-full" placeholder="商品货号"/></div>
           </div>
           <!-- 新增：库存数量设置（用户可在编辑药品时直接补库存） -->
           <div class="grid grid-cols-1 lg:grid-cols-4 gap-3 text-xs mb-3">
@@ -145,15 +149,21 @@
               <table class="min-w-full text-left table-modern-compact">
                 <thead>
                   <tr>
-                    <th>租户</th>
+                    <th>序号</th>
                     <th>药品ID</th>
-                  <tr>
-                    <th>租户</th>
-                    <th>ID</th>
+                    <th>货号</th>
+                    <th>条形码</th>
                     <th>通用名</th>
+                    <th>剂型</th>
                     <th>商品名</th>
-                    <th>批号/价格</th>
-                    <th>当前库存</th>
+                    <th>规格</th>
+                    <th>生产厂家</th>
+                    <th>批号</th>
+                    <th>有效期</th>
+                    <th>库存</th>
+                    <th>进货价</th>
+                    <th>零售价</th>
+                    <th>利润</th>
                     <th>操作</th>
                   </tr>
                 </thead>
@@ -223,21 +233,31 @@
     }
     const $=id=>document.getElementById(id);
     const pageBody=$('pageBody'); const btnLoad=$('btnLoadPage'); const pageNo=$('pageNo'); const pageSize=$('pageSize');
-    function showLoading(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="7" class="px-6 py-6 text-center text-gray-500 text-sm"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</td></tr>'; }
-    function showEmpty(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500"><i class="fa fa-database text-4xl mb-2 text-gray-300"></i><div>暂无药品数据</div></td></tr>'; }
+    function showLoading(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="16" class="px-6 py-6 text-center text-gray-500 text-sm"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</td></tr>'; }
+    function showEmpty(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="16" class="px-6 py-8 text-center text-gray-500"><i class="fa fa-database text-4xl mb-2 text-gray-300"></i><div>暂无药品数据</div></td></tr>'; }
     async function fetchPage(page,size){ const tenant=localStorage.getItem('selectedTenant')||''; const url=`/api/inventory/page-current-stocks?page=${page}&size=${size}`; console.log('[inventory] 请求分页库存:', url,'tenant=',tenant); const r=await fetch(url,{headers:{'Accept':'application/json','X-Shop-Id':tenant}}); if(!r.ok){ throw new Error('HTTP '+r.status+': '+await r.text()); } const data=await r.json(); console.log('[inventory] 分页响应原始数据:', data); return data; }
-    function renderPage(resp){ const list = Array.isArray(resp)? resp : (resp.content||resp.data||resp.results||[]); console.log('[inventory] 解析后的列表长度:', list.length); if(!list.length){ showEmpty(); return; } pageBody.innerHTML=list.map(item=>{ const id=item.medicineId||''; const stock=item.stockQuantity??item.currentStock??item.stock??0; const gn=item.medicineGenericName||item.genericName||''; const tn=item.medicineTradeName||item.tradeName||''; const spec=item.medicineSpec||item.spec||''; const price=item.medicineRetailPrice??item.retailPrice??''; const batchNo=item.batchNo||'-'; const payload=encodeURIComponent(JSON.stringify({medicineId:id,genericName:gn,tradeName:tn,spec:spec,retailPrice:price,batchNo:batchNo})); return `<tr>
-    <td><span class='badge-soft'>${item.shopId||'default'}</span></td>
-    <td class='font-mono text-xs'>${id}</td>
-    <td class='text-xs'>${gn}</td>
+    function renderPage(resp){ const list = Array.isArray(resp)? resp : (resp.content||resp.data||resp.results||[]); console.log('[inventory] 解析后的列表长度:', list.length); if(!list.length){ showEmpty(); return; } pageBody.innerHTML=list.map((item, idx)=>{ const id=item.medicineId||''; const stock=item.stockQuantity??item.currentStock??item.stock??0; const gn=item.medicineGenericName||item.genericName||''; const tn=item.medicineTradeName||item.tradeName||''; const spec=item.medicineSpec||item.spec||''; const retailPrice=item.medicineRetailPrice??item.retailPrice??'0.00'; const purchasePrice=item.purchasePrice??'0.00'; const batchNo=item.batchNo||'-'; const barcode=item.medicineBarcode||item.barcode||'-'; const approvalNo=item.medicineApprovalNo||item.approvalNo||'-'; const expiryDate=item.expiryDate||'-'; const manufacturer=item.medicineManufacturer||item.manufacturer||'-'; const dosageForm=item.dosageForm||item.medicineDosageForm||'-'; const productCode=item.productCode||item.medicineProductCode||'-'; const profit = (parseFloat(retailPrice) - parseFloat(purchasePrice)).toFixed(2); const payload=encodeURIComponent(JSON.stringify({medicineId:id,genericName:gn,tradeName:tn,spec:spec,retailPrice:retailPrice,batchNo:batchNo}));
+    // Format Expiry Date if it exists
+    let expiryDisplay = expiryDate;
+    if (expiryDate && expiryDate !== '-') {
+        try { expiryDisplay = new Date(expiryDate).toISOString().slice(0,10); } catch(e){}
+    }
+    return `<tr>
+    <td class='font-mono text-xs text-gray-500'>${idx+1}</td>
+    <td class='font-mono text-xs text-gray-500'>${id}</td>
+    <td class='font-mono text-xs text-gray-500'>${productCode}</td>
+    <td class='font-mono text-xs text-gray-500'>${barcode}</td>
+    <td class='text-xs font-medium'>${gn}</td>
+    <td class='text-xs'>${dosageForm}</td>
     <td class='text-xs'>${tn}</td>
-    <td class='text-xs'>
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-medium text-indigo-700 font-mono">${batchNo}</span>
-          ${price? '<span class="text-green-600 font-bold text-[11px]">¥'+price+'</span>' : ''}
-        </div>
-    </td>
-    <td>${stock}</td>
+    <td class='text-xs text-gray-500'>${spec}</td>
+    <td class='text-xs text-gray-500'>${manufacturer}</td>
+    <td class='text-xs font-mono'>${batchNo}</td>
+    <td class='text-xs'>${expiryDisplay}</td>
+    <td class='font-bold ${stock<=0?"text-red-500":"text-gray-700"}'>${stock}</td>
+    <td class='text-xs text-gray-500'>¥${purchasePrice}</td>
+    <td class='text-xs text-green-600 font-bold'>¥${retailPrice}</td>
+    <td class='text-xs text-blue-600 font-bold'>¥${profit}</td>
     <td><button class='btn btn-outline btn-xs' data-edit='${payload}'>编辑</button><button class='btn btn-outline btn-xs ml-1' data-transfer='${payload}'>调货</button></td>
   </tr>`; }).join('');
     pageBody.querySelectorAll('button[data-edit]').forEach(btn=> btn.onclick=()=>{ const m=JSON.parse(decodeURIComponent(btn.getAttribute('data-edit'))); openInlineEdit(m); });
@@ -254,7 +274,7 @@
     const panel=f('edit-inline-panel');
     const loading=f('inline-loading');
     // 增加库存相关字段引用
-    const fld={ id:f('inline-id'), approvalNo:f('inline-approvalNo'), barcode:f('inline-barcode'), gn:f('inline-gn'), tn:f('inline-tn'), spec:f('inline-spec'), retailPrice:f('inline-retailPrice'), memberPrice:f('inline-memberPrice'), discountPercent:f('inline-discountPercent'), categoryId:f('inline-categoryId'), productionDate:f('inline-productionDate'), expiryDate:f('inline-expiryDate'), unit:f('inline-unit'), manufacturer:f('inline-manufacturer'), /*以下字段为可选，页面可能没有定义*/ isRx:f('inline-isRx')||null, status:f('inline-status')||null, description:f('inline-description')||null, currentStock:f('inline-currentStock'), stockQuantity:f('inline-stockQuantity'), minStock:f('inline-minStock') };
+    const fld={ id:f('inline-id'), approvalNo:f('inline-approvalNo'), barcode:f('inline-barcode'), gn:f('inline-gn'), tn:f('inline-tn'), spec:f('inline-spec'), retailPrice:f('inline-retailPrice'), memberPrice:f('inline-memberPrice'), discountPercent:f('inline-discountPercent'), categoryId:f('inline-categoryId'), productionDate:f('inline-productionDate'), expiryDate:f('inline-expiryDate'), unit:f('inline-unit'), manufacturer:f('inline-manufacturer'), dosageForm:f('inline-dosageForm'), productCode:f('inline-productCode'), isRx:f('inline-isRx')||null, status:f('inline-status')||null, description:f('inline-description')||null, currentStock:f('inline-currentStock'), stockQuantity:f('inline-stockQuantity'), minStock:f('inline-minStock') };
     let full=null;
     function calcDiscount(){ const rp=parseFloat(fld.retailPrice?.value||'0'); const mp=parseFloat(fld.memberPrice?.value||'0'); if(rp>0 && mp>0){ if(fld.discountPercent) fld.discountPercent.value=((1-mp/rp)*100).toFixed(2); } }
     function calcMember(){ const rp=parseFloat(fld.retailPrice?.value||'0'); const pct=parseFloat(fld.discountPercent?.value||'0'); if(rp>0 && pct>=0 && pct<100){ if(fld.memberPrice) fld.memberPrice.value=(rp*(1-pct/100)).toFixed(2); } }
@@ -285,6 +305,9 @@
         safeSetValue(fld.memberPrice, detail.memberPrice!=null?detail.memberPrice:'');
         safeSetValue(fld.categoryId, detail.categoryId!=null?detail.categoryId:'');
         safeSetValue(fld.productionDate, detail.productionDate || '');
+        safeSetValue(fld.expiryDate, detail.expiryDate || '');
+        safeSetValue(fld.dosageForm, detail.dosageForm || '');
+        safeSetValue(fld.productCode, detail.productCode || '');
         safeSetValue(fld.expiryDate, detail.expiryDate || '');
         safeSetValue(fld.status, detail.status || 'ACTIVE');
         try{ if(fld.isRx) safeSetValue(fld.isRx, !!detail.isRx); }catch(e){}
@@ -391,24 +414,27 @@
 
         if(!content.length){ showEmpty(); showStatus('没有匹配结果'); return; }
         clearStatus();
-        pageBody.innerHTML = content.map(item => {
-          const id=item.medicineId||''; const stock=item.stockQuantity ?? 0; const gn=item.genericName||''; const tn=item.tradeName||''; const spec=item.spec||''; const barcode=item.barcode||'';
-          const payload=encodeURIComponent(JSON.stringify({medicineId:id,genericName:gn,tradeName:tn,spec:spec,retailPrice:item.retailPrice}));
+        pageBody.innerHTML = content.map((item, idx) => {
+          const id=item.medicineId||''; const stock=item.stockQuantity ?? 0; const gn=item.genericName||''; const tn=item.tradeName||''; const spec=item.spec||''; const barcode=item.barcode||''; const retailPrice=item.retailPrice??'0.00'; const batchNo=(item.batchNos&&item.batchNos[0])||item.batchNo||'-'; const expiryDate=item.expiryDate||'-'; const manufacturer=item.manufacturer||'-'; const dosageForm=item.dosageForm||'-'; const productCode=item.productCode||'-'; const purchasePrice='-'; const profit='-';
+          const payload=encodeURIComponent(JSON.stringify({medicineId:id,genericName:gn,tradeName:tn,spec:spec,retailPrice:retailPrice}));
           return `<tr>
-            <td><span class='badge-soft'>${item.shopId||'default'}</span></td>
+            <td class='font-mono text-xs text-gray-500'>${idx+1}</td>
             <td class='font-mono text-xs'>${id}</td>
-            <td class='text-xs'>${gn}</td>
+            <td class='font-mono text-xs text-gray-500'>${productCode}</td>
+            <td class='font-mono text-xs text-gray-500'>${barcode}</td>
+            <td class='text-xs font-medium'>${gn}</td>
+            <td class='text-xs'>${dosageForm}</td>
             <td class='text-xs'>${tn}</td>
-            <td class='text-xs'>
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-medium text-indigo-700 font-mono">${item.batchNo||'-'}</span>
-                  ${item.retailPrice? '<span class="text-green-600 font-bold text-[11px]">¥'+item.retailPrice+'</span>' : ''}
-                </div>
-            </td>
-            <td>${stock}</td>
+            <td class='text-xs'>${spec}</td>
+            <td class='text-xs text-gray-500'>${manufacturer}</td>
+            <td class='text-xs font-mono'>${batchNo}</td>
+            <td class='text-xs'>${expiryDate}</td>
+            <td class='font-bold ${stock<=0?"text-red-500":"text-gray-700"}'>${stock}</td>
+            <td class='text-xs text-gray-500'>${purchasePrice}</td>
+            <td class='text-xs text-green-600 font-bold'>¥${retailPrice}</td>
+            <td class='text-xs text-blue-600 font-bold'>${profit}</td>
             <td><button class='btn btn-outline btn-xs' data-edit='${payload}'>编辑</button><button class='btn btn-outline btn-xs ml-1' data-transfer='${payload}'>调货</button></td>
-          </tr>`;
-        }).join('');
+          </tr>`}).join('');
         pageBody.querySelectorAll('button[data-edit]').forEach(btn=> btn.onclick=()=>{ const m=JSON.parse(decodeURIComponent(btn.getAttribute('data-edit'))); window.openInlineEdit && window.openInlineEdit(m); });
       } catch(e){ console.warn('[inventory] 搜索异常', e); showEmpty(); showStatus('搜索失败：'+e.message); }
     }

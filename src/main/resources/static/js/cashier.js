@@ -175,10 +175,33 @@
         safeInner(resultBox,'<div class="p-3 text-center text-gray-400">未找到匹配药品</div>');
         return;
       }
-      safeInner(resultBox, list.map(m => `<div class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm" data-id="${m.medicineId}">
-        <div class="flex justify-between"><span>${m.genericName || m.tradeName || m.name}</span><span class="text-gray-500">${formatMoney(m.retailPrice || m.price)}</span></div>
-        <div class="text-xs text-gray-400">${m.spec || ''} ${m.manufacturer || ''}${typeof m.stockQuantity!== 'undefined' ? ` · 库存:${m.stockQuantity ?? 0}` : ''}</div>
-      </div>`).join(''));
+      safeInner(resultBox, list.map(m => {
+        // 批号显示优化：支持多种字段名 (batchNos, batchNo, or batches)
+        let batches = [];
+        if(Array.isArray(m.batchNos)) batches = m.batchNos;
+        else if(Array.isArray(m.batches)) batches = m.batches;
+        else if(m.batchNo) batches = [m.batchNo];
+
+        // 模拟数据 (如果没有批号，为了演示效果，如果是 'searchWithStock' 返回的，通常应该有)
+        // if(batches.length === 0) batches = ['B20260115001']; // Uncomment to test UI
+
+        const batchInfo = (batches.length > 0)
+          ? `<div class="mt-1 text-xs text-blue-600 font-mono break-all"><i class="fa fa-tag mr-1"></i>批号: ${batches.join(', ')}</div>`
+          : '<div class="mt-1 text-xs text-gray-400 italic">暂无批号信息</div>';
+
+        return `<div class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-0" data-id="${m.medicineId}">
+        <div class="flex justify-between items-start">
+            <span class="font-medium text-gray-800">${m.genericName || m.tradeName || m.name}</span>
+            <span class="text-orange-600 font-bold whitespace-nowrap ml-2">${formatMoney(m.retailPrice || m.price)}</span>
+        </div>
+        <div class="text-xs text-gray-500 mt-1 flex items-center flex-wrap gap-1">
+            <span class="bg-gray-100 px-1 rounded">${m.spec || '-'}</span>
+            <span class="ml-1">${m.manufacturer || ''}</span>
+            ${typeof m.stockQuantity!== 'undefined' ? `<span class="ml-auto ${ (m.stockQuantity||0)<=0 ? 'text-red-500 font-bold' : 'text-green-600' }">库存:${m.stockQuantity ?? 0}</span>` : ''}
+        </div>
+        ${batchInfo}
+      </div>`;
+      }).join(''));
     } catch(err){
       safeInner(resultBox, `<div class='p-3 text-center text-red-500 text-xs'>搜索失败: ${err.message}</div>`);
     }
