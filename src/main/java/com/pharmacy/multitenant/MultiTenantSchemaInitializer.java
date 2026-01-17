@@ -30,6 +30,7 @@ public class MultiTenantSchemaInitializer {
     }
 
     @Bean
+    @Order(1)
     public ApplicationRunner stockInTablesInitializer(@Qualifier("tenantDataSources") Map<String, DataSource> tenantDataSources) {
         return args -> {
             System.out.println("[SchemaInit] 开始检测并补齐各租户的入库/供应商相关表...");

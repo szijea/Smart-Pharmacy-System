@@ -1,22 +1,11 @@
-FROM eclipse-temurin:17-jdk AS build
-WORKDIR /workspace
-COPY pom.xml .
-COPY mvnw .
-COPY .mvn .mvn
-RUN ./mvnw -q dependency:go-offline
-COPY src src
-RUN ./mvnw -q clean package -DskipTests
-
-FROM eclipse-temurin:17-jre AS runtime
+﻿# 因网络限制无法拉取远程镜像，这里使用本地已存在的镜像作为基础
+# 请注意，确保 springboot-main-app:latest 包含 Java 17 运行环境
+FROM springboot-main-app:latest
+# 设置容器内工作目录
 WORKDIR /app
-ENV JAVA_OPTS="-Xms256m -Xmx512m"
-ARG APP_VERSION=1.0.0
-# 创建非 root 用户
-RUN useradd -u 10001 -m appuser
-# 安装 wget 供健康检查使用
-USER root
-RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
-USER appuser
-COPY --from=build /workspace/target/pharmacy-system-*.jar app.jar
+# 复制最新编译的 Jar 包，重命名为 app.jar
+COPY target/pharmacy-system-1.2.3.jar app.jar
+# 暴露端口
 EXPOSE 8080
-ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar app.jar"]
+# 启动命令
+ENTRYPOINT ["java", "-jar", "app.jar"]
