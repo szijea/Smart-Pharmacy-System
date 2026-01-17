@@ -48,9 +48,9 @@
     .data-table tr:last-child td { border-bottom: none; }
     .data-table tr:hover td { background-color: #f8fafc; }
 
-    .search-bar { position: relative; width: 300px; }
+    .search-bar { position: relative; }
     .search-bar i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
-    .search-bar input { padding-left: 2.5rem; border-radius: 99px; }
+    .search-bar input { padding-left: 2.5rem; border-radius: 99px; width: 100%; }
 
     /* Views */
     .view-section { display: none; animation: fadeIn 0.3s ease-out; }
@@ -133,21 +133,21 @@
           <p class="text-gray-500 text-sm mt-1">跨门店实时库存检索</p>
         </header>
 
-        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-wrap gap-8 items-center">
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-wrap gap-8 items-end">
            <div class="w-48">
              <label class="block text-xs font-medium text-gray-500 mb-1">选择店铺</label>
-             <select id="inv-tenant-select" class="input-modern h-10 py-1 text-sm bg-gray-50">
+             <select id="inv-tenant-select" class="input-modern h-10 py-1 text-sm bg-gray-50 w-full">
                <option value="" disabled selected>加载中...</option>
              </select>
            </div>
-           <div class="w-64">
+           <div class="w-56">
              <label class="block text-xs font-medium text-gray-500 mb-1">搜索药品 (名称/条码)</label>
              <div class="search-bar w-full">
                <i class="fa fa-search"></i>
                <input type="text" id="inv-search-input" class="input-modern h-10 text-sm" placeholder="输入药品名称、通用名或条码...">
              </div>
            </div>
-           <div class="pt-5 ml-auto">
+           <div class="ml-auto">
              <button class="btn-modern btn-primary h-10 px-6" onclick="searchInventory()">
                <i class="fa fa-search mr-1"></i> 查询
              </button>
@@ -223,7 +223,7 @@
             </div>
             <div class="p-8">
               <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">修改管理员密码</label>
+                <label for="new-password" class="block text-sm font-medium text-gray-700 mb-2">修改管理员密码</label>
                 <input type="password" id="new-password" class="input-modern mb-3" placeholder="输入新密码">
                 <button id="btn-change-pwd" class="btn-modern btn-primary w-full justify-center">
                   确认修改
@@ -246,6 +246,12 @@
     if(!token) window.location.href = 'boss-login.html';
     const headers = { 'Authorization': token, 'Content-Type': 'application/json' };
     const formatMoney = (v) => '¥' + (Number(v)||0).toLocaleString('zh-CN', {minimumFractionDigits: 2});
+
+    // Tenant Names Helper
+    const getTenantName = (tid) => {
+        const names = { 'bht': '🏥 百和堂药店', 'wx': '💊 万欣药店', 'rzt': '🏬 仁智堂药店', 'default': '📦 总仓库' };
+        return names[tid] || tid.toUpperCase();
+    };
 
     // View Switcher
     window.switchView = function(viewId) {
@@ -277,12 +283,12 @@
         grid.innerHTML = '';
 
         // Tenant Names Mapping (Mock or fetch from somewhere if API provides names)
-        const tenantNames = { 'bht': '🏥 百和堂药店', 'wx': '💊 万欣药店', 'rzt': '🏬 仁智堂药店', 'default': '📦 总仓库' };
+        // const tenantNames = { 'bht': '🏥 百和堂药店', 'wx': '💊 万欣药店', 'rzt': '🏬 仁智堂药店', 'default': '📦 总仓库' };
 
         Object.keys(sData).forEach(tid => {
            // Show all tenants including default
            const st = sData[tid];
-           const name = tenantNames[tid] || tid.toUpperCase();
+           const name = getTenantName(tid);
 
            grid.innerHTML += `
              <div class="tenant-card">
@@ -323,11 +329,11 @@
       try {
         const res = await fetch('/api/boss/tenants', { headers });
         const tenants = await res.json();
-        const tenantNames = { 'bht': '百和堂药店', 'wx': '万欣药店', 'rzt': '仁智堂药店' };
+        // const tenantNames = { 'bht': '百和堂药店', 'wx': '万欣药店', 'rzt': '仁智堂药店' };
 
         sel.innerHTML = '<option value="" disabled selected>请选择店铺</option>';
         tenants.forEach(t => {
-           const label = tenantNames[t] || t.toUpperCase();
+           const label = getTenantName(t);
            sel.innerHTML += `<option value="${t}">${label}</option>`;
         });
       } catch(e){}
@@ -395,8 +401,8 @@
           body.innerHTML = logs.map(l => `
              <tr>
                <td class="text-sm text-gray-600">${new Date(l.transferTime).toLocaleString()}</td>
-               <td><span class="px-2 py-1 rounded bg-red-50 text-red-600 text-xs font-bold">${l.fromTenant}</span></td>
-               <td><span class="px-2 py-1 rounded bg-green-50 text-green-600 text-xs font-bold">${l.toTenant}</span></td>
+               <td><span class="px-2 py-1 rounded bg-red-50 text-red-600 text-xs font-bold">${getTenantName(l.fromTenant)}</span></td>
+               <td><span class="px-2 py-1 rounded bg-green-50 text-green-600 text-xs font-bold">${getTenantName(l.toTenant)}</span></td>
                <td class="font-mono text-xs text-gray-500">${l.medicineId}</td>
                <td class="font-mono text-xs text-gray-500">${l.batchNo||'-'}</td>
                <td class="font-bold text-gray-700">${l.quantity}</td>

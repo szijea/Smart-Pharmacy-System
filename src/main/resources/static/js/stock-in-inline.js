@@ -586,7 +586,7 @@
       setImportProgress(60, '提交入库单...');
       const payload = {
         stockInNo: undefined,
-        stockInDate: (qs('stock-date') && qs('stock-date').value)? (qs('stock-date').value + 'T00:00:00') : undefined,
+        stockInDate: (qs('stock-date') && qs('stock-date').value)? (qs('stock-date').value + 'T00:00:00') : new Date().toISOString(),
         remark: (qs('remark-input') && qs('remark-input').value) || '',
         supplier: { supplierId: 1 },
         items: realItems.map(i => ({

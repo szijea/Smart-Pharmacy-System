@@ -1,6 +1,5 @@
 package com.pharmacy.service;
 
-import com.pharmacy.entity.Order;
 import com.pharmacy.entity.Inventory;
 import com.pharmacy.entity.Medicine;
 import com.pharmacy.shared.entity.ProductTransferLog;
@@ -16,13 +15,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class BossDataService {
@@ -190,10 +186,9 @@ public class BossDataService {
     }
 
     public java.util.Set<String> getAllTenantIds() {
-        // Get all tenant IDs, but exclude 'default' as it's not a valid transfer target from the UI.
-        java.util.Set<String> tenantIds = multiTenantDataSourceConfig.getTenantIds();
-        return tenantIds.stream()
-                .filter(id -> !"default".equals(id))
-                .collect(java.util.stream.Collectors.toSet());
+        // Get all tenant IDs, inclusive of 'default' so we can view warehouse inventory
+        java.util.Set<String> ids = new java.util.HashSet<>(multiTenantDataSourceConfig.getTenantIds());
+        ids.add("default");
+        return ids;
     }
 }
