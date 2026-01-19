@@ -41,20 +41,5 @@ services:
       retries: 3
     restart: always
 
-  # nginx:
-  #   image: nginx:1.25-alpine
-  #   container_name: pharmacy-nginx
-  #   depends_on:
-  #     app:
-  #       condition: service_healthy
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ./nginx/conf.d:/etc/nginx/conf.d:ro
-  #     - ./nginx/certs:/etc/nginx/certs:ro
-  #   restart: always
-
 volumes:
   mysql-data:
