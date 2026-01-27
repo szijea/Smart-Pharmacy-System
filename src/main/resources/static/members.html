@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script>(function(){if(!window.tailwind){window.tailwind={config:{}};} if(!window.tailwind.config){window.tailwind.config={};}})();</script>
+    <script>if(typeof tailwind==='undefined'){window.tailwind={config:{}};}</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧药房收银系统 - 会员管理</title>
+    <link rel="stylesheet" href="css/tailwind.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/theme-enhanced.css" />
+    <link rel="stylesheet" href="css/theme-premium.css" />
+    <link rel="stylesheet" href="css/theme-lightwide.css" />
+    <link rel="stylesheet" href="css/ui-enhanced.css" />
+    <link rel="stylesheet" href="css/ui-modern.css" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+      .member-level-tag{background:#eff6ff;color:#1d4ed8;}
+      .main-content{flex:1 1 auto;padding:1.5rem;min-height:calc(100vh - 64px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;}
+      .main-content::-webkit-scrollbar{width:8px}
+      .main-content::-webkit-scrollbar-track{background:#f5f5f5;border-radius:4px}
+      .main-content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+      .main-content::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+      .segment-btn.active{background:#165DFF;color:#fff;border-color:#165DFF}
+      .member-risk-churn{background:#fee2e2;color:#991b1b}
+      .member-risk-sleep{background:#ffedd5;color:#c2410c}
+      .member-risk-new{background:#dcfce7;color:#166534}
+      .member-risk-active{background:#dbeafe;color:#1e3a8a}
+      #advanced-filters{display:none}
+      #advanced-filters.open{display:block}
+      .member-cap{margin:0 auto;width:100%;overflow-x:hidden;}
+      /* 移除多模式宽度类定义，仅保留固定 1280 */
+      .member-two-col{display:grid;gap:1.5rem;align-items:start;}
+      @media(min-width:1024px){.member-two-col{grid-template-columns:280px 1fr;}}
+      .member-right-stack > * + *{margin-top:1.5rem;}
+      /* KPI 单行紧凑模式 */
+      .kpi-horizontal.no-wrap{flex-wrap:nowrap!important;overflow-x:auto;}
+      .kpi-horizontal.kpi-compact .card-modern{flex:0 0 140px;min-width:140px;}
+      .kpi-horizontal.kpi-compact::-webkit-scrollbar{height:8px}
+      .kpi-horizontal.kpi-compact::-webkit-scrollbar-track{background:#f5f5f5;border-radius:4px}
+      .kpi-horizontal.kpi-compact::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+      .kpi-horizontal.kpi-compact::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+      .chart-container { position: relative; width: 100%; height: 100%; min-width: 0; }
+      /* Limit width to prevent infinite stretching on ultra-wide screens */
+      .app-shell { max-width: 1440px !important; margin: 0 auto; overflow: hidden; }
+    </style>
+    <script src="js/common.js" defer></script>
+    <script src="js/common-nav.js" defer></script>
+    <script src="js/ui-global.js" defer></script>
+    <!-- Use reliable CDN for Chart.js in China -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body class="font-inter text-gray-800 min-h-screen flex enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+
+<div class="scroll-progress" id="scroll-progress"></div>
+<div id="common-nav" data-active="members"></div>
+<div id="notification-panel" class="hidden absolute top-20 right-6 bg-white shadow-lg rounded-lg p-4 w-64 text-sm">
+  <div class="font-medium mb-2">通知面板</div>
+  <p class="text-gray-500">暂时无通知</p>
+</div>
+<main class="flex-1 flex flex-col pt-16">
+  <div class="member-cap">
+    <div class="main-content" id="main-content"><div class="container-fluid section-gap"><div class="app-shell">
+      <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 action-bar">
+          <div>
+              <h2 class="page-title font-bold page-title-decor heading-accent">会员管理</h2>
+              <p class="text-gray-500">会员信息与消费记录管理</p>
+          </div>
+          <div class="flex gap-3">
+              <button class="btn btn-tonal btn-pill" id="import-btn"><i class="fa fa-upload"></i> 导入会员</button>
+              <input type="file" id="import-file" class="hidden" accept=".xlsx">
+              <button class="btn btn-tonal btn-pill" id="export-btn"><i class="fa fa-download"></i> 导出会员</button>
+              <button class="btn btn-tonal btn-pill" id="reward-settings-btn"><i class="fa fa-gift"></i> 积分福利设置</button>
+              <button class="btn btn-primary btn-pill" id="add-member"><i class="fa fa-plus"></i> 新增会员</button>
+              <!-- 已移除宽度切换与下拉菜单 -->
+          </div>
+      </div>
+      <div class="dashboard-kpis kpi-horizontal kpi-compact no-wrap mb-6" id="member-kpi-row">
+        <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">总会员数</p><h3 id="total-members" class="text-xl font-bold">0 人</h3></div>
+        <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">VIP会员</p><h3 id="vip-members" class="text-xl font-bold">0 人</h3></div>
+        <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">本月新增</p><h3 id="new-members" class="text-xl font-bold">0 人</h3></div>
+        <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">沉睡会员</p><h3 id="sleeping-members" class="text-xl font-bold">0 人</h3></div>
+        <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">平均积分</p><h3 id="avg-points" class="text-xl font-bold">--</h3></div>
+        <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">活跃率</p><h3 id="active-rate" class="text-xl font-bold">--</h3></div>
+        <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">流失风险</p><h3 id="churn-risk" class="text-xl font-bold">--</h3></div>
+      </div>
+      <div class="member-two-col" id="member-two-col">
+        <aside class="space-y-6" id="member-side">
+          <div id="member-filter-panel" class="card-modern p-4">
+            <h3 class="font-bold text-sm mb-3">筛选条件</h3>
+            <div class="space-y-3">
+              <div><label class="block text-xs font-medium text-gray-700 mb-1" for="filter-name">会员姓名</label><input type="text" id="filter-name" class="input-modern text-sm" placeholder="输入会员姓名"></div>
+              <div><label class="block text-xs font-medium text-gray-700 mb-1" for="filter-phone">手机号</label><input type="text" id="filter-phone" class="input-modern text-sm" placeholder="输入手机号"></div>
+              <div><label class="block text-xs font-medium text-gray-700 mb-1" for="filter-level">会员等级</label><select id="filter-level" class="input-modern text-sm"><option value="">全部等级</option><option value="0">普通会员</option><option value="1">白银会员</option><option value="2">黄金会员</option><option value="3">铂金会员</option><option value="4">VIP会员</option></select></div>
+              <div><label class="block text-xs font-medium text-gray-700 mb-1" for="filter-date">注册日期</label><input type="date" id="filter-date" class="input-modern text-sm"></div>
+            </div>
+            <div class="flex justify-end gap-2 mt-4"><button class="btn btn-outline text-xs" id="reset-filter">重置</button><button class="btn btn-primary text-xs" id="apply-filter">查询</button></div>
+            <button class="btn btn-outline text-xs mt-3" id="toggle-advanced"><i class="fa fa-sliders"></i> 高级筛选</button>
+            <div id="advanced-filters" class="mt-4 space-y-3 border-t pt-4">
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-xs font-medium text-gray-700 mb-1" for="points-min">积分下限</label><input type="number" id="points-min" class="input-modern text-xs" placeholder="如 100"></div>
+                <div><label class="block text-xs font-medium text-gray-700 mb-1" for="points-max">积分上限</label><input type="number" id="points-max" class="input-modern text-xs" placeholder="如 1000"></div>
+                <div><label class="block text-xs font-medium text-gray-700 mb-1" for="cons-min">消费次数下限</label><input type="number" id="cons-min" class="input-modern text-xs" placeholder="0"></div>
+                <div><label class="block text-xs font-medium text-gray-700 mb-1" for="cons-max">消费次数上限</label><input type="number" id="cons-max" class="input-modern text-xs" placeholder="50"></div>
+              </div>
+              <div class="flex gap-2 justify-end"><button class="btn btn-outline text-xs" id="advanced-reset">清空</button><button class="btn btn-primary text-xs" id="advanced-apply">应用</button></div>
+            </div>
+          </div>
+        </aside>
+        <div class="member-right-stack" id="member-right">
+          <div class="flex gap-2 overflow-x-auto pb-1" id="member-segments">
+            <button class="btn btn-outline text-xs segment-btn" data-seg="all">全部</button>
+            <button class="btn btn-outline text-xs segment-btn" data-seg="vip">VIP</button>
+            <button class="btn btn-outline text-xs segment-btn" data-seg="new30">30天新增</button>
+            <button class="btn btn-outline text-xs segment-btn" data-seg="sleep">沉睡</button>
+            <button class="btn btn-outline text-xs segment-btn" data-seg="highPoints">高积分</button>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="member-charts-row">
+            <div class="card-modern p-6 lg:col-span-2 overflow-hidden min-w-0"><div class="flex justify-between items-center mb-4"><h3 class="font-bold">会员增长趋势</h3></div><div class="h-72 relative w-full min-w-0"><canvas id="member-growth-chart"></canvas></div></div>
+            <div class="card-modern p-6 overflow-hidden min-w-0"><h3 class="font-bold mb-4">会员等级占比</h3><div class="h-72 relative w-full min-w-0"><canvas id="member-level-chart"></canvas></div></div>
+          </div>
+          <div class="card-modern" id="member-table-card">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center"><h3 class="font-bold">会员列表</h3><div class="text-sm text-gray-500" id="member-count">共 0 位会员</div></div>
+            <div class="overflow-x-auto">
+              <table class="table-modern-compact w-full" id="members-table">
+                <thead class="bg-gray-50"><tr>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><label for="select-all-members" class="sr-only">全选会员</label><input type="checkbox" id="select-all-members" aria-label="全选会员" class="rounded border-gray-300"></th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会员信息</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">手机号</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会员等级</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">累计积分</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">消费次数</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最近消费</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">风险标签</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                </tr></thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="members-tbody"></tbody>
+              </table>
+            </div>
+            <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4"><div class="text-sm text-gray-500" id="pagination-info">显示 0-0 条，共 0 条</div><div class="flex gap-1" id="pagination-buttons"></div></div>
+          </div>
+        </div>
+      </div>
+    </div></div></div></div>
+  </main>
+<div id="member-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+  <div class="card-modern w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col bg-white">
+    <div class="p-6 border-b border-gray-100 flex justify-between items-center"><h3 class="font-bold text-lg" id="modal-title">新增会员</h3><button id="close-modal" class="text-gray-400 hover:text-gray-600"><i class="fa fa-times"></i></button></div>
+    <div class="flex-1 overflow-y-auto p-6">
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium text-gray-700 mb-1" for="member-name">会员姓名 <span class="text-accent">*</span></label><input type="text" id="member-name" class="input-modern" placeholder="请输入会员姓名" required></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1" for="member-phone">手机号码 <span class="text-accent">*</span></label><input type="tel" id="member-phone" class="input-modern" placeholder="请输入手机号码" required></div>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1" for="member-level">会员等级</label><select id="member-level" class="input-modern"><option value="0">普通会员</option><option value="1">白银会员</option><option value="2">黄金会员</option><option value="3">铂金会员</option><option value="4">VIP会员</option></select></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">性别</label><div class="flex gap-4"><label class="flex items-center gap-2"><input type="radio" name="gender" value="male" class="text-primary" checked><span>男</span></label><label class="flex items-center gap-2"><input type="radio" name="gender" value="female" class="text-primary"><span>女</span></label></div></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1" for="birth-date">出生日期</label><input type="date" id="birth-date" class="input-modern"></div>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1" for="address">家庭住址</label><input type="text" id="address" class="input-modern" placeholder="请输入家庭住址"></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1" for="allergy-history">过敏史</label><textarea id="allergy-history" class="input-modern" rows="3" placeholder="请输入药品过敏史（如有）"></textarea></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1" for="remark">备注</label><textarea id="remark" class="input-modern" rows="2" placeholder="请输入备注信息"></textarea></div>
+      </div>
+    </div>
+    <div class="p-6 border-t border-gray-100 flex justify-end gap-3"><button class="btn btn-outline" id="cancel-member">取消</button><button class="btn btn-primary" id="save-member">保存会员</button></div>
+  </div>
+</div>
+<div id="batch-bar" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-lg rounded-full px-6 py-2 flex items-center gap-4 text-sm z-50 border">
+  <span id="batch-count">已选择 0 条</span>
+  <button class="btn btn-outline btn-pill text-xs" id="batch-export-csv"><i class="fa fa-file-text-o"></i> CSV</button>
+  <button class="btn btn-outline btn-pill text-xs" id="batch-export-json"><i class="fa fa-code"></i> JSON</button>
+  <button class="btn btn-outline btn-pill text-xs" id="batch-export-xlsx"><i class="fa fa-file-excel-o"></i> Excel</button>
+  <button class="btn btn-outline btn-pill text-xs" id="batch-clear"><i class="fa fa-times"></i> 清空</button>
+</div>
+<!-- 积分福利设置模态框 -->
+<div id="reward-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+    <div class="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+      <h3 class="text-xl font-bold text-gray-800"><i class="fa fa-gift text-primary mr-2"></i>积分福利设置</h3>
+      <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('reward-settings-modal').classList.add('hidden')">
+        <i class="fa fa-times text-xl"></i>
+      </button>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1">
+      <!-- 添加新福利表单 -->
+      <div class="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
+        <h4 class="font-bold text-blue-800 mb-3 text-sm">添加新福利</h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          <input type="text" id="new-reward-name" class="input-modern text-sm" placeholder="福利名称 (如: 保温杯)">
+          <input type="number" id="new-reward-points" class="input-modern text-sm" placeholder="所需积分 (如: 1000)">
+          <input type="text" id="new-reward-desc" class="input-modern text-sm" placeholder="描述 (可选)">
+        </div>
+        <div class="flex justify-end">
+          <button class="btn btn-primary btn-sm" onclick="createNewReward()">添加福利</button>
+        </div>
+      </div>
+
+      <!-- 现有福利列表 -->
+      <h4 class="font-bold text-gray-700 mb-3 text-sm">现有福利列表</h4>
+      <div class="overflow-x-auto rounded-lg border">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-gray-50 text-gray-600 font-medium border-b">
+            <tr>
+              <th class="px-4 py-3">名称</th>
+              <th class="px-4 py-3">所需积分</th>
+              <th class="px-4 py-3">描述</th>
+              <th class="px-4 py-3">状态</th>
+              <th class="px-4 py-3 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody id="rewards-tbody" class="divide-y divide-gray-100">
+            <!-- 动态填充 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="p-4 border-t bg-gray-50 rounded-b-xl flex justify-end">
+      <button class="btn btn-outline" onclick="document.getElementById('reward-settings-modal').classList.add('hidden')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 积分兑换模态框 -->
+<div id="exchange-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col">
+    <div class="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+      <h3 class="text-xl font-bold text-gray-800"><i class="fa fa-gift text-orange-500 mr-2"></i>积分兑换</h3>
+      <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('exchange-modal').classList.add('hidden')">
+        <i class="fa fa-times text-xl"></i>
+      </button>
+    </div>
+    <div class="p-6">
+      <div class="mb-4">
+        <p class="text-sm text-gray-600">会员: <span id="exchange-member-name" class="font-bold"></span></p>
+        <p class="text-sm text-gray-600">当前积分: <span id="exchange-member-points" class="font-bold text-primary"></span></p>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">选择福利</label>
+        <select id="exchange-reward-select" class="input w-full text-sm">
+          <option value="">-- 请选择福利 --</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">或 自定义扣除积分</label>
+        <input type="number" id="exchange-custom-points" class="input w-full text-sm" placeholder="输入要扣除的积分">
+      </div>
+    </div>
+    <div class="p-4 border-t bg-gray-50 rounded-b-xl flex justify-end gap-3">
+      <button class="btn btn-outline" onclick="document.getElementById('exchange-modal').classList.add('hidden')">取消</button>
+      <button class="btn btn-primary" onclick="confirmExchange()">确认兑换</button>
+    </div>
+  </div>
+</div>
+
+<!-- Redemption Modal -->
+<div id="redemption-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col max-h-[90vh]" role="dialog" aria-modal="true">
+      <div class="p-4 border-b flex items-center justify-between bg-gray-50 rounded-t-lg">
+        <h3 class="font-bold text-lg text-gray-800">福利兑换</h3>
+        <button id="redemption-close" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+          <i class="fa fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <div class="p-4 border-b bg-blue-50">
+        <div class="flex justify-between items-center text-sm">
+            <div>
+                <span class="text-gray-500">会员:</span>
+                <span class="font-bold text-gray-800 ml-1" id="redemption-member-name">-</span>
+            </div>
+            <div>
+                <span class="text-gray-500">当前积分:</span>
+                <span class="font-bold text-blue-600 text-lg ml-1" id="redemption-member-points">0</span>
+            </div>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-4" id="redemption-list-container">
+        <!-- Rewards will be injected here -->
+        <div class="text-center text-gray-500 py-8">正在加载福利列表...</div>
+      </div>
+
+      <div class="p-4 border-t bg-gray-50 rounded-b-lg text-right">
+        <button id="redemption-cancel" class="btn btn-outline mr-2">取消</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// 积分福利相关逻辑
+(function(){
+  const modal = document.getElementById('reward-settings-modal');
+  const btn = document.getElementById('reward-settings-btn');
+  const tbody = document.getElementById('rewards-tbody');
+
+  if(btn){
+    btn.addEventListener('click', () => {
+      modal.classList.remove('hidden');
+      loadRewards();
+    });
+  }
+
+  window.loadRewards = async function() {
+    try {
+      const rewards = await api.memberAPI.request('/point-rewards', {method:'GET'}).catch(()=>[]) || [];
+      // Note: /point-rewards endpoint might need separate handling if it is not under /api/members
+      // Assuming api.request works with full url if starts with http, or absolute path?
+      // Actually memberAPI uses /api/members.
+      // If point-rewards is root level /api/point-rewards, we need apiCall or correct path.
+      // Let's assume we use apiCall from common.js if available, or fetch directly.
+      // But api.request is defined below.
+      // Let's use a safe fallback fetch.
+      const r = await fetch('/api/point-rewards', { headers: { 'X-Shop-Id': localStorage.getItem('selectedTenant')||'' } });
+      if(r.ok) renderRewards(await r.json());
+    } catch (e) {
+      console.error(e);
+      api.showMessage('加载福利列表失败', 'error');
+    }
+  };
+
+  function renderRewards(rewards) {
+    if(!tbody) return;
+    if(!Array.isArray(rewards)) rewards=[];
+    tbody.innerHTML = rewards.map(r => `
+      <tr class="hover:bg-gray-50 transition-colors">
+        <td class="px-4 py-3 font-medium">${r.name}</td>
+        <td class="px-4 py-3 text-primary font-bold">${r.pointsRequired}</td>
+        <td class="px-4 py-3 text-gray-500 truncate max-w-[150px]">${r.description || '-'}</td>
+        <td class="px-4 py-3">
+          <span class="px-2 py-1 rounded-full text-xs ${r.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">
+            ${r.isActive ? '启用' : '禁用'}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-right space-x-2">
+          <button class="text-xs ${r.isActive ? 'text-orange-500' : 'text-green-600'} hover:underline" onclick="toggleReward(${r.id})">
+            ${r.isActive ? '禁用' : '启用'}
+          </button>
+          <button class="text-xs text-red-500 hover:underline" onclick="deleteReward(${r.id})">删除</button>
+        </td>
+      </tr>
+    `).join('');
+    if (rewards.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">暂无福利设置</td></tr>';
+    }
+  }
+
+  window.createNewReward = async function() {
+    const name = document.getElementById('new-reward-name').value.trim();
+    const points = parseInt(document.getElementById('new-reward-points').value);
+    const desc = document.getElementById('new-reward-desc').value.trim();
+
+    if (!name || !points) {
+      api.showMessage('请填写名称和所需积分', 'warning');
+      return;
+    }
+
+    try {
+      await fetch('/api/point-rewards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Shop-Id': localStorage.getItem('selectedTenant')||'' },
+        body: JSON.stringify({ name, pointsRequired: points, description: desc, isActive: true })
+      });
+
+      document.getElementById('new-reward-name').value = '';
+      document.getElementById('new-reward-points').value = '';
+      document.getElementById('new-reward-desc').value = '';
+
+      api.showMessage('福利添加成功', 'success');
+      loadRewards();
+    } catch (e) {
+      console.error(e);
+      api.showMessage('添加失败', 'error');
+    }
+  };
+
+  window.deleteReward = async function(id) {
+    if (!confirm('确定要删除这个福利吗？')) return;
+    try {
+      await fetch(`/api/point-rewards/${id}`, { method: 'DELETE', headers: { 'X-Shop-Id': localStorage.getItem('selectedTenant')||'' } });
+      api.showMessage('删除成功', 'success');
+      loadRewards();
+    } catch (e) {
+      api.showMessage('删除失败', 'error');
+    }
+  };
+
+  window.toggleReward = async function(id) {
+    try {
+      await fetch(`/api/point-rewards/${id}/toggle`, { method: 'POST', headers: { 'X-Shop-Id': localStorage.getItem('selectedTenant')||'' } });
+      loadRewards();
+    } catch (e) {
+      api.showMessage('操作失败', 'error');
+    }
+  };
+})();
+
+// 积分兑换逻辑
+(function(){
+  let currentExchangeMemberId = null;
+  let activeRewards = [];
+
+  window.showExchangeModal = async function(memberId) {
+    const member = membersData.find(m => String(m.memberId) === String(memberId));
+    if (!member) return;
+
+    currentExchangeMemberId = memberId;
+    document.getElementById('exchange-member-name').textContent = member.name;
+    document.getElementById('exchange-member-points').textContent = member.points || 0;
+    document.getElementById('exchange-custom-points').value = '';
+
+    // 加载可用福利
+    try {
+      const r = await fetch('/api/point-rewards/active', { headers: { 'X-Shop-Id': localStorage.getItem('selectedTenant')||'' } });
+      if(r.ok) activeRewards = await r.json(); else activeRewards=[];
+
+      const select = document.getElementById('exchange-reward-select');
+      select.innerHTML = '<option value="">-- 请选择福利 --</option>' +
+        activeRewards.map(r => `<option value="${r.id}" data-points="${r.pointsRequired}">${r.name} (${r.pointsRequired}分)</option>`).join('');
+
+      // 监听选择变化
+      select.onchange = function() {
+        const opt = this.options[this.selectedIndex];
+        if (opt.value) {
+          document.getElementById('exchange-custom-points').value = opt.getAttribute('data-points');
+        }
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    document.getElementById('exchange-modal').classList.remove('hidden');
+  };
+
+  window.confirmExchange = async function() {
+    const points = parseInt(document.getElementById('exchange-custom-points').value);
+    if (!points || points <= 0) {
+      api.showMessage('请输入有效的积分数值', 'warning');
+      return;
+    }
+
+    const member = membersData.find(m => String(m.memberId) === String(currentExchangeMemberId));
+    if (member && (member.points || 0) < points) {
+      api.showMessage('会员积分不足', 'error');
+      return;
+    }
+
+    if (!confirm(`确定要扣除 ${points} 积分进行兑换吗？`)) return;
+
+    try {
+      await api.memberAPI.request(`/${currentExchangeMemberId}/exchange`, {
+        method: 'POST',
+        body: { points }
+      });
+
+      api.showMessage('兑换成功', 'success');
+      document.getElementById('exchange-modal').classList.add('hidden');
+      loadMembers(currentPage); // 刷新列表
+    } catch (e) {
+      api.showMessage('兑换失败: ' + e.message, 'error');
+    }
+  };
+})();
+</script>
+
+<script>
+// --- API & Utilities (restored) ---
+const tenant = localStorage.getItem('selectedTenant') || '';
+const api = {
+  baseUrl:'/api/members',
+  async request(ep,opt={}){
+    try{
+      const url=ep.startsWith('http')?ep:`${this.baseUrl}${ep}`;
+      const headers = {
+        'Content-Type':'application/json',
+        'X-Shop-Id': tenant,
+        ...opt.headers
+      };
+      const r=await fetch(url,{headers,...opt});
+      if(!r.ok){
+        const errorText = await r.text();
+        throw new Error('HTTP '+r.status+': '+errorText);
+      }
+      return await r.json();
+    }catch(e){
+      console.error('[API]',e);
+      this.showMessage('网络请求失败: '+e.message,'error');
+      throw e;
+    }
+  },
+  memberAPI:{
+    getAll:()=>api.request(''),
+    getById:id=>api.request(`/${id}`),
+    create:data=>api.request('',{method:'POST',body:JSON.stringify(data)}),
+    update:(id,data)=>api.request(`/${id}`,{method:'PUT',body:JSON.stringify(data)}),
+    delete:id=>api.request(`/${id}`,{method:'DELETE'}),
+    search:kw=>api.request(`/search?keyword=${encodeURIComponent(kw)}`),
+    getStats:()=>api.request('/stats'),
+    checkPhone:p=>api.request(`/check-phone?phone=${encodeURIComponent(p)}`),
+    request:(ep, opt)=>api.request(ep, opt)
+  },
+  showMessage(msg,type='success'){
+    const alertClass= type==='error'? 'bg-red-100 border-red-400 text-red-700': type==='warning'? 'bg-yellow-100 border-yellow-400 text-yellow-700':'bg-green-100 border-green-400 text-green-700';
+    const iconClass= type==='error'?'fa-exclamation-circle': type==='warning'?'fa-warning':'fa-check-circle';
+    const d=document.createElement('div');
+    d.className=`fixed top-4 right-4 border px-4 py-3 rounded ${alertClass} z-50 shadow-lg`;
+    d.innerHTML=`<div class='flex items-center'><i class='fa ${iconClass} mr-2'></i><span>${msg}</span></div>`;
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),3000);
+  },
+  utils:{
+    formatDate(s){ if(!s) return '-'; try{ return new Date(s).toLocaleDateString('zh-CN'); }catch(e){ return s;} },
+    formatPhone(p){ if(!p) return '-'; return p.replace(/(\d{3})\d{4}(\d{4})/,'$1****$2'); },
+    escapeHtml(u){ if(typeof u!=='string') return u; return u.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+  }
+};
+</script>
+<script>
+// --- Main App (restored) ---
+let membersData=[]; let currentPage=1; const pageSize=10; let isSearching=false; let currentEditingMember=null;
+
+// 定义风险类别和标签函数（从增强脚本提前定义）
+const SLEEP=90*86400000;
+const ACTIVE=30*86400000;
+window.getRiskClass=function(m){
+  const last=m.lastConsumptionDate? new Date(m.lastConsumptionDate).getTime():0;
+  if(!last||Date.now()-last>SLEEP) return 'member-risk-churn';
+  if(m.createTime && new Date(m.createTime).getTime()>Date.now()-ACTIVE) return 'member-risk-new';
+  return 'member-risk-active';
+};
+window.getRiskLabel=function(m){
+  const c=window.getRiskClass(m);
+  if(c==='member-risk-churn') return '流失风险';
+  if(c==='member-risk-new') return '新会员';
+  if(c==='member-risk-active') return '活跃';
+  return '未知';
+};
+
+const elements={ memberTableBody:document.getElementById('members-tbody'), addMemberBtn:document.getElementById('add-member'), memberModal:document.getElementById('member-modal'), closeModalBtn:document.getElementById('close-modal'), cancelMemberBtn:document.getElementById('cancel-member'), saveMemberBtn:document.getElementById('save-member'), importBtn:document.getElementById('import-btn'), exportBtn:document.getElementById('export-btn'), memberCount:document.getElementById('member-count'), paginationInfo:document.getElementById('pagination-info') };
+function getLevelBadge(level){ const lv=Number(level); let text='普通会员', cls='bg-gray-100 text-gray-600'; switch(lv){ case 1:text='白银会员';cls='bg-slate-200 text-slate-700';break; case 2:text='黄金会员';cls='bg-yellow-100 text-yellow-700';break; case 3:text='铂金会员';cls='bg-blue-100 text-blue-700';break; case 4:text='VIP会员';cls='bg-purple-100 text-purple-700';break;} return `<span class='px-2 py-1 rounded-full text-xs font-medium ${cls}'>${text}</span>`; }
+function resetFilter(){ ['filter-name','filter-phone','filter-level','filter-date','points-min','points-max','cons-min','cons-max'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';}); loadMembers(1); api.showMessage('筛选已重置','info'); }
+function applyAllFilters(){ const name=document.getElementById('filter-name')?.value||''; const phone=document.getElementById('filter-phone')?.value||''; const level=document.getElementById('filter-level')?.value||''; const date=document.getElementById('filter-date')?.value||''; const ptsMin=parseInt(document.getElementById('points-min')?.value)||0; const ptsMax=parseInt(document.getElementById('points-max')?.value)||999999; const consMin=parseInt(document.getElementById('cons-min')?.value)||0; const consMax=parseInt(document.getElementById('cons-max')?.value)||999999; let filtered=membersData.filter(m=>{ if(name && !String(m.name||'').includes(name)) return false; if(phone && !String(m.phone||'').includes(phone)) return false; if(level && String(m.level)!==level) return false; if(date && !String(m.createTime||'').startsWith(date)) return false; const pts=m.points||0; if(pts<ptsMin||pts>ptsMax) return false; const cons=m.consumptionCount||0; if(cons<consMin||cons>consMax) return false; return true; }); renderMemberTable(filtered.slice(0,pageSize)); updatePagination(filtered.length,1); api.showMessage(`筛选结果：${filtered.length} 条`,'success'); }
+async function initApp(){ try{ await loadMembers(); await loadMemberStats(); setupEventListeners(); }catch(e){ console.error('[Init]失败',e);} }
+function setupEventListeners(){
+  elements.addMemberBtn?.addEventListener('click',showAddMemberModal);
+  elements.closeModalBtn?.addEventListener('click',hideMemberModal);
+  elements.cancelMemberBtn?.addEventListener('click',hideMemberModal);
+  elements.saveMemberBtn?.addEventListener('click',handleSaveMember);
+  document.getElementById('reset-filter')?.addEventListener('click',resetFilter);
+  document.getElementById('apply-filter')?.addEventListener('click',()=>{ applyAllFilters&&applyAllFilters(); });
+  document.getElementById('toggle-advanced')?.addEventListener('click',()=>document.getElementById('advanced-filters').classList.toggle('open'));
+  document.getElementById('advanced-reset')?.addEventListener('click',()=>{ ['points-min','points-max','cons-min','cons-max'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';}); applyAllFilters&&applyAllFilters(); });
+  document.getElementById('advanced-apply')?.addEventListener('click',()=>applyAllFilters&&applyAllFilters());
+  elements.importBtn?.addEventListener('click',()=>document.getElementById('import-file').click());
+  document.getElementById('import-file')?.addEventListener('change', handleImport);
+  elements.exportBtn?.addEventListener('click',handleExport);
+}
+async function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    api.showMessage('正在导入...', 'info');
+    const res = await api.request('/import', {
+      method: 'POST',
+      body: formData,
+      headers: {} // Let browser set Content-Type for FormData
+    });
+
+    if (res.success > 0) {
+      api.showMessage(`成功导入 ${res.success} 条会员数据`, 'success');
+      loadMembers(1);
+    }
+    if (res.errors && res.errors.length > 0) {
+      console.warn('Import errors:', res.errors);
+      api.showMessage(`导入完成，但有 ${res.errors.length} 条错误，请查看控制台`, 'warning');
+    }
+  } catch (err) {
+    api.showMessage('导入失败: ' + err.message, 'error');
+  }
+  e.target.value = ''; // Reset input
+}
+
+async function handleExport() {
+  try {
+    api.showMessage('正在导出...', 'info');
+    const token = localStorage.getItem('token');
+    const tenant = localStorage.getItem('selectedTenant') || '';
+
+    const response = await fetch('/api/members/export', {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'X-Shop-Id': tenant
+      }
+    });
+
+    if (!response.ok) throw new Error('Export failed');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'members.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+
+    api.showMessage('导出成功', 'success');
+  } catch (err) {
+    api.showMessage('导出失败: ' + err.message, 'error');
+  }
+}
+async function loadMembers(page=1){
+  try{
+    const resp=await api.memberAPI.getAll();
+    console.log('[LoadMembers] API response:', resp);
+    membersData=Array.isArray(resp)? resp: (Array.isArray(resp?.data)? resp.data: []);
+    console.log('[LoadMembers] membersData:', membersData.length, 'items');
+    const start=(page-1)*pageSize;
+    const end=start+pageSize;
+    const paged=membersData.slice(start,end);
+    renderMemberTable(paged);
+    updatePagination(membersData.length,page);
+    currentPage=page;
+    isSearching=false;
+    // 更新统计信息
+    const stats = calculateStatsFromData(membersData);
+    updateStatsCards(stats);
+  }catch(e){
+    console.error('[LoadMembers]',e);
+    showEmptyState('数据加载失败');
+  }
+}
+async function loadMemberStats(){ try{ const stats=await api.memberAPI.getStats(); console.log('[LoadMemberStats] stats:', stats); if(stats && !stats.error){ updateStatsCards(stats); updateMemberCharts(stats); } else { const calculated=calculateStatsFromData(membersData); updateStatsCards(calculated); updateMemberCharts(calculated); } }catch(e){ console.warn('[Stats]失败',e); const calculated=calculateStatsFromData(membersData); updateStatsCards(calculated); updateMemberCharts(calculated); } }
+function calculateStatsFromData(list){ const total=list.length; const vip=list.filter(m=>m.level>=3).length; const days30=new Date(Date.now()-30*86400000); const newCount=list.filter(m=> m.createTime && new Date(m.createTime)>=days30).length; const days90=new Date(Date.now()-90*86400000); const sleep=list.filter(m=> !m.lastConsumptionDate || new Date(m.lastConsumptionDate)<days90).length; const levelCounts=[0,0,0,0,0]; list.forEach(m=>{ const lv=Number(m.level)||0; if(lv>=0&&lv<=4) levelCounts[lv]++; }); const now=Date.now(); const growthLabels=[]; const growthData=[]; for(let i=6;i>=0;i--){ const d=new Date(now-i*86400000); growthLabels.push((d.getMonth()+1)+'/'+ d.getDate()); const dayStart=new Date(d.setHours(0,0,0,0)).getTime(); const dayEnd=new Date(d.setHours(23,59,59,999)).getTime(); growthData.push(list.filter(m=> m.createTime && new Date(m.createTime).getTime()>=dayStart && new Date(m.createTime).getTime()<=dayEnd).length); } return { totalMembers:total, vipMembers:vip, newMembers:newCount, sleepingMembers:sleep, totalGrowth:Math.floor(total*0.1), vipGrowth:Math.floor(vip*0.1), newGrowth:newCount, sleepingGrowth:-Math.floor(sleep*0.1), levelDistribution:levelCounts, growth:{ labels:growthLabels, data:growthData } }; }
+function renderMemberTable(members){ const body=elements.memberTableBody; if(!body) return; body.innerHTML=''; if(!members||!members.length){ showEmptyState('暂无会员数据'); return;} members.forEach((m,i)=>{ const row=document.createElement('tr'); row.className='hover:bg-gray-50 transition-colors'; const last=m.lastConsumptionDate? api.utils.formatDate(m.lastConsumptionDate):'-'; row.innerHTML=`<td class='px-3 py-4'><input type='checkbox' class='member-select' data-id='${m.memberId}'></td><td class='px-6 py-4 whitespace-nowrap'><div class='flex items-center'><img src='https://picsum.photos/40/40?random=${i+60}' alt='会员' class='w-10 h-10 rounded-full mr-3'><div><div class='text-sm font-medium'>${api.utils.escapeHtml(m.name)}</div><div class='text-xs text-gray-500'>ID: ${m.memberId}</div></div></div></td><td class='px-6 py-4 text-sm'>${api.utils.formatPhone(m.phone)}</td><td class='px-6 py-4'>${getLevelBadge(m.level)}</td><td class='px-6 py-4 text-sm'>${m.points||0}</td><td class='px-6 py-4 text-sm'>${m.consumptionCount||0}次</td><td class='px-6 py-4 text-sm'>${last}</td><td class='px-6 py-4 text-xs'><span class='px-2 py-1 rounded-full ${getRiskClass(m)}'>${getRiskLabel(m)}</span></td><td class='px-6 py-4 text-sm'><button class='text-primary hover:underline mr-2' onclick='showMemberDetail("${m.memberId}")'>详情</button><button class='text-secondary hover:underline mr-2' onclick='editMember("${m.memberId}")'>编辑</button><button class='text-blue-600 hover:underline mr-2' onclick='window.openRedeemModal && window.openRedeemModal("${m.memberId}", "${api.utils.escapeHtml(m.name)}", ${m.points||0})'>福利兑换</button><button class='text-red-500 hover:underline' onclick='deleteMember("${m.memberId}")'>删除</button></td>`; body.appendChild(row); }); attachRowHover&&attachRowHover(); }
+function showEmptyState(msg){ elements.memberTableBody.innerHTML=`<tr><td colspan='9' class='px-6 py-8 text-center text-gray-500'><i class='fa fa-users text-4xl mb-2 text-gray-300'></i><p>${msg}</p><button onclick='showAddMemberModal()' class='mt-2 btn btn-primary'><i class='fa fa-plus'></i> 新增会员</button></td></tr>`; }
+function updateStatsCards(s){
+  if(!s) return;
+  const set=(id,val)=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=val;
+  };
+  set('total-members',`${s.totalMembers||0} 人`);
+  set('vip-members',`${s.vipMembers||0} 人`);
+  set('new-members',`${s.newMembers||0} 人`);
+  set('sleeping-members',`${s.sleepingMembers||0} 人`);
+  // 同时更新会员列表顶部的总数显示
+  set('member-count',`共 ${s.totalMembers||0} 位会员`);
+}
+function updatePagination(total,page){ const info=document.getElementById('pagination-info'); const btns=document.getElementById('pagination-buttons'); if(!info||!btns) return; const start= total? (page-1)*pageSize+1:0; const end=Math.min(page*pageSize,total); info.textContent=`显示 ${start}-${end} 条，共 ${total} 条`; btns.innerHTML=''; const totalPages=Math.ceil(total/pageSize)||1; const mk=(label,p,dis=false,act=false)=>{ const b=document.createElement('button'); b.className='btn btn-outline text-xs'+(act?' bg-primary text-white':''); b.textContent=label; b.disabled=dis; if(!dis&&!act) b.onclick=()=>{ loadMembers(p); }; btns.appendChild(b); }; mk('首页',1,page===1); mk('上一页',Math.max(1,page-1),page===1); mk('下一页',Math.min(totalPages,page+1),page===totalPages); mk('末页',totalPages,page===totalPages); }
+function showAddMemberModal(){
+  elements.memberModal?.classList.remove('hidden');
+  currentEditingMember=null;
+  document.getElementById('modal-title').textContent='新增会员';
+  // 清空表单
+  document.getElementById('member-name').value='';
+  document.getElementById('member-phone').value='';
+  document.getElementById('member-level').value='0';
+  document.getElementById('birth-date').value='';
+  document.getElementById('address').value='';
+  document.getElementById('allergy-history').value='';
+  document.getElementById('remark').value='';
+}
+function hideMemberModal(){ elements.memberModal?.classList.add('hidden'); }
+async function handleSaveMember(){
+  const name = document.getElementById('member-name')?.value?.trim();
+  const phone = document.getElementById('member-phone')?.value?.trim();
+  const level = parseInt(document.getElementById('member-level')?.value||'0');
+  const birthDate = document.getElementById('birth-date')?.value||null;
+  const address = document.getElementById('address')?.value?.trim()||'';
+  const allergyHistory = document.getElementById('allergy-history')?.value?.trim()||'';
+  const remark = document.getElementById('remark')?.value?.trim()||'';
+
+  if(!name){ api.showMessage('请输入会员姓名','warning'); return; }
+  if(!phone){ api.showMessage('请输入手机号码','warning'); return; }
+  if(!/^1[3-9]\d{9}$/.test(phone)){ api.showMessage('手机号码格式不正确','warning'); return; }
+
+  const memberData = { name, phone, level, birthDate, address, allergyHistory, remark, points:0, balance:0, consumptionCount:0 };
+
+  try{
+    if(currentEditingMember){
+      await api.memberAPI.update(currentEditingMember.memberId, memberData);
+      api.showMessage('会员信息更新成功','success');
+    } else {
+      await api.memberAPI.create(memberData);
+      api.showMessage('会员创建成功','success');
+    }
+    hideMemberModal();
+    await loadMembers(currentPage);
+  }catch(e){
+    console.error('[SaveMember]',e);
+  }
+}
+window.showMemberDetail=async function(id){
+  try{
+    const member = membersData.find(m=>String(m.memberId)===String(id));
+    if(!member){ api.showMessage('会员不存在','error'); return; }
+    const details = [
+      `ID: ${member.memberId}`,
+      `姓名: ${member.name}`,
+      `手机号: ${member.phone}`,
+      `等级: ${['普通','白银','黄金','铂金','VIP'][member.level]||'普通'}`,
+      `积分: ${member.points||0}`,
+      `余额: ¥${member.balance||0}`,
+      `消费次数: ${member.consumptionCount||0}次`,
+      `注册时间: ${api.utils.formatDate(member.createTime)}`,
+      `最近消费: ${api.utils.formatDate(member.lastConsumptionDate)}`
+    ].join('\n');
+    alert('会员详情\n\n'+details);
+  }catch(e){ console.error('[ShowDetail]',e); }
+}
+window.editMember=async function(id){
+  try{
+    const member = membersData.find(m=>String(m.memberId)===String(id));
+    if(!member){ api.showMessage('会员不存在','error'); return; }
+    currentEditingMember = member;
+    document.getElementById('modal-title').textContent='编辑会员';
+    document.getElementById('member-name').value=member.name||'';
+    document.getElementById('member-phone').value=member.phone||'';
+    document.getElementById('member-level').value=member.level||'0';
+    document.getElementById('birth-date').value=member.birthDate||'';
+    document.getElementById('address').value=member.address||'';
+    document.getElementById('allergy-history').value=member.allergyHistory||'';
+    document.getElementById('remark').value=member.remark||'';
+    elements.memberModal?.classList.remove('hidden');
+  }catch(e){ console.error('[EditMember]',e); }
+}
+window.deleteMember=async function(id){
+  if(!confirm('确认删除该会员吗？此操作不可恢复！')) return;
+  try{
+    await api.memberAPI.delete(id);
+    api.showMessage('会员已删除','success');
+    await loadMembers(currentPage);
+  }catch(e){
+    console.error('[DeleteMember]',e);
+    api.showMessage('删除失败: '+e.message,'error');
+  }
+}
+initApp();
+</script>
+<script>
+// Charts init
+(function(){ if(typeof Chart==='undefined') return; const growthCtx=document.getElementById('member-growth-chart'); const levelCtx=document.getElementById('member-level-chart'); if(growthCtx){ window.memberGrowthChart=new Chart(growthCtx,{type:'line',data:{labels:[],datasets:[{label:'新增会员',data:[],borderColor:'#165DFF',backgroundColor:'rgba(22,93,255,0.12)',tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});} if(levelCtx){ window.memberLevelChart=new Chart(levelCtx,{type:'doughnut',data:{labels:['普通','白银','黄金','铂金','VIP'],datasets:[{data:[0,0,0,0,0],backgroundColor:['#93c5fd','#cbd5e1','#fde68a','#bfdbfe','#e9d5ff'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false}});} })();
+function updateMemberCharts(stats){ try{ if(window.memberGrowthChart){ const labels=stats?.growth?.labels||stats?.growthLabels||['近7天']; const data=stats?.growth?.data||stats?.growthData||[0]; window.memberGrowthChart.data.labels=labels; window.memberGrowthChart.data.datasets[0].data=data; window.memberGrowthChart.update('none'); } if(window.memberLevelChart){ const levelData=stats?.levelDistribution||stats?.levels||[10,20,30,15,5]; window.memberLevelChart.data.datasets[0].data=levelData; window.memberLevelChart.update('none'); } }catch(e){ console.warn('[Charts]更新失败',e);} }
+</script>
+<script>
+// Enhancements (risk, segments, batch export, hover toolbar)
+(function(){
+  const state={raw:[],segment:'all',selected:new Set(),page:1,pageSize:10};
+  // getRiskClass 和 getRiskLabel 已在主脚本中定义，这里不需要重复定义
+
+  document.querySelectorAll('#member-segments .segment-btn').forEach(b=> b.addEventListener('click',()=>{
+    document.querySelectorAll('#member-segments .segment-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    state.segment=b.dataset.seg||'all';
+    applyAllFilters&&applyAllFilters();
+  }));
+  // 批量导出
+  document.getElementById('batch-export-csv')?.addEventListener('click',()=>exportSelected('csv')); document.getElementById('batch-export-json')?.addEventListener('click',()=>exportSelected('json')); document.getElementById('batch-export-xlsx')?.addEventListener('click',()=>exportSelected('xlsx'));
+  function exportSelected(kind){ const selected=[...document.querySelectorAll('.member-select:checked')].map(cb=> cb.getAttribute('data-id')); if(!selected.length){ api.showMessage('未选择任何会员','warning'); return;} const rows=membersData.filter(m=> selected.includes(String(m.memberId))); if(!rows.length){ api.showMessage('匹配数据为空','warning'); return;} const summary= buildSummary(rows); if(kind==='csv'){ const header='ID,姓名,手机号,等级,积分,消费次数,最近消费\n'; const csv= header + rows.map(r=>`${r.memberId},${(r.name||'').replace(/,/g,' ')},${r.phone||''},${r.level||0},${r.points||0},${r.consumptionCount||0},${r.lastConsumptionDate||''}`).join('\n')+'\n'; triggerDownload(csv,'members_selected.csv','text/csv'); } else if(kind==='json'){ triggerDownload(JSON.stringify({meta:summary,data:rows},null,2),'members_selected.json','application/json'); } else if(kind==='xlsx'){ if(typeof XLSX==='undefined'){ api.showMessage('Excel库未加载','error'); return;} const sheet=XLSX.utils.json_to_sheet(rows.map(r=>({ID:r.memberId,姓名:r.name,手机号:r.phone,等级:r.level,积分:r.points,消费次数:r.consumptionCount,最近消费:r.lastConsumptionDate}))); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,sheet,'Members'); const out=XLSX.write(wb,{bookType:'xlsx',type:'array'}); const blob=new Blob([out],{type:'application/octet-stream'}); const url=URL.createObjectURL(blob); triggerDownload(url,'members_selected.xlsx',null,true);} api.showMessage('导出完成','success'); }
+  function buildSummary(list){ return { count:list.length, exportTime:new Date().toLocaleString('zh-CN') }; }
+  window.triggerDownload=function(data,name,mime,isUrl){ if(isUrl){ const a=document.createElement('a'); a.href=data; a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{a.remove(); URL.revokeObjectURL(data);},500); return;} const a=document.createElement('a'); if(mime==='text/csv'){ data='\uFEFF'+data; } a.href='data:'+mime+';charset=utf-8,'+encodeURIComponent(data); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>a.remove(),500); };
+  // Hover quick toolbar
+  const bar=document.createElement('div'); bar.id='row-quick-bar'; bar.style.cssText='position:absolute;pointer-events:none;z-index:70;opacity:0;transition:opacity .15s;'; document.body.appendChild(bar); window.attachRowHover=function(){ document.querySelectorAll('#members-tbody tr').forEach(tr=>{ tr.addEventListener('mouseenter',()=>{ const rect=tr.getBoundingClientRect(); const idCell=tr.querySelector('div.text-xs.text-gray-500'); const id=idCell? idCell.textContent.replace('ID:','').trim():''; bar.innerHTML=`<div class='bg-white/95 backdrop-blur shadow px-3 py-1 rounded-full border text-xs flex gap-2 items-center'><button class='text-primary hover:underline' onclick='showMemberDetail("${id}")'>详情</button><button class='text-secondary hover:underline' onclick='editMember("${id}")'>积分+</button><button class='text-red-500 hover:underline' onclick='deleteMember("${id}")'>删除</button></div>`; bar.style.top=(window.scrollY+rect.top-30)+'px'; bar.style.left=(rect.right-180)+'px'; bar.style.opacity='1'; }); tr.addEventListener('mouseleave',()=>{ bar.style.opacity='0'; }); }); };
+})();
+</script>
+<script>
+  (function(){
+      const modal = document.getElementById('redemption-modal');
+      const closeBtn = document.getElementById('redemption-close');
+      const cancelBtn = document.getElementById('redemption-cancel');
+      const listContainer = document.getElementById('redemption-list-container');
+      const memberNameEl = document.getElementById('redemption-member-name');
+      const memberPointsEl = document.getElementById('redemption-member-points');
+
+      let currentMemberId = null;
+      let currentPoints = 0;
+
+      function closeModal(){
+          modal.classList.add('hidden');
+      }
+
+      if(closeBtn) closeBtn.addEventListener('click', closeModal);
+      if(cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+      window.openRedeemModal = async function(memberId, memberName, points){
+          if(!modal) return;
+          currentMemberId = memberId;
+          currentPoints = points;
+          if(memberNameEl) memberNameEl.textContent = memberName;
+          if(memberPointsEl) memberPointsEl.textContent = points;
+
+          if(listContainer) listContainer.innerHTML = '<div class="text-center text-gray-500 py-8"><i class="fa fa-spinner fa-spin mr-2"></i>正在加载福利列表...</div>';
+          modal.classList.remove('hidden');
+
+          try {
+              // Fetch active rewards
+              const resp = await fetch('/api/point-rewards/active', { headers: { 'X-Shop-Id': localStorage.getItem('selectedTenant')||'' } });
+              const rewards = await resp.json().catch(()=>[]);
+              renderRewards(Array.isArray(rewards)?rewards:[]);
+          } catch(e) {
+              if(listContainer) listContainer.innerHTML = `<div class="text-center text-red-500 py-4">加载失败: ${e.message}</div>`;
+          }
+      };
+
+      function renderRewards(rewards){
+          if(!listContainer) return;
+          if(!rewards || rewards.length === 0){
+              listContainer.innerHTML = '<div class="text-center text-gray-500 py-8">暂无可用福利</div>';
+              return;
+          }
+
+          listContainer.innerHTML = rewards.map(r => {
+              const affordable = currentPoints >= r.pointsRequired;
+              const btnClass = affordable
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-gray-300 cursor-not-allowed text-gray-500';
+
+              const safeName = api.utils.escapeHtml(r.name);
+              return `
+                <div class="border rounded-lg p-3 flex justify-between items-center hover:shadow-sm transition-shadow">
+                    <div>
+                        <div class="font-bold text-gray-800">${safeName}</div>
+                        <div class="text-xs text-gray-500 mt-1">${api.utils.escapeHtml(r.description ||'')}</div>
+                        <div class="text-sm text-blue-600 font-medium mt-1">${r.pointsRequired} 积分</div>
+                    </div>
+                    <button
+                        class="px-3 py-1.5 rounded text-sm font-medium transition-colors ${btnClass}"
+                        ${!affordable ? 'disabled' : ''}
+                        onclick="window.doRedeem(${r.id}, ${r.pointsRequired}, '${safeName.replace(/'/g, "\\'")}')"
+                    >
+                        兑换
+                    </button>
+                </div>
+              `;
+          }).join('');
+      }
+
+      window.doRedeem = async function(rewardId, cost, rewardName){
+          if(!confirm(`确定消耗 ${cost} 积分兑换 [${rewardName}] 吗？`)) return;
+
+          try {
+              // Call API
+               const res = await api.memberAPI.request(`/${currentMemberId}/redeem`, {
+                  method: 'POST',
+                  body: JSON.stringify({ rewardId: rewardId })
+              });
+
+              api.showMessage(`兑换成功！剩余积分: ${res.remainingPoints}`, 'success');
+              // Update local state if needed
+              currentPoints = res.remainingPoints;
+              if(memberPointsEl) memberPointsEl.textContent = currentPoints;
+
+              // Refresh member list in background
+              if(window.loadMembers) window.loadMembers(window.currentPage || 1);
+
+              closeModal();
+          } catch(e) {
+              alert('兑换失败: ' + e.message);
+          }
+      };
+  })();
+  </script>
+</body>
+</html>

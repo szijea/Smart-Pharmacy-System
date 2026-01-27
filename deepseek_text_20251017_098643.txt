@@ -1,0 +1,14 @@
+pharmacy-system/
+├── src/
+│   └── main/
+│       ├── java/com/pharmacy/
+│       │   ├── controller/
+│       │   ├── entity/
+│       │   ├── repository/
+│       │   ├── service/
+│       │   ├── dto/
+│       │   └── PharmacyApplication.java
+│       └── resources/
+│           ├── static/
+│           ├── templates/
+│           └── application.properties

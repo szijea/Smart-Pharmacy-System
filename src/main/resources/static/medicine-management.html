@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script>(function(){if(!window.tailwind){window.tailwind={config:{}};} if(!window.tailwind.config){window.tailwind.config={};}})();</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧药房收银系统 - 控制台</title>
+    <link rel="stylesheet" href="css/tailwind.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/theme-enhanced.css" />
+    <link rel="stylesheet" href="css/theme-premium.css" />
+    <link rel="stylesheet" href="css/theme-lightwide.css" />
+    <link rel="stylesheet" href="css/ui-enhanced.css" />
+    <link rel="stylesheet" href="css/ui-modern.css" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script>if(typeof tailwind==='undefined'){window.tailwind={config:{}};}</script>
+    <!-- 保留原 tailwind.config 自定义可在此扩展 -->
+    <script>tailwind.config={theme:{extend:{colors:{primary:'#165DFF',secondary:'#36B37E',accent:'#FF5630'},fontFamily:{inter:['Inter','system-ui','sans-serif']}}}};</script>
+    <style>
+      /* 保留仅页面特有或覆盖性样式 */
+      .dashboard-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem}
+      /* Match cashier.html full width but cap it */
+      .container-fluid{max-width:100% !important; width:100%;}
+      .app-shell{width:100% !important; max-width: 1440px !important; margin: 0 auto;}
+    </style>
+    <!-- 引入 Chart.js Local -->
+    <script src="js/chart.min.js"></script>
+</head>
+<body class="font-inter text-gray-800 min-h-screen flex enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+
+<div class="scroll-progress" id="scroll-progress"></div>
+<!-- 注入统一导航（侧边栏 + 顶部） -->
+<div id="common-nav" data-active="dashboard"></div>
+<!-- 添加通知面板占位，避免元素不存在日志警告，可根据真实UI替换 -->
+<div id="notification-panel" class="hidden absolute top-20 right-6 bg-white shadow-lg rounded-lg p-4 w-64 text-sm">
+  <div class="font-medium mb-2">通知面板</div>
+  <p class="text-gray-500">暂无通知</p>
+</div>
+
+<main class="flex-1 flex flex-col pt-16">
+    <div class="main-content" id="main-content"><div class="container-fluid section-gap"><div class="app-shell">
+        <!-- 页面标题与操作按钮 -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 action-bar">
+            <div>
+                <h2 class="text-[clamp(1.25rem,2vw,1.75rem)] font-bold page-title-decor heading-accent">控制台概览</h2>
+                <p class="text-gray-500">实时监控药房运营数据</p>
+            </div>
+            <div class="flex gap-3">
+                <button class="btn btn-tonal btn-pill" id="export-report">
+                    <i class="fa fa-download"></i> 导出报表
+                </button>
+                <button class="btn btn-gradient btn-pill" id="refresh-data">
+                    <i class="fa fa-refresh"></i> 刷新数据
+                </button>
+            </div>
+        </div>
+
+        <!-- 数据统计卡片 -->
+        <div class="dashboard-kpis kpi-horizontal mb-6" id="dashboard-kpi-row">
+            <!-- 今日销售额 -->
+            <div class="card-modern p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-gray-500 text-sm">今日销售额</p>
+                        <h3 class="text-2xl font-bold mt-1" id="todaySales">--</h3>
+                    </div>
+                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                        <i class="fa fa-money"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-sm">
+                        <span class="text-secondary flex items-center" id="salesChange">
+                            <i class="fa fa-arrow-up mr-1"></i> --
+                        </span>
+                    <span class="text-gray-500 ml-2">较昨日</span>
+                </div>
+            </div>
+
+            <!-- 今日订单 -->
+            <div class="card-modern p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-gray-500 text-sm">今日订单</p>
+                        <h3 class="text-2xl font-bold mt-1" id="todayOrders">--</h3>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                        <i class="fa fa-shopping-cart"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-sm">
+                        <span class="text-secondary flex items-center" id="ordersChange">
+                            <i class="fa fa-arrow-up mr-1"></i> --
+                        </span>
+                    <span class="text-gray-500 ml-2">较昨日</span>
+                </div>
+            </div>
+
+            <!-- 会员消费 -->
+            <div class="card-modern p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-gray-500 text-sm">会员消费</p>
+                        <h3 class="text-2xl font-bold mt-1" id="memberConsumption">--</h3>
+                    </div>
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
+                        <i class="fa fa-users"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-sm">
+                        <span class="text-secondary flex items-center" id="memberChange">
+                            <i class="fa fa-arrow-up mr-1"></i> --
+                        </span>
+                    <span class="text-gray-500 ml-2">较昨日</span>
+                </div>
+            </div>
+
+            <!-- 库存预警 (原第4卡) -->
+            <div class="card-modern p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-gray-500 text-sm">库存预警</p>
+                        <h3 class="text-2xl font-bold mt-1" id="lowStockCount">--</h3>
+                    </div>
+                    <div class="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center text-accent">
+                        <i class="fa fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-sm">
+                        <span class="text-accent flex items-center" id="stockChange">
+                            <i class="fa fa-arrow-up mr-1"></i> --
+                        </span>
+                    <span class="text-gray-500 ml-2">较昨日</span>
+                </div>
+            </div>
+
+            <!-- 新增: 近效期药品 -->
+            <div class="card-modern p-6" id="nearExpiryCard">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-gray-500 text-sm">近效期药品</p>
+                        <h3 class="text-2xl font-bold mt-1" id="nearExpiryCount">--</h3>
+                    </div>
+                    <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
+                        <i class="fa fa-clock-o"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-sm">
+                    <span class="text-orange-600 flex items-center" id="nearExpiryChange">
+                        <i class="fa fa-arrow-up mr-1"></i> --
+                    </span>
+                    <span class="text-gray-500 ml-2">动态统计</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="dashboard-charts grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- 销售趋势图表 -->
+            <div class="card-modern p-6 lg:col-span-2 overflow-hidden" id="sales-trend-card">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold">销售趋势</h3>
+                    <div class="flex gap-2">
+                        <button class="btn btn-outline text-sm px-3 py-1" data-period="day">日</button>
+                        <button class="btn btn-primary text-sm px-3 py-1" data-period="week">周</button>
+                        <button class="btn btn-outline text-sm px-3 py-1" data-period="month">月</button>
+                    </div>
+                </div>
+                <!-- 增加相对定位与宽限制 -->
+                <div class="h-80 relative w-full min-w-0">
+                    <canvas id="sales-trend-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- 药品分类占比图表 -->
+            <div class="card-modern p-6 overflow-hidden" id="category-pie-card">
+                <h3 class="font-bold mb-6">药品分类占比</h3>
+                <div class="h-80 relative w-full min-w-0">
+                    <canvas id="category-pie-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- 新增：查看盘点详情按钮移动到图表区域下方 -->
+        <div class="flex justify-end mb-6" id="audit-actions">
+          <button id="open-audit-btn" type="button" class="btn btn-outline"><i class="fa fa-list"></i> 查看盘点详情</button>
+        </div>
+        <!-- 今日热销药品 -->
+        <div class="card-modern mb-6" id="hot-products-card">
+            <div class="p-6 border-b border-gray-100 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+                <div class="flex items-center gap-3">
+                    <h3 class="font-bold" id="hot-products-title">今日热销药品</h3>
+                    <div class="flex gap-2" id="hot-products-period">
+                        <button class="btn btn-primary text-sm px-3 py-1" data-hot-period="day">日</button>
+                        <button class="btn btn-outline text-sm px-3 py-1" data-hot-period="week">周</button>
+                        <button class="btn btn-outline text-sm px-3 py-1" data-hot-period="month">月</button>
+                        <button class="btn btn-outline text-sm px-3 py-1" data-hot-period="year">年</button>
+                    </div>
+                </div>
+                <a href="inventory.html" class="text-primary hover:underline text-sm">查看全部</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table-modern-compact w-full" id="hot-products-table">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">药品名称</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">规格</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">单价</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">销量</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">销售额</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">库存状态</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="hot-products">
+                    <!-- 数据将通过JavaScript动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div></div></div>
+</main>
+
+<!-- 盘点详情模态 -->
+<div id="audit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-xl max-h-[90vh] overflow-y-auto">
+    <div class="p-4 border-b flex justify-between items-center">
+      <h3 class="font-bold text-lg">库存盘点详情</h3>
+      <button id="audit-modal-close" class="text-gray-500 hover:text-gray-700">✕</button>
+    </div>
+    <div class="p-4 text-sm" id="audit-modal-body">
+      <p class="text-gray-500 mb-2">从库存页面同步的低库存 / 缺货 / 近效期 / 已过期药品（按���品去重）。</p>
+      <div id="audit-lowstock-section" class="mb-4">
+        <h4 class="font-medium mb-1">低库存 / 缺货 (<span id="audit-lowstock-count">0</span> 种)</h4>
+        <div id="audit-lowstock-list" class="space-y-1"></div>
+      </div>
+      <div id="audit-expiry-section" class="mb-2">
+        <h4 class="font-medium mb-1">近效期 / 已过期 (<span id="audit-expiry-count">0</span> 种)</h4>
+        <div id="audit-expiry-list" class="space-y-1"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 注入���一导航脚本 -->
+<script src="js/common.js"></script>
+<script src="js/common-nav.js"></script>
+<script src="js/stock-status.js"></script>
+<script src="js/ui-global.js" defer></script>
+<!-- 去除内联滚动/主题脚本：已由 ui-global.js 统一处理 -->
+<script>
+    // 新增：数据填充脚本（纯安全版，无 catch 关键字）
+    ;(function(){
+        const base = (window.location.origin + '/api');
+        function fetchJsonSafe(url){
+            var tenant = localStorage.getItem('selectedTenant') || localStorage.getItem('tenant') || 'wx';
+            return fetch(url,{headers:{'X-Shop-Id': tenant}})
+              .then(function(r){ return r.ok ? r.json().catch(function(){ return {}; }) : ({__error: r.status}); })
+              .catch(function(){ return {__error: 'network'}; });
+        }
+        function setText(id,val){ var el=document.getElementById(id); if(el) el.textContent= val==null? '--': val; }
+        function formatCurrency(v){ if(v==null) return '--'; var n=Number(v); return Number.isFinite(n)? ('¥'+n.toFixed(2)) : String(v); }
+        async function loadMetrics(){
+            var d = await fetchJsonSafe(base+'/dashboard/metrics');
+            if(d && !d.__error){
+                setText('todaySales', formatCurrency(d.todaySales));
+                setText('salesChange', d.salesChange); setText('todayOrders', d.todayOrders); setText('ordersChange', d.ordersChange);
+                setText('memberConsumption', formatCurrency(d.memberConsumption)); setText('memberChange', d.memberChange);
+                setText('lowStockCount', d.lowStockCount); setText('stockChange', d.stockChange);
+                setText('nearExpiryCount', d.nearExpiryCount); setText('nearExpiryChange', d.nearExpiryChange);
+            }
+        }
+        function renderStockBadge(stock){ var s=(stock==null?0:stock); if(s===0) return '<span class="px-2 py-1 rounded-full bg-red-50 text-red-600">缺货</span>'; if(s<=10) return '<span class="px-2 py-1 rounded-full bg-orange-50 text-orange-600">低库存</span>'; return '<span class="px-2 py-1 rounded-full bg-green-50 text-green-600">充足</span>'; }
+        window.updateHotProducts=function(list){ var tbody=document.getElementById('hot-products'); if(!tbody) return; if(!Array.isArray(list)||!list.length){ tbody.innerHTML='<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">暂无数据</td></tr>'; return; } tbody.innerHTML=list.map(function(p){ return "<tr class='hover\x2dbg\x2dgray\x2d50'>"+
+          "<td class='px\x2d6 py\x2d4 text\x2dsm'>"+(p.name||p.productName||p.genericName||p.tradeName||p.medicineId)+"</td>"+
+          "<td class='px\x2d6 py\x2d4 text\x2dxs'>"+(p.spec||'-')+"</td>"+
+          "<td class='px\x2d6 py\x2d4 text\x2dsm'>"+(p.price? '¥'+p.price: (p.retailPrice? '¥'+p.retailPrice: '--'))+"</td>"+
+          "<td class='px\x2d6 py\x2d4 text\x2dsm'>"+(p.totalQuantity||p.quantity||0)+"</td>"+
+          "<td class='px\x2d6 py\x2d4 text\x2dsm'>"+(p.totalRevenue? ('¥'+(p.totalRevenue.value||p.totalRevenue)) : '--')+"</td>"+
+          "<td class='px\x2d6 py\x2d4 text\x2dxs'>"+renderStockBadge(p.currentStock)+"</td>"+
+        "</tr>"; }).join(''); };
+        window.updateStockAlerts=function(list){};
+        async function loadHotProducts(period){
+            if(!period) period = (window.__hotProductsPeriod || 'day');
+            window.__hotProductsPeriod = period;
+            var d = await fetchJsonSafe(base+'/dashboard/hot-products?limit=15&period=' + encodeURIComponent(period));
+            var list = [];
+            if(d && !d.__error){
+                if(Array.isArray(d.data)) list = d.data;
+                else if(d.data && Array.isArray(d.data.hotProducts)) list = d.data.hotProducts;
+                else if(Array.isArray(d.hotProducts)) list = d.hotProducts;
+            }
+            updateHotProducts(list);
+            // 更新标题
+            var titleMap = { day: '今日热销药品', week: '本周热销药品', month: '本月热销药品', year: '本年热销药品' };
+            var t = document.getElementById('hot-products-title');
+            if(t) t.textContent = titleMap[period] || '热销药品';
+        }
+        async function loadStockAlerts(){ var d = await fetchJsonSafe(base+'/dashboard/stock-alerts'); var arr = d && !d.__error ? (d.data||d.alerts||[]) : []; updateStockAlerts(arr); }
+        // 提升为全局，避免其它脚本监听时未定义
+        window.loadHotProducts = loadHotProducts;
+        window.loadStockAlerts = loadStockAlerts;
+        function initCharts(){
+            var ctx = document.getElementById('sales-trend-canvas');
+            if(ctx && window.Chart){
+                var existing = Chart.getChart(ctx);
+                if(existing){ existing.destroy(); }
+                var inst = new Chart(ctx,{ type:'line', data:{ labels:[], datasets:[{label:'销售额',data:[],borderColor:'#165DFF',backgroundColor:'rgba(22,93,255,0.12)', tension:.3, fill:true }]}, options:{ responsive:true, maintainAspectRatio:false } });
+                window.__salesChart = inst;
+            }
+        }
+        var btn = document.getElementById('refresh-data');
+        if(btn){
+          btn.addEventListener('click', function(){
+            var period = window.__hotProductsPeriod || 'day';
+            Promise.all([loadMetrics(), loadHotProducts(period), loadStockAlerts()]).then(function(){
+              if(window.showMessage){ showMessage('数据已刷新'); }
+            });
+          });
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            initCharts();
+            var p = [];
+            if(typeof loadMetrics === 'function') p.push(loadMetrics());
+            if(typeof window.loadHotProducts === 'function') p.push(window.loadHotProducts('day'));
+            if(typeof window.loadStockAlerts === 'function') p.push(window.loadStockAlerts());
+
+            // 绑定热销周期切换
+            document.querySelectorAll('[data-hot-period]').forEach(function(btn){
+                btn.addEventListener('click', function(){
+                    var period = btn.getAttribute('data-hot-period') || 'day';
+                    document.querySelectorAll('[data-hot-period]').forEach(function(b){ b.classList.remove('btn-primary'); b.classList.add('btn-outline'); });
+                    btn.classList.remove('btn-outline'); btn.classList.add('btn-primary');
+                    window.loadHotProducts && window.loadHotProducts(period);
+                });
+            });
+
+            Promise.all(p);
+        });
+    })();
+  </script>
+<script>
+// 图表数据加载（安全版）
+(function(){
+    var charts = { trend: null, category: null };
+    function emptyCard(id, title, msg){
+        var el = document.getElementById(id);
+        if(!el) return;
+        el.innerHTML = "<div class='card p-6'><h3 class='font-bold mb-2'>"+title+"</h3><div class='text-center text-gray-500 py-12'><i class='fa fa-line-chart text-4xl text-gray-300 mb-2'></i><p>"+msg+"</p></div></div>";
+    }
+    function initCharts(){
+        var t = document.getElementById('sales-trend-canvas');
+        var c = document.getElementById('category-pie-canvas');
+        if(window.Chart){
+            if(t){
+                var prev = Chart.getChart(t);
+                if(prev){ prev.destroy(); }
+                charts.trend = new Chart(t, {
+                    type: 'line',
+                    data: { labels: [], datasets: [{ label: '销售额', data: [], borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.12)', tension: .3, fill: true }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+                window.__salesChart = charts.trend;
+            }
+            if(c){
+                var prevPie = Chart.getChart(c);
+                if(prevPie){ prevPie.destroy(); }
+                charts.category = new Chart(c, {
+                    type: 'doughnut',
+                    data: { labels: [], datasets: [{ data: [], backgroundColor: ['#93c5fd','#cbd5e1','#fde68a','#bfdbfe','#e9d5ff'] }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+                window.__categoryChart = charts.category;
+            }
+        }
+    }
+    function fetchJsonSafe(url, tenant){
+        return fetch(url, { headers: { 'X-Shop-Id': tenant || '' } })
+            .then(function(r){ return r.ok ? r.json() : ({ __error: r.status }); })
+            .catch(function(){ return { __error: 'network' }; });
+    }
+    async function loadData(){
+        var base = (window.api && window.api.BASE_URL) || (window.location.origin + '/api');
+        var tenant = localStorage.getItem('selectedTenant') || '';
+        var trend = await fetchJsonSafe(base + '/sales/trend?days=14', tenant);
+        var cat   = await fetchJsonSafe(base + '/medicines/category-stats', tenant);
+        if(!trend || trend.__error || !trend.data || !trend.data.labels || !trend.data.values){
+            emptyCard('sales-trend-card', '销售趋势', '暂无趋势数据');
+        } else if(charts.trend){
+            charts.trend.data.labels = trend.data.labels;
+            charts.trend.data.datasets[0].data = trend.data.values;
+            charts.trend.update('none');
+        }
+        if(!cat || cat.__error || !Array.isArray(cat.data) || !cat.data.length){
+            emptyCard('category-pie-card', '药品分类占比', '暂无分类统计');
+        } else if(charts.category){
+            charts.category.data.labels = cat.data.map(function(x){ return x.name; });
+            charts.category.data.datasets[0].data = cat.data.map(function(x){ return x.count; });
+            charts.category.update('none');
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+        initCharts();
+        loadData();
+        // Export Logic
+        const exportBtn = document.getElementById('export-report');
+        if(exportBtn){
+            exportBtn.addEventListener('click', async function(){
+                try{
+                     // Show loading
+                     exportBtn.disabled = true;
+                     exportBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 导出中...';
+
+                     var base = (window.api && window.api.BASE_URL) || (window.location.origin + '/api');
+                     var tenant = localStorage.getItem('selectedTenant') || '';
+
+                     // Fetch all medicines
+                     const resp = await fetch(base + '/medicines', { headers: { 'X-Shop-Id': tenant || '' } });
+                     if(!resp.ok) { throw new Error('Failed to fetch data'); }
+                     const data = await resp.json();
+                     const list = Array.isArray(data) ? data : (data.data || []);
+
+                     if(!list.length) { alert('暂无数据可导出'); return; }
+
+                     // Transform data
+                     const rows = list.map(m => ({
+                         'ID': m.medicineId,
+                         '通用名': m.genericName,
+                         '商品名': m.tradeName,
+                         '规格': m.spec,
+                         '批准文号': m.approvalNo,
+                         '厂家': m.manufacturer,
+                         '条码': m.barcode,
+                         '零售价': m.retailPrice,
+                         '会员价': m.memberPrice,
+                         '当前库存': (m.currentStock || m.stockQuantity || 0)
+                     }));
+
+                     // Export
+                     const ws = XLSX.utils.json_to_sheet(rows);
+                     const wb = XLSX.utils.book_new();
+                     XLSX.utils.book_append_sheet(wb, ws, "药品列表");
+                     XLSX.writeFile(wb, "medicine_report_" + new Date().toISOString().slice(0,10) + ".xlsx");
+
+                } catch(e) {
+                    console.error(e);
+                    alert('导出失败: ' + e.message);
+                } finally {
+                    exportBtn.disabled = false;
+                    exportBtn.innerHTML = '<i class="fa fa-download"></i> 导出报表';
+                }
+            });
+        }
+
+        // 添加销售趋势日/周/月切换按钮事件
+        document.querySelectorAll('[data-period]').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                document.querySelectorAll('[data-period]').forEach(function(b){ b.classList.remove('btn-primary'); b.classList.add('btn-outline'); });
+                btn.classList.remove('btn-outline'); btn.classList.add('btn-primary');
+                var period = btn.getAttribute('data-period');
+                var days = period==='day'?7:period==='week'?14:30;
+                loadSalesTrend(days);
+            });
+        });
+    });
+    async function loadSalesTrend(days){
+        var base = (window.api && window.api.BASE_URL) || (window.location.origin + '/api');
+        var tenant = localStorage.getItem('selectedTenant') || '';
+        var trend = await fetchJsonSafe(base + '/sales/trend?days='+days, tenant);
+        if(!trend || trend.__error || !trend.data || !trend.data.labels || !trend.data.values){
+            emptyCard('sales-trend-card', '销售趋势', '暂无趋势数据');
+        } else if(charts.trend){
+            charts.trend.data.labels = trend.data.labels;
+            charts.trend.data.datasets[0].data = trend.data.values;
+            charts.trend.update('none');
+        }
+    }
+})();
+</script>
+</body>
+</html>

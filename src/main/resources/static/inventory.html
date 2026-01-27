@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>智慧药房收银系统 - 库存管理</title>
+  <link rel="stylesheet" href="css/tailwind.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/theme-enhanced.css" />
+  <link rel="stylesheet" href="css/theme-premium.css" />
+  <link rel="stylesheet" href="css/theme-lightwide.css" />
+  <link rel="stylesheet" href="css/ui-enhanced.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/ui-modern.css" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <style>
+    /* 覆盖旧样式为现代布局 */
+    .inventory-grid { display:grid; gap:1.25rem; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+    .search-section-modern { display:flex; flex-direction:column; gap:.6rem; }
+    .main-content{flex:1;padding:1.25rem;} .main-content > .container-fluid{max-width:100% !important;margin:0 auto;width:100%;}
+    .badge{display:inline-block;padding:.25rem .5rem;border-radius:.25rem;font-size:.75rem} .btn{display:inline-flex;align-items:center;gap:.25rem}
+    .spinner{border:2px solid #eee;border-top-color:#3b82f6;border-radius:50%;width:18px;height:18px;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* 搜索输入与筛选收紧 */
+    .input-modern{ min-height: 42px; padding: 0.35rem 0.75rem; font-size: 0.9rem; border-radius: 8px; }
+    .btn-modern{ min-height: 42px; padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; }
+
+    /* 修复分页区重叠与拥挤 */
+    .pagination-controls { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; }
+    .pagination-controls .input-modern { min-width: 80px; }
+    .inventory-card { margin-bottom: 1rem; }
+    .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius: 8px; border: 1px solid #e2e8f0; }
+
+    /* 修复编辑面板被覆盖：提高层级 */
+    #inventory-edit-modal, #inventory-move-modal, .inventory-modal-backdrop { z-index: 9999 !important; }
+    #transfer-stock-modal { z-index: 100000 !important; }
+    body.modal-open { overflow: hidden; }
+
+    /* 顶部编辑卡片增强：粘性、滚动、层级更高 */
+    #edit-inline-panel { position: sticky; top: 80px; z-index: 1000; max-height: 60vh; overflow-y: auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+    #edit-inline-panel .input-modern { min-height: 38px; }
+    /* Limit width */
+    .app-shell { max-width: 1440px !important; margin: 0 auto; }
+  </style>
+  <script src="js/common-nav.js" defer></script>
+  <script src="js/common.js"></script>
+</head>
+<body class="font-inter text-gray-800 min-h-screen flex enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+  <div id="common-nav" data-active="inventory"></div>
+  <main class="flex-1 flex flex-col pt-16">
+    <div class="main-content" id="main-content">
+      <div class="container-fluid section-gap">
+        <div class="app-shell">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800">库存管理</h2>
+            <p class="text-gray-500 mt-1">分页查看所有药品的当前库存</p>
+          </div>
+        </div>
+
+
+
+        <!-- 新增：顶部搜索与筛选 -->
+        <div class="card-modern p-6 mb-6">
+          <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 search-section-modern">
+            <div class="flex flex-col">
+              <label class="text-xs font-medium text-gray-700 mb-1" for="inv-search-keyword">药品关键字/条码</label>
+              <input id="inv-search-keyword" class="input-modern" placeholder="输入名称、规格、厂家或条码" />
+            </div>
+            <div class="flex flex-col">
+              <label class="text-xs font-medium text-gray-700 mb-1" for="inv-filter-stock">库存筛选</label>
+              <select id="inv-filter-stock" class="input-modern">
+                <option value="">全部</option>
+                <option value="gt0">库存>0</option>
+                <option value="eq0">库存=0</option>
+              </select>
+            </div>
+            <div class="flex items-end gap-2 lg:col-span-2">
+              <button id="inv-btn-search" class="btn-modern bg-blue-600 text-white hover:bg-blue-700"><i class="fa fa-search"></i> 搜索</button>
+              <button id="inv-btn-reset" class="btn-modern bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"><i class="fa fa-undo"></i> 重置</button>
+            </div>
+            <div class="flex items-end text-xs text-gray-500 lg:col-span-1">提示：搜索走药品库，结果会显示当前库存；入库后可立即通过关键字或条码搜索到。</div>
+          </div>
+          <div id="inv-search-status" class="text-xs text-gray-500 mt-2 hidden"></div>
+        </div>
+
+        <!-- 顶部内联编辑卡片（默认隐藏） -->
+        <div id="edit-inline-panel" class="card-modern p-6 mb-6 hidden bg-white">
+          <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
+            <h3 class="font-bold text-lg text-gray-800">编辑药品信息</h3>
+            <div class="flex gap-2 items-center">
+              <span id="inline-loading" class="text-xs text-gray-400 hidden"><i class="fa fa-spinner fa-spin mr-1"></i>加载中...</span>
+              <button class="btn btn-outline btn-sm rounded-full" id="inline-close"><i class="fa fa-times"></i> 收起</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 text-sm mb-4">
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">药品ID</span><input id="inline-id" class="input-modern w-full bg-gray-50" disabled></div>
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">批准文号</span><input id="inline-approvalNo" class="input-modern w-full" placeholder="例如 国药准字H0000"/></div>
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">条形码</span><input id="inline-barcode" class="input-modern w-full" placeholder="扫描或输入条码"/></div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 text-sm mb-4">
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">通用名</span><input id="inline-gn" class="input-modern w-full" placeholder="例如 阿司匹林"/></div>
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">商品名</span><input id="inline-tn" class="input-modern w-full" placeholder="例如 某品牌"/></div>
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">规格</span><input id="inline-spec" class="input-modern w-full" placeholder="例如 100mg*100片"/></div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 text-sm mb-4">
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">零售价(¥)</span><input id="inline-retailPrice" type="number" step="0.01" class="input-modern w-full" placeholder="19.90"/></div>
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">会员价(¥)</span><input id="inline-memberPrice" type="number" step="0.01" class="input-modern w-full" placeholder="18.00"/></div>
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">折扣%</span><input id="inline-discountPercent" type="number" step="0.01" class="input-modern w-full" placeholder="自动"/></div>
+            <div class="flex flex-col"><span class="text-gray-500 mb-1">分类ID</span><input id="inline-categoryId" type="number" class="input-modern w-full" placeholder="数字"/></div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-4 gap-3 text-xs mb-3">
+            <div class="flex flex-col"><span class="text-gray-500">生产日期</span><input id="inline-productionDate" type="date" class="input-modern w-full"/></div>
+            <div class="flex flex-col"><span class="text-gray-500">到期日期</span><input id="inline-expiryDate" type="date" class="input-modern w-full"/></div>
+            <div class="flex flex-col"><span class="text-gray-500">单位</span><input id="inline-unit" class="input-modern w-full" placeholder="盒 / 瓶"/></div>
+            <div class="flex flex-col"><span class="text-gray-500">厂家</span><input id="inline-manufacturer" class="input-modern w-full" placeholder="生产厂家"/></div>
+          </div>
+          <!-- 新增：库存数量设置（用户可在编辑药品时直接补库存） -->
+          <div class="grid grid-cols-1 lg:grid-cols-4 gap-3 text-xs mb-3">
+            <div class="flex flex-col"><span class="text-gray-500">当前库存</span><input id="inline-currentStock" class="input-modern w-full" disabled></div>
+            <div class="flex flex-col"><span class="text-gray-500">库存数量设置（补货）</span><input id="inline-stockQuantity" type="number" min="0" step="1" class="input-modern w-full" placeholder="输入补货数量，保存后将入库"/></div>
+            <div class="flex flex-col"><span class="text-gray-500">安全库存（可选）</span><input id="inline-minStock" type="number" min="0" step="1" class="input-modern w-full" placeholder="可选：触发预警阈值"/></div>
+            <div class="flex items-center text-xs text-gray-500">提示：如果输入补货数量，则在保存药品信息后会自动执行入库。</div>
+          </div>
+          <div class="flex justify-end gap-2 mt-2">
+            <button class="btn-modern" id="inline-cancel">取消</button>
+            <button class="btn-modern" id="inline-save" style="background:#2563eb;color:#fff">保存</button>
+          </div>
+        </div>
+
+        <!-- 平齐布局：仅库存分页列表 -->
+        <div class="grid grid-cols-1 gap-4 items-start">
+          <div class="card-modern p-4 fade-enter inventory-card">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="section-title-modern">所有药品当前库存（分页）</h3>
+              <div class="text-xs text-gray-500">租户：<span id="current-tenant-label">默认/本地</span></div>
+            </div>
+            <div class="pagination-controls mb-3 text-sm">
+              <label class="flex items-center gap-2">页码 <input id="pageNo" type="number" min="0" value="0" class="input-modern w-24" /></label>
+              <label class="flex items-center gap-2">每页 <input id="pageSize" type="number" min="1" value="10" class="input-modern w-24" /></label>
+              <button id="btnLoadPage" class="btn-modern" style="background:#2563eb">加载</button>
+            </div>
+            <div class="table-wrapper">
+              <table class="min-w-full text-left table-modern-compact">
+                <thead>
+                  <tr>
+                    <th>租户</th>
+                    <th>药品ID</th>
+                  <tr>
+                    <th>租户</th>
+                    <th>ID</th>
+                    <th>通用名</th>
+                    <th>商品名</th>
+                    <th>批号/价格</th>
+                    <th>当前库存</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="pageBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 移除：租户选择、单次查询、名称搜索、批量查询、单次结果表格 -->
+
+  <!-- 编辑药品信息右侧抽屉 -->
+  <div id="edit-medicine-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden z-50">
+    <div class="absolute inset-0" aria-hidden="true"></div>
+    <aside class="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-white shadow-xl border-l rounded-l-xl flex flex-col" role="dialog" aria-modal="true">
+      <div class="p-4 border-b flex items-center justify-between">
+        <h3 class="font-bold text-lg">编辑药品信息</h3>
+        <button id="em-close" class="text-gray-500 hover:text-gray-700" aria-label="关闭">✕</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-3">
+        <div>
+          <label class="text-xs text-gray-500">药品ID</label>
+          <input id="em-medicineId" class="input-modern w-full" disabled>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500">通用名</label>
+          <input id="em-genericName" class="input-modern w-full" placeholder="例如 阿司匹林">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500">商品名</label>
+          <input id="em-tradeName" class="input-modern w-full" placeholder="例如 某品牌">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500">规格</label>
+          <input id="em-spec" class="input-modern w-full" placeholder="例如 100mg*100片">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500">零售价(¥)</label>
+          <input id="em-retailPrice" type="number" step="0.01" class="input-modern w-full" placeholder="例如 19.90">
+        </div>
+      </div>
+      <div class="p-4 border-t flex justify-end gap-2">
+        <button id="em-cancel" class="btn-modern">取消</button>
+        <button id="em-save" class="btn-modern" style="background:#2563eb;color:#fff">保存</button>
+      </div>
+    </aside>
+  </div>
+  <script>
+  // 兜底 showMessage (如果 common.js 尚未加载或失败)
+  if (typeof window.showMessage !== 'function') {
+    window.showMessage = function(msg, type='info') {
+      const box=document.createElement('div');
+      box.className='fixed top-4 right-4 z-50 px-4 py-2 rounded shadow text-sm '+(type==='error'?'bg-red-500 text-white': type==='success'?'bg-green-500 text-white':'bg-blue-500 text-white');
+      box.textContent=msg; document.body.appendChild(box); setTimeout(()=>box.remove(),2500);
+    };
+  }
+  </script>
+  <!-- 修复脚本：loadPage 与 openInlineEdit 引用字段一致 -->
+  <script>
+  (function(){
+    if (typeof window.withLock !== 'function') {
+      window.withLock = function(btn, fn){ return async ()=>{ if(btn?.disabled) return; btn && (btn.disabled=true); try{ await fn(); } finally { btn && (btn.disabled=false); } }; };
+    }
+    const $=id=>document.getElementById(id);
+    const pageBody=$('pageBody'); const btnLoad=$('btnLoadPage'); const pageNo=$('pageNo'); const pageSize=$('pageSize');
+    function showLoading(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="7" class="px-6 py-6 text-center text-gray-500 text-sm"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</td></tr>'; }
+    function showEmpty(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500"><i class="fa fa-database text-4xl mb-2 text-gray-300"></i><div>暂无药品数据</div></td></tr>'; }
+    async function fetchPage(page,size){ const tenant=localStorage.getItem('selectedTenant')||''; const url=`/api/inventory/page-current-stocks?page=${page}&size=${size}`; console.log('[inventory] 请求分页库存:', url,'tenant=',tenant); const r=await fetch(url,{headers:{'Accept':'application/json','X-Shop-Id':tenant}}); if(!r.ok){ throw new Error('HTTP '+r.status+': '+await r.text()); } const data=await r.json(); console.log('[inventory] 分页响应原始数据:', data); return data; }
+    function renderPage(resp){ const list = Array.isArray(resp)? resp : (resp.content||resp.data||resp.results||[]); console.log('[inventory] 解析后的列表长度:', list.length); if(!list.length){ showEmpty(); return; } pageBody.innerHTML=list.map(item=>{ const id=item.medicineId||''; const stock=item.stockQuantity??item.currentStock??item.stock??0; const gn=item.medicineGenericName||item.genericName||''; const tn=item.medicineTradeName||item.tradeName||''; const spec=item.medicineSpec||item.spec||''; const price=item.medicineRetailPrice??item.retailPrice??''; const batchNo=item.batchNo||'-'; const payload=encodeURIComponent(JSON.stringify({medicineId:id,genericName:gn,tradeName:tn,spec:spec,retailPrice:price,batchNo:batchNo})); return `<tr>
+    <td><span class='badge-soft'>${item.shopId||'default'}</span></td>
+    <td class='font-mono text-xs'>${id}</td>
+    <td class='text-xs'>${gn}</td>
+    <td class='text-xs'>${tn}</td>
+    <td class='text-xs'>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium text-indigo-700 font-mono">${batchNo}</span>
+          ${price? '<span class="text-green-600 font-bold text-[11px]">¥'+price+'</span>' : ''}
+        </div>
+    </td>
+    <td>${stock}</td>
+    <td><button class='btn btn-outline btn-xs' data-edit='${payload}'>编辑</button><button class='btn btn-outline btn-xs ml-1' data-transfer='${payload}'>调货</button></td>
+  </tr>`; }).join('');
+    pageBody.querySelectorAll('button[data-edit]').forEach(btn=> btn.onclick=()=>{ const m=JSON.parse(decodeURIComponent(btn.getAttribute('data-edit'))); openInlineEdit(m); });
+  }
+  window.loadPage = async function(page,size){ try{ page=Number(page)||0; size=Number(size)||10; if(page<0) page=0; if(size<=0) size=10; showLoading(); const resp=await fetchPage(page,size); renderPage(resp);}catch(e){ console.error(e); showEmpty(); showMessage('加载失败: '+e.message,'error'); }};
+  btnLoad?.addEventListener('click', window.withLock(btnLoad, async()=>{ await loadPage(pageNo.value, pageSize.value); }));
+  document.addEventListener('DOMContentLoaded', ()=> btnLoad?.click());
+})();
+  </script>
+  <script>
+  // 扩展编辑表单字段引用与函数修复
+  (function(){
+    const f=id=>document.getElementById(id);
+    const panel=f('edit-inline-panel');
+    const loading=f('inline-loading');
+    // 增加库存相关字段引用
+    const fld={ id:f('inline-id'), approvalNo:f('inline-approvalNo'), barcode:f('inline-barcode'), gn:f('inline-gn'), tn:f('inline-tn'), spec:f('inline-spec'), retailPrice:f('inline-retailPrice'), memberPrice:f('inline-memberPrice'), discountPercent:f('inline-discountPercent'), categoryId:f('inline-categoryId'), productionDate:f('inline-productionDate'), expiryDate:f('inline-expiryDate'), unit:f('inline-unit'), manufacturer:f('inline-manufacturer'), /*以下字段为可选，页面可能没有定义*/ isRx:f('inline-isRx')||null, status:f('inline-status')||null, description:f('inline-description')||null, currentStock:f('inline-currentStock'), stockQuantity:f('inline-stockQuantity'), minStock:f('inline-minStock') };
+    let full=null;
+    function calcDiscount(){ const rp=parseFloat(fld.retailPrice?.value||'0'); const mp=parseFloat(fld.memberPrice?.value||'0'); if(rp>0 && mp>0){ if(fld.discountPercent) fld.discountPercent.value=((1-mp/rp)*100).toFixed(2); } }
+    function calcMember(){ const rp=parseFloat(fld.retailPrice?.value||'0'); const pct=parseFloat(fld.discountPercent?.value||'0'); if(rp>0 && pct>=0 && pct<100){ if(fld.memberPrice) fld.memberPrice.value=(rp*(1-pct/100)).toFixed(2); } }
+    fld.memberPrice?.addEventListener('input', calcDiscount); fld.retailPrice?.addEventListener('input',()=>{ calcDiscount(); calcMember(); }); fld.discountPercent?.addEventListener('input', calcMember);
+    async function fetchDetail(id){ if(!id) return null; try{ loading?.classList.remove('hidden'); const resp= await window.api?.medicineAPI?.getById(id); loading?.classList.add('hidden'); return resp?.data||resp; }catch(e){ loading?.classList.add('hidden'); console.warn('详情加载失败',e); return null; } }
+    window.openInlineEdit = async function(m){
+      if(!panel) return;
+      panel.classList.remove('hidden');
+
+      // helper to safely set input/checkbox values
+      const safeSetValue = (el, val) => { try{ if(!el) return; if('checked' in el && typeof val === 'boolean'){ el.checked = val; } else { el.value = (val==null? '': val); } }catch(e){ console.warn('safeSetValue failed', e); } };
+
+      // safe set values only when elements exist
+      safeSetValue(fld.id, m.medicineId || '');
+      safeSetValue(fld.gn, m.genericName || '');
+      safeSetValue(fld.tn, m.tradeName || '');
+      safeSetValue(fld.spec, m.spec || '');
+      if(fld.retailPrice && m.retailPrice!=null) safeSetValue(fld.retailPrice, m.retailPrice);
+
+      // load medicine detail
+      const detail = await fetchDetail(m.medicineId);
+      loading?.classList.add('hidden'); full = detail;
+      if(detail){
+        safeSetValue(fld.approvalNo, detail.approvalNo || '');
+        safeSetValue(fld.barcode, detail.barcode || '');
+        safeSetValue(fld.manufacturer, detail.manufacturer || '');
+        safeSetValue(fld.unit, detail.unit || '');
+        safeSetValue(fld.memberPrice, detail.memberPrice!=null?detail.memberPrice:'');
+        safeSetValue(fld.categoryId, detail.categoryId!=null?detail.categoryId:'');
+        safeSetValue(fld.productionDate, detail.productionDate || '');
+        safeSetValue(fld.expiryDate, detail.expiryDate || '');
+        safeSetValue(fld.status, detail.status || 'ACTIVE');
+        try{ if(fld.isRx) safeSetValue(fld.isRx, !!detail.isRx); }catch(e){}
+        safeSetValue(fld.description, detail.description || '');
+        if(fld.retailPrice && fld.memberPrice && fld.retailPrice.value && fld.memberPrice.value) calcDiscount();
+      }
+      // 尝试单独查询当前库存（后端 inventory API），优先显示更准确的库存
+      try{
+        const tenant = localStorage.getItem('selectedTenant')||'';
+        const mid = fld.id ? (fld.id.value || (m.medicineId||'')) : (m.medicineId||'');
+        const resp = await fetch('/api/inventory/current-stock?medicineId='+encodeURIComponent(mid), { headers: {'Accept':'application/json','X-Shop-Id': tenant} });
+        if(resp.ok){ const j = await resp.json(); const cs = (j && (j.currentStock!=null ? j.currentStock : (j.data && j.data.currentStock!=null ? j.data.currentStock : null))); if(cs!=null){ safeSetValue(fld.currentStock, String(cs)); } }
+      }catch(e){ console.warn('[inventory] 获取当前库存失败', e); }
+    };
+  const saveBtn=f('inline-save');
+  saveBtn?.addEventListener('click', window.withLock(saveBtn, async()=>{
+    const id=(fld.id && fld.id.value? fld.id.value.trim(): ''); if(!id){ showMessage('缺少ID','error'); return; }
+    // 构造原始 payload
+    let payload={ genericName: (fld.gn?.value||'').trim(), tradeName: (fld.tn?.value||'').trim(), spec: (fld.spec?.value||'').trim(), approvalNo: (fld.approvalNo?.value||'').trim(), barcode: (fld.barcode?.value||'').trim(), manufacturer: (fld.manufacturer?.value||'').trim(), unit: (fld.unit?.value||'').trim(), retailPrice: fld.retailPrice? parseFloat(fld.retailPrice.value||'0') : undefined, memberPrice: fld.memberPrice && fld.memberPrice.value? parseFloat(fld.memberPrice.value): undefined, isRx: fld.isRx? fld.isRx.checked : undefined, description: fld.description? (fld.description.value||'').trim() : undefined, productionDate: fld.productionDate? fld.productionDate.value||undefined: undefined, expiryDate: fld.expiryDate? fld.expiryDate.value||undefined: undefined, status: fld.status? (fld.status.value||undefined): undefined, deleted:false, categoryId: (fld.categoryId && fld.categoryId.value? parseInt(fld.categoryId.value): (full?.categoryId??0)) };
+    // 清洗：移除空字符串/undefined字段；避免发送空日期 / 空会员价
+    Object.keys(payload).forEach(k=>{ const v=payload[k]; if(v==='' || v===undefined || (Number.isNaN(v) && typeof v==='number')) delete payload[k]; });
+    // retailPrice 必须为数字
+    if(typeof payload.retailPrice!=='number' || Number.isNaN(payload.retailPrice)){ showMessage('零售价格式不正确','error'); return; }
+    // 必填校验
+    if(!payload.genericName || !payload.approvalNo || !payload.categoryId){ showMessage('通用名/批准文号/分类ID 必填','error'); return; }
+    console.log('[inventory] 准备更新药品 payload=', payload);
+    try{
+      const resp = await window.api.medicineAPI.update(id, payload);
+      console.log('[inventory] update 响应=', resp);
+      if(resp && (resp.code===200 || resp.success || resp.medicineId || resp.data)){
+        // 保存成功后再进行补货（若用户填写了补货数量）——异步背景执行，不影响主流程
+        const stockToAdd = fld.stockQuantity && fld.stockQuantity.value? parseInt(fld.stockQuantity.value, 10) : 0;
+        if(!isNaN(stockToAdd) && stockToAdd>0){
+          (async function(){
+            try{
+              const tenant = localStorage.getItem('selectedTenant')||'';
+              const body = { medicineId: id, quantity: stockToAdd };
+              const min = fld.minStock && fld.minStock.value ? parseInt(fld.minStock.value, 10) : null;
+              if(!isNaN(min) && min !== null){ body.minStock = min; }
+              const r = await fetch('/api/inventory/stock-in', { method:'POST', headers: {'Content-Type':'application/json','Accept':'application/json','X-Shop-Id': tenant}, body: JSON.stringify(body) });
+              if(r.ok){ const j = await r.json(); console.log('[inventory] 补货响应:', j); showMessage('已补货：'+stockToAdd+' 件','success'); }
+              else { const txt = await r.text(); console.warn('[inventory] 补货失败', r.status, txt); showMessage('补货失败: '+r.status,'error'); }
+            }catch(e){ console.warn('[inventory] 补货异常', e); showMessage('补货异常: '+e.message,'error'); }
+          })();
+        }
+        showMessage('保存成功','success'); panel.classList.add('hidden'); window.loadPage && window.loadPage(pageNo.value, pageSize.value); return;
+      }
+       showMessage('保存失败','error');
+     } catch(e){
+       console.warn('[inventory] update 异常', e);
+       if(String(e.message).includes('415')){
+        console.warn('[inventory] 触发 415 回退，使用原生 fetch 再试');
+        try {
+          const tenant = localStorage.getItem('selectedTenant')||'';
+          const r = await fetch(`/api/medicines/${id}`, { method:'PUT', headers:{'Content-Type':'application/json','Accept':'application/json','X-Shop-Id':tenant}, body: JSON.stringify(payload)});
+          const txt = await r.text();
+          console.log('[inventory] 回退响应文本=', txt);
+          if(r.ok){ showMessage('保存成功(回退)','success'); panel.classList.add('hidden'); window.loadPage && window.loadPage(pageNo.value, pageSize.value); return; }
+          showMessage('回退仍失败: '+r.status,'error');
+        } catch(e2){ console.error('[inventory] 回退失败', e2); showMessage('回退失败:'+e2.message,'error'); }
+      } else {
+        showMessage('保存异常:'+e.message,'error');
+      }
+    }
+  }));
+  document.getElementById('inline-cancel')?.addEventListener('click', ()=> panel.classList.add('hidden'));
+  document.getElementById('inline-close')?.addEventListener('click', ()=> panel.classList.add('hidden'));
+})();
+  </script>
+  <!-- 新增：搜索与筛选逻辑 -->
+  <script>
+  (function(){
+    const $=id=>document.getElementById(id);
+    const pageBody=$('pageBody');
+    const status=$('inv-search-status');
+    const btnSearch=$('inv-btn-search');
+    const btnReset=$('inv-btn-reset');
+    const kw=$('inv-search-keyword');
+    const filterStock=$('inv-filter-stock');
+
+    function showStatus(msg){ if(!status) return; status.classList.remove('hidden'); status.textContent=msg; }
+    function clearStatus(){ if(!status) return; status.classList.add('hidden'); status.textContent=''; }
+    function showEmpty(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500"><i class="fa fa-database text-4xl mb-2 text-gray-300"></i><div>暂无匹配数据</div></td></tr>'; }
+
+    async function searchAndRender(){
+      const keyword=(kw?.value||'').trim();
+      const tenant=localStorage.getItem('selectedTenant')||'';
+      if(!pageBody) return;
+      pageBody.innerHTML='<tr><td colspan="7" class="px-6 py-6 text-center text-gray-500 text-sm"><i class="fa fa-spinner fa-spin mr-2"></i>搜索中...</td></tr>';
+      try {
+        const medResp = await window.api.medicineAPI.searchWithStock(keyword, '', 1, 100);
+        const meds = Array.isArray(medResp?.data) ? medResp.data : [];
+        let content = meds;
+        const ids = meds.map(m=>m.medicineId).filter(Boolean);
+        if(ids.length>0){
+          try{
+            const invResp = await fetch('/api/inventory/current-stocks?ids='+encodeURIComponent(ids.join(',')), { headers:{'Accept':'application/json','X-Shop-Id': tenant} });
+            if(invResp.ok){ const j=await invResp.json(); const map=new Map(); (j.results||j.data||[]).forEach(r=> map.set(r.medicineId, r.currentStock)); content = meds.map(m=> ({...m, stockQuantity: (typeof m.stockQuantity!=='undefined' ? m.stockQuantity : map.get(m.medicineId)) })); }
+          }catch(e){ /* 忽略批量库存错误 */ }
+        }
+        const fs = filterStock?.value || '';
+        if(fs==='gt0'){ content = content.filter(m => (m.stockQuantity ?? 0) > 0); }
+        if(fs==='eq0'){ content = content.filter(m => (m.stockQuantity ?? 0) === 0); }
+
+        if(!content.length){ showEmpty(); showStatus('没有匹配结果'); return; }
+        clearStatus();
+        pageBody.innerHTML = content.map(item => {
+          const id=item.medicineId||''; const stock=item.stockQuantity ?? 0; const gn=item.genericName||''; const tn=item.tradeName||''; const spec=item.spec||''; const barcode=item.barcode||'';
+          const payload=encodeURIComponent(JSON.stringify({medicineId:id,genericName:gn,tradeName:tn,spec:spec,retailPrice:item.retailPrice}));
+          return `<tr>
+            <td><span class='badge-soft'>${item.shopId||'default'}</span></td>
+            <td class='font-mono text-xs'>${id}</td>
+            <td class='text-xs'>${gn}</td>
+            <td class='text-xs'>${tn}</td>
+            <td class='text-xs'>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-medium text-indigo-700 font-mono">${item.batchNo||'-'}</span>
+                  ${item.retailPrice? '<span class="text-green-600 font-bold text-[11px]">¥'+item.retailPrice+'</span>' : ''}
+                </div>
+            </td>
+            <td>${stock}</td>
+            <td><button class='btn btn-outline btn-xs' data-edit='${payload}'>编辑</button><button class='btn btn-outline btn-xs ml-1' data-transfer='${payload}'>调货</button></td>
+          </tr>`;
+        }).join('');
+        pageBody.querySelectorAll('button[data-edit]').forEach(btn=> btn.onclick=()=>{ const m=JSON.parse(decodeURIComponent(btn.getAttribute('data-edit'))); window.openInlineEdit && window.openInlineEdit(m); });
+      } catch(e){ console.warn('[inventory] 搜索异常', e); showEmpty(); showStatus('搜索失败：'+e.message); }
+    }
+
+    btnSearch?.addEventListener('click', searchAndRender);
+    kw?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); searchAndRender(); }});
+    btnReset?.addEventListener('click', ()=>{ if(kw) kw.value=''; if(filterStock) filterStock.value=''; clearStatus(); window.loadPage && window.loadPage(document.getElementById('pageNo')?.value, document.getElementById('pageSize')?.value); });
+  })();
+  </script>
+
+  <!-- Transfer Stock Modal -->
+  <div id="transfer-stock-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden z-[9999] flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col" role="dialog" aria-modal="true">
+      <div class="p-4 border-b flex items-center justify-between">
+        <h3 class="font-bold text-lg">库存调货</h3>
+        <button id="transfer-modal-close" class="text-gray-500 hover:text-gray-700" aria-label="关闭">✕</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div>
+          <label class="text-xs text-gray-500">药品</label>
+          <p id="transfer-medicine-name" class="font-semibold"></p>
+        </div>
+        <div>
+          <label for="transfer-batch-select" class="text-xs text-gray-500">选择批次</label>
+          <select id="transfer-batch-select" class="input-modern w-full"></select>
+        </div>
+        <div>
+          <label for="transfer-tenant-select" class="text-xs text-gray-500">调往</label>
+          <select id="transfer-tenant-select" class="input-modern w-full"></select>
+        </div>
+        <div>
+          <label for="transfer-quantity" class="text-xs text-gray-500">调货数量</label>
+          <input id="transfer-quantity" type="number" min="1" class="input-modern w-full" placeholder="输入数量">
+        </div>
+        <div>
+          <label for="transfer-remark" class="text-xs text-gray-500">备注 (可选)</label>
+          <input id="transfer-remark" class="input-modern w-full" placeholder="例如：紧急支援">
+        </div>
+      </div>
+      <div class="p-4 border-t flex justify-end gap-2">
+        <button id="transfer-modal-cancel" class="btn-modern">取消</button>
+        <button id="transfer-modal-confirm" class="btn-modern bg-blue-600 text-white hover:bg-blue-700">确认调货</button>
+      </div>
+    </div>
+  </div>
+  <!-- Transfer Stock Logic -->
+  <script>
+  (function(){
+    const modal = document.getElementById('transfer-stock-modal');
+    if (!modal) return;
+
+    const closeBtn = document.getElementById('transfer-modal-close');
+    const cancelBtn = document.getElementById('transfer-modal-cancel');
+    const confirmBtn = document.getElementById('transfer-modal-confirm');
+    const medicineNameEl = document.getElementById('transfer-medicine-name');
+    const batchSelect = document.getElementById('transfer-batch-select');
+    const tenantSelect = document.getElementById('transfer-tenant-select');
+    const quantityInput = document.getElementById('transfer-quantity');
+    const remarkInput = document.getElementById('transfer-remark');
+
+    let currentMedicine = null;
+
+    function openModal() { modal.classList.remove('hidden'); }
+    function closeModal() { modal.classList.add('hidden'); }
+
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    async function openTransferModal(medicine) {
+        currentMedicine = medicine;
+        medicineNameEl.textContent = `${medicine.genericName} (${medicine.tradeName || ''})`;
+
+        // Reset fields
+        batchSelect.innerHTML = '<option>加载中...</option>';
+        tenantSelect.innerHTML = '<option>加载中...</option>';
+        quantityInput.value = '';
+        remarkInput.value = '';
+
+        openModal();
+
+        // Fetch tenants and batches in parallel
+        try {
+            const currentTenant = localStorage.getItem('selectedTenant') || 'default';
+            const headers = { 'X-Shop-Id': currentTenant };
+
+            const [tenants, batches] = await Promise.all([
+                fetch('/api/inventory/tenants', { headers }).then(res => res.ok ? res.json() : []),
+                fetch(`/api/inventory/by-medicine/${medicine.medicineId}`, { headers }).then(res => res.ok ? res.json() : {data:[]})
+            ]);
+
+            // Populate tenants
+            // Make sure to handle both array of strings or objects. If it's objects, use .id
+            const tenantList = Array.isArray(tenants) ? tenants : (tenants.data || []);
+            const validTenantList = tenantList.map(t => (typeof t === 'string' ? t : t.id));
+
+            tenantSelect.innerHTML = validTenantList.filter(t => t !== currentTenant && t !== 'default').map(t => `<option value="${t}">${t}</option>`).join('') + '<option value="warehouse">仓库</option>';
+
+            // Populate batches
+            const batchList = batches.data || [];
+            if (batchList.length > 0) {
+                batchSelect.innerHTML = batchList.map(b => `<option value="${b.batchNo}">批号: ${b.batchNo} (库存: ${b.stockQuantity})</option>`).join('');
+            } else {
+                batchSelect.innerHTML = '<option value="">无可用批次</option>';
+            }
+
+        } catch (error) {
+            console.error("Failed to load data for transfer modal:", error);
+            showMessage('加载调货数据失败', 'error');
+            closeModal();
+        }
+    }
+
+    confirmBtn.addEventListener('click', async () => {
+        const fromTenant = localStorage.getItem('selectedTenant') || 'default';
+        const toTenant = tenantSelect.value;
+        const medicineId = currentMedicine.medicineId;
+        const batchNo = batchSelect.value;
+        const quantity = parseInt(quantityInput.value, 10);
+        const remark = remarkInput.value;
+
+        if (!toTenant || !batchNo || !quantity || quantity <= 0) {
+            showMessage('请填写所有必填项', 'error');
+            return;
+        }
+
+        const payload = {
+            fromTenant,
+            toTenant,
+            medicineId,
+            batchNo,
+            quantity,
+            remark,
+            operatorId: 'current_user' // This should be replaced with actual user info
+        };
+
+        try {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 调货中...';
+            const response = await fetch('/api/inventory/transfer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                showMessage('调货成功', 'success');
+                closeModal();
+                document.getElementById('btnLoadPage')?.click();
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.message || '调货失败');
+            }
+        } catch (error) {
+            showMessage(`调货失败: ${error.message}`, 'error');
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '确认调货';
+        }
+    });
+
+    function attachTransferButtonListeners() {
+        document.querySelectorAll('button[data-transfer]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const medicineData = JSON.parse(decodeURIComponent(btn.getAttribute('data-transfer')));
+                openTransferModal(medicineData);
+            });
+        });
+    }
+
+    const observer = new MutationObserver((mutationsList) => {
+        for(const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                attachTransferButtonListeners();
+            }
+        }
+    });
+
+    const pageBody = document.getElementById('pageBody');
+    if (pageBody) {
+        observer.observe(pageBody, { childList: true, subtree: true });
+    }
+
+    document.addEventListener('DOMContentLoaded', attachTransferButtonListeners);
+
+  })();
+  </script>
+</body>
+</html>

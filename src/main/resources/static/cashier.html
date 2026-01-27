@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- Tailwind 全局安全占位：任何页面最先执行，防止 CDN 阻止导致 ReferenceError -->
+    <script>(function(){if(!window.tailwind){window.tailwind={config:{}};} if(!window.tailwind.config){window.tailwind.config={};}})();</script>
+    <script>if(typeof tailwind==='undefined'){window.tailwind={config:{}};}</script>
+    <script>tailwind.config={theme:{extend:{colors:{primary:'#165DFF',secondary:'#36B37E',accent:'#FF5630'}}}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧药房收银系统 - 收银管理</title>
+    <link rel="stylesheet" href="css/tailwind.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/theme-enhanced.css" />
+    <link rel="stylesheet" href="css/theme-premium.css" />
+    <link rel="stylesheet" href="css/theme-lightwide.css" />
+    <link rel="stylesheet" href="css/ui-enhanced.css" />
+    <link rel="stylesheet" href="css/ui-modern.css" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+      /* 统一主内容区滚动样式 */
+      .main-content{flex:1 1 auto;padding:1.5rem;min-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin;}
+      .main-content::-webkit-scrollbar{width:8px}
+      .main-content::-webkit-scrollbar-track{background:#f5f5f5;border-radius:4px}
+      .main-content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+      .main-content::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+      .cart-item-highlight{background:#fef9c3;}
+      .container-fluid{max-width:100% !important; width:100%;}
+      .app-shell{width:100% !important; max-width: 1440px !important; margin: 0 auto;}
+    </style>
+    <script src="js/common.js" defer></script>
+    <script src="js/common-nav.js" defer></script>
+</head>
+<body class="font-inter text-gray-800 min-h-screen flex enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+
+<div class="scroll-progress" id="scroll-progress"></div>
+  <div id="common-nav" data-active="cashier"></div>
+  <div id="notification-panel" class="hidden absolute top-20 right-6 bg-white shadow-lg rounded-lg p-4 w-64 text-sm">
+    <div class="font-medium mb-2">通知面板</div>
+    <p class="text-gray-500">暂时无通知</p>
+  </div>
+  <main class="flex-1 flex flex-col pt-16">
+    <div class="main-content" id="main-content"><div class="container-fluid section-gap"><div class="app-shell">
+      <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 action-bar">
+        <div>
+          <h2 class="text-[clamp(1.25rem,2vw,1.75rem)] font-bold page-title-decor">收银台</h2>
+          <p class="text-gray-500">快速录入药品与结算订单</p>
+        </div>
+        <div class="flex gap-3">
+          <button class="btn btn-outline" id="hang-order-btn"><i class="fa fa-pause"></i> 挂单</button>
+          <button class="btn btn-primary" id="submit-order-btn"><i class="fa fa-check"></i> 提交订单</button>
+        </div>
+      </div>
+
+      <!-- 顶部搜索区 -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6 cozy-grid cols-4" id="cashier-top-row">
+        <!-- 药品扫码/搜索 -->
+        <div class="card-modern p-6">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fa fa-barcode text-primary"></i> 药品扫码/搜索</h3>
+<label for="barcode-input" class="sr-only">药品条码输入</label>
+<input id="barcode-input" class="input-modern" placeholder="扫码或输入条码" autocomplete="off" />
+<div class="relative mt-3">
+  <label for="medicine-search-input" class="sr-only">药品名称搜索</label>
+  <input id="medicine-search-input" class="input-modern" placeholder="输入药品名称/拼音/关键字" />
+  <div id="medicine-search-result" class="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow z-20 max-h-64 overflow-y-auto hidden"></div>
+</div>
+<div class="flex gap-2 mt-3">
+  <label for="medicine-category-filter" class="sr-only">药品分类筛选</label>
+  <select id="medicine-category-filter" class="input-modern text-sm">
+    <option value="">全部分类</option>
+    <option value="prescription">处方药</option>
+    <option value="otc">非处方药</option>
+    <option value="chinese">中药</option>
+  </select>
+  <button id="medicine-search-btn" class="btn btn-outline flex-shrink-0"><i class="fa fa-search"></i> 搜索</button>
+</div>
+        </div>
+        <!-- 会员选择 -->
+        <div class="card-modern p-6">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fa fa-user text-primary"></i> 会员选择</h3>
+<div class="space-y-3">
+  <div class="relative">
+    <label for="member-search-input" class="sr-only">会员搜索</label>
+    <input id="member-search-input" class="input-modern" placeholder="输入姓名/手机号/卡号" />
+    <div id="member-search-result" class="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow z-20 max-h-64 overflow-y-auto hidden"></div>
+  </div>
+  <div id="selected-member-info" class="text-sm text-gray-600 hidden"></div>
+  <button id="clear-member-btn" class="btn btn-outline text-xs hidden"><i class="fa fa-times"></i> 移除会员</button>
+</div>
+        </div>
+        <!-- 支付与折扣 -->
+        <div class="card-modern p-6">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fa fa-cny text-primary"></i> 支付与折扣</h3>
+<label for="payment-method" class="sr-only">支付方式</label>
+<select id="payment-method" class="input-modern">
+  <option value="CASH">现金支付</option>
+  <option value="WECHAT">微信支付</option>
+  <option value="ALIPAY">支付宝</option>
+  <option value="INSURANCE">医保支付</option>
+  <option value="CARD">银行卡</option>
+</select>
+<div class="flex items-center gap-2 mt-3">
+  <label for="discount-amount" class="sr-only">折扣金额</label>
+  <input id="discount-amount" type="number" min="0" step="0.01" class="input-modern" placeholder="折扣金额(可选)" />
+</div>
+<div class="flex items-center gap-2 mt-3">
+  <label for="use-points" class="sr-only">使用积分</label>
+  <input id="use-points" type="number" min="0" class="input-modern" placeholder="使用积分(可选)" />
+</div>
+        </div>
+        <!-- 订单汇总 -->
+        <div class="card-modern p-6 flex flex-col" id="order-summary-card">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fa fa-list-alt"></i> 订单汇总</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between"><span>商品总额</span><span id="summary-original">¥0.00</span></div>
+            <div class="flex justify-between"><span>折扣金额</span><span id="summary-discount">¥0.00</span></div>
+            <div class="flex justify-between"><span>积分抵扣</span><span id="summary-points">¥0.00</span></div>
+            <div class="flex justify-between font-medium text-lg pt-2 border-t"><span>应付金额</span><span id="summary-payable">¥0.00</span></div>
+          </div>
+          <div class="mt-4 flex flex-col gap-2">
+            <button id="quick-pay-btn" class="btn btn-primary w-full"><i class="fa fa-bolt"></i> 快速结算</button>
+            <button id="print-preview-btn" class="btn btn-outline w-full"><i class="fa fa-print"></i> 打印预览</button>
+          </div>
+          <div id="order-feedback" class="mt-4 text-sm"></div>
+        </div>
+      </div>
+
+      <!-- KPI 行 -->
+      <div class="dashboard-kpis kpi-horizontal mb-6" id="cashier-kpi-row">
+  <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">商品行数</p><h3 class="text-xl font-bold" id="kpi-order-items">0</h3></div>
+  <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">原价合计</p><h3 class="text-xl font-bold" id="kpi-order-original">¥0.00</h3></div>
+  <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">折扣与积分</p><h3 class="text-xl font-bold" id="kpi-order-discount">¥0.00</h3></div>
+  <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">应付金额</p><h3 class="text-xl font-bold" id="kpi-order-payable">¥0.00</h3></div>
+  <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">会员使用积分</p><h3 class="text-xl font-bold" id="kpi-order-points">0</h3></div>
+</div>
+
+      <!-- 购物车与汇总 -->
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6 section-gap" id="cashier-cart-row">
+        <div class="card-modern xl:col-span-1 p-6" id="cart-card">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold flex items-center gap-2"><i class="fa fa-shopping-cart"></i> 购物车</h3>
+            <button id="clear-cart-btn" class="btn btn-outline text-xs"><i class="fa fa-trash"></i> 清空</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm table-modern-compact">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-2 text-left font-medium text-gray-600">药品</th>
+                  <th class="px-4 py-2 text-left font-medium text-gray-600">规格</th>
+                  <th class="px-4 py-2 text-left font-medium text-gray-600">单价</th>
+                  <th class="px-4 py-2 text-left font-medium text-gray-600">数量</th>
+                  <th class="px-4 py-2 text-left font-medium text-gray-600">小计</th>
+                  <th class="px-4 py-2 text-left font-medium text-gray-600">操作</th>
+                </tr>
+              </thead>
+              <tbody id="cart-body" class="bg-white divide-y divide-gray-200"></tbody>
+            </table>
+          </div>
+          <div id="cart-empty" class="p-6 text-center text-gray-400">暂无商品，请搜索添加</div>
+        </div>
+        <div class="hidden" id="order-summary-card-old"></div>
+      </div>
+
+      <!-- 最近添加提示区域 -->
+      <div id="recent-added-hint" class="hidden p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm mb-6"></div>
+
+      <!-- 挂单列表(占位) -->
+      <div class="card p-6 card-interactive" id="hang-list-card">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold flex items-center gap-2"><i class="fa fa-pause-circle"></i> 挂单列表</h3>
+          <button id="refresh-hang-btn" class="btn btn-outline text-xs"><i class="fa fa-refresh"></i> 刷新</button>
+        </div>
+        <div id="hang-orders-empty" class="text-gray-400 text-sm">暂无挂单</div>
+        <div id="hang-orders-container" class="space-y-2 text-sm"></div>
+      </div>
+    </div></div></div> <!-- close app-shell / container-fluid / main-content -->
+  </main>
+<!-- 积分兑换模态框 -->
+<div id="exchange-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col">
+    <div class="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+      <h3 class="text-xl font-bold text-gray-800"><i class="fa fa-gift text-orange-500 mr-2"></i>积分兑换</h3>
+      <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('exchange-modal').classList.add('hidden')">
+        <i class="fa fa-times text-xl"></i>
+      </button>
+    </div>
+    <div class="p-6">
+      <div class="mb-4">
+        <p class="text-sm text-gray-600">会员: <span id="exchange-member-name" class="font-bold"></span></p>
+        <p class="text-sm text-gray-600">当前积分: <span id="exchange-member-points" class="font-bold text-primary"></span></p>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">选择福利</label>
+        <select id="exchange-reward-select" class="input w-full text-sm">
+          <option value="">-- 请选择福利 --</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">或 自定义扣除积分</label>
+        <input type="number" id="exchange-custom-points" class="input w-full text-sm" placeholder="输入要扣除的积分">
+      </div>
+    </div>
+    <div class="p-4 border-t bg-gray-50 rounded-b-xl flex justify-end gap-3">
+      <button class="btn btn-outline" onclick="document.getElementById('exchange-modal').classList.add('hidden')">取消</button>
+      <button class="btn btn-primary" id="confirm-exchange-btn">确认兑换</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 积分兑换逻辑 (Cashier)
+(function(){
+  window.showExchangeModal = function(member, rewards) {
+    if (!member) return;
+
+    document.getElementById('exchange-member-name').textContent = member.name;
+    document.getElementById('exchange-member-points').textContent = member.points || 0;
+    document.getElementById('exchange-custom-points').value = '';
+
+    const select = document.getElementById('exchange-reward-select');
+    select.innerHTML = '<option value="">-- 请选择福利 --</option>' +
+      rewards.map(r => `<option value="${r.id}" data-points="${r.pointsRequired}">${r.name} (${r.pointsRequired}分)</option>`).join('');
+
+    select.onchange = function() {
+      const opt = this.options[this.selectedIndex];
+      if (opt.value) {
+        document.getElementById('exchange-custom-points').value = opt.getAttribute('data-points');
+      }
+    };
+
+    document.getElementById('exchange-modal').classList.remove('hidden');
+
+    // 绑定确认按钮
+    const btn = document.getElementById('confirm-exchange-btn');
+    btn.onclick = async function() {
+        const points = parseInt(document.getElementById('exchange-custom-points').value);
+        if (!points || points <= 0) {
+          alert('请输入有效的积分数值');
+          return;
+        }
+        if ((member.points || 0) < points) {
+          alert('会员积分不足');
+          return;
+        }
+        if (!confirm(`确定要扣除 ${points} 积分进行兑换吗？`)) return;
+
+        try {
+          const res = await fetch(`/api/members/${member.memberId}/exchange`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ points })
+          });
+
+          if (!res.ok) {
+            const err = await res.text();
+            throw new Error(err);
+          }
+
+          alert('兑换成功');
+          document.getElementById('exchange-modal').classList.add('hidden');
+          // 刷新会员信息
+          if(window.refreshMemberInfo) window.refreshMemberInfo(member.memberId);
+        } catch (e) {
+          alert('兑换失败: ' + e.message);
+        }
+    };
+  };
+})();
+</script>
+<script src="js/cashier.js" defer></script>
+<script src="js/a11y.js" defer></script>
+<script src="js/ui-global.js" defer></script>
+<script src="js/kpi.js"></script>
+<script>
+(function(){
+  function syncCashierKpis(){
+    const items=document.querySelectorAll('#cart-card tbody tr');
+    const set=(id,val)=>{const el=document.getElementById(id); if(el) el.textContent=val;};
+    set('kpi-order-items',items.length);
+    set('kpi-order-original',document.getElementById('summary-original')?.textContent||'¥0.00');
+    const discount=(document.getElementById('summary-discount')?.textContent||'��0.00');
+    const points=(document.getElementById('summary-points')?.textContent||'¥0.00');
+    set('kpi-order-discount',discount+' / '+points);
+    set('kpi-order-payable',document.getElementById('summary-payable')?.textContent||'¥0.00');
+    // Points numeric
+    const ptsInput=document.getElementById('use-points');
+    set('kpi-order-points', ptsInput && ptsInput.value ? ptsInput.value : '0');
+  }
+  document.addEventListener('DOMContentLoaded',()=>{ syncCashierKpis(); setInterval(syncCashierKpis,1500); });
+})();
+</script>
+<script>
+(function(){
+  function parseCurrency(text){ if(!text) return 0; const n = Number(String(text).replace(/[^0-9.\-]/g,'')); return isNaN(n)? 0: n; }
+  function formatCurrency(n){ n=Number(n||0); return '¥'+ n.toFixed(2); }
+  function computeSummary(){
+    const rows = document.querySelectorAll('#cart-body tr');
+    let original = 0;
+    rows.forEach(tr=>{
+      const td = tr.querySelector('td:nth-child(5)'); // 小计列
+      if(td){ original += parseCurrency(td.textContent||'0'); }
+    });
+    const discountInput = document.getElementById('discount-amount');
+    const pointsInput = document.getElementById('use-points');
+    const discount = discountInput && discountInput.value ? Number(discountInput.value) : 0;
+    const points = pointsInput && pointsInput.value ? Number(pointsInput.value) : 0;
+    const pointsDeduction = points; // 简化：1积分抵1元，后续可按规则调整
+    const payable = Math.max(0, original - discount - pointsDeduction);
+    // 更新汇总
+    const so = document.getElementById('summary-original'); if(so) so.textContent = formatCurrency(original);
+    const sd = document.getElementById('summary-discount'); if(sd) sd.textContent = formatCurrency(discount);
+    const sp = document.getElementById('summary-points'); if(sp) sp.textContent = formatCurrency(pointsDeduction);
+    const spay = document.getElementById('summary-payable'); if(spay) spay.textContent = formatCurrency(payable);
+    // KPI 联动
+    const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+    set('kpi-order-items', String(rows.length));
+    set('kpi-order-original', formatCurrency(original));
+    set('kpi-order-discount', formatCurrency(discount)+' / '+formatCurrency(pointsDeduction));
+    set('kpi-order-payable', formatCurrency(payable));
+    set('kpi-order-points', pointsInput && pointsInput.value ? pointsInput.value : '0');
+  }
+  function bind(){
+    ['input','change'].forEach(evt=>{
+      const di=document.getElementById('discount-amount'); if(di) di.addEventListener(evt, computeSummary);
+      const pi=document.getElementById('use-points'); if(pi) pi.addEventListener(evt, computeSummary);
+      const pm=document.getElementById('payment-method'); if(pm) pm.addEventListener('change', computeSummary);
+    });
+    const cartBody = document.getElementById('cart-body');
+    if(cartBody){
+      const observer = new MutationObserver(computeSummary);
+      observer.observe(cartBody, { childList: true, subtree: true });
+    }
+    document.addEventListener('DOMContentLoaded', computeSummary);
+  }
+  bind();
+})();
+</script>
+</body>
+</html>

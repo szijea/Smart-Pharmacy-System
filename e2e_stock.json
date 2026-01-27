@@ -1,0 +1,2 @@
+{"stockInDate":"2025-11-10T12:00:00Z","remark":"E2E入库","status":1,"supplier":{"supplierId":1},"items":[{"medicine":{"medicineId":"E2E_M1"},"quantity":12,"unitPrice":10.0,"batchNumber":"BATCH-E2E-1","productionDate":"2025-01-01T00:00:00Z","expiryDate":"2026-01-01T00:00:00Z"}]}
+

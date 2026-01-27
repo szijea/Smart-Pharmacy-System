@@ -1,0 +1,24 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : 
+Content           : {"total":2,"code":200,"data":[{"medicineId":"E2E_M1","genericName":"E2Eè¯","tradeName":"E2Eç","spec":"10mg","manufacturer":"Eå","retail
+                    Price":20.00,"memberPrice":18.00,"isRx":false,"unit":"ç","...
+RawContent        : HTTP/1.1 200 
+                    Vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+                    Transfer-Encoding: chunked
+                    Content-Type: application/json
+                    Date: Sun, 14 Dec 2025 05:38:26 GMT
+                    
+                    {"total":2,...
+Forms             : {}
+Headers           : {[Vary, Origin,Access-Control-Request-Method,Access-Control-Request-Headers], [Transfer-Encoding, chunked], [Content-Type, application/json]
+                    , [Date, Sun, 14 Dec 2025 05:38:26 GMT]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 893
+
+
+

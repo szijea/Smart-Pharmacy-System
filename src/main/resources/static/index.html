@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智慧药房收银系统 - 登录</title>
+  <link rel="stylesheet" href="css/tailwind.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/theme-enhanced.css" />
+  <link rel="stylesheet" href="css/theme-premium.css" />
+  <link rel="stylesheet" href="css/theme-lightwide.css" />
+  <link rel="stylesheet" href="css/ui-enhanced.css" />
+  <link rel="stylesheet" href="css/ui-modern.css" />
+
+  <!-- 高级感配色配置 (安全包装，避免 tailwind 未定义时报错) -->
+  <script>
+      window.tailwind = window.tailwind || {}; // 防止 CDN 加载失败导致 ReferenceError
+      window.tailwind.config = {
+          theme: {
+              extend: {
+                  colors: {
+                      primary: '#1e3a8a',
+                      secondary: '#3b82f6',
+                      neutral: { 50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',800:'#1e293b',900:'#0f172a' }
+                  },
+                  fontFamily: { sans: ['Inter','system-ui','sans-serif'] },
+                  boxShadow: {
+                      'soft': '0 2px 15px -3px rgba(0,0,0,0.05), 0 10px 20px -2px rgba(0,0,0,0.03)',
+                      'hover': '0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04)'
+                  }
+              }
+          }
+      };
+  </script>
+
+  <style>
+    /* 登录页精简版样式：更清晰的结构与留白 */
+    .login-shell { display:grid; grid-template-columns: 1fr; min-height: 100vh; }
+    @media(min-width:1024px){ .login-shell{ grid-template-columns: 1fr 1fr; } }
+    .hero-side { display:none; }
+    @media(min-width:1024px){
+      .hero-side{
+        display:block;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        position:relative;
+        overflow: hidden;
+      }
+      .hero-side::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 25%),
+                    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 25%);
+        pointer-events: none;
+      }
+      .hero-side .brand { position:absolute; top:2.5rem; left:2.5rem; color:#fff; font-weight:700; letter-spacing:1px; font-size: 1.1rem; opacity: 0.9; }
+      .hero-side .hero-content { position:absolute; inset:0; display:flex; flex-direction: column; align-items:center; justify-content:center; padding:4rem; color:#fff; text-align: center; }
+      .hero-side .hero-content .title { font-size: clamp(2.5rem, 5vw, 3.5rem); font-weight:800; line-height:1.2; margin-bottom: 1rem; text-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+      .hero-side .hero-content .subtitle { font-size: 1.1rem; opacity:.85; max-width: 80%; line-height: 1.6; font-weight: 300; }
+    }
+    .login-side { display:flex; align-items:center; justify-content:center; padding:2rem; background:#f8fafc; position: relative; }
+
+    .login-card {
+      width: 100%;
+      max-width: 520px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px -10px rgba(30,58,138,0.1), 0 10px 20px -10px rgba(0,0,0,0.05);
+      animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-card header { padding: 2.5rem 3rem 1rem; text-align: center; }
+    .login-card .body { padding: 1rem 3rem 2.5rem; }
+    .login-card .foot { padding: 1rem 3rem 2rem; text-align: center; border-top: 1px solid #f1f5f9; background: rgba(248,250,252,0.5); border-radius: 0 0 24px 24px; }
+
+    .login-card header .title { font-size: 2rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+    .login-card header .subtitle { color: #64748b; font-size: 0.95rem; }
+
+    .form-fields-wrap { width: 100%; }
+    .field { margin-bottom: 1.25rem; }
+
+    .label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; color: #475569; margin-left: 0.25rem; }
+
+    .input-modern {
+      width: 100%;
+      box-sizing: border-box;
+      height: 52px;
+      padding: 0 1.25rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #fff;
+      color: #1e293b;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+
+    .input-modern:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+      outline: none;
+    }
+
+    .input-modern::placeholder { color: #94a3b8; }
+
+    select.input-modern {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 1rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
+    }
+
+    .btn-modern {
+      width: 100%;
+      height: 54px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-modern:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+      filter: brightness(1.05);
+    }
+
+    .btn-modern:active { transform: translateY(0); }
+
+    .message-area { min-height: 1.5rem; margin-bottom: 1rem; font-size: 0.9rem; text-align: center; }
+    .message-box { padding: 0.75rem; border-radius: 10px; background: #fee2e2; color: #991b1b; display: none; }
+    .message-box.success { background: #dcfce7; color: #166534; }
+
+    /* 响应式调整 */
+    @media (max-width: 640px){
+      .login-card { border-radius: 0; height: 100vh; max-width: none; display: flex; flex-direction: column; justify-content: center; border: none; box-shadow: none; }
+      .login-card header { padding-top: 0; }
+      .login-side { padding: 0; background: #fff; }
+    }
+
+    @media (min-width:1600px){ .login-card { max-width: 60%; } }
+    /* 调整：缩小“欢迎登录”标题 */
+    .login-card header .title { font-size: clamp(2.6rem,6vw,3.6rem); }
+    /* 输入框更精致（略减高度/内边距/字体），保持圆角与对齐 */
+    .form-fields-wrap .input-modern { min-height: 48px; padding: 0.75rem 1rem; font-size: 1rem; }
+    .select-wrap select.input-modern { padding-left: 3rem; padding-right: 2.6rem; }
+    .btn-modern { min-height: 56px; font-size: 1.1rem; }
+    @media (max-width: 420px) { .form-fields-wrap .input-modern { min-height: 46px; padding: 0.7rem 0.95rem; font-size: .98rem; } }
+  </style>
+</head>
+<body class="font-inter text-gray-800 min-h-screen enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+  <div class="login-shell">
+    <aside class="hero-side">
+      <div class="overlay"></div>
+      <div class="brand">Pharmacy Cloud</div>
+      <div class="hero-content">
+        <div>
+          <div class="title">智能药品 · 经营平台</div>
+          <div class="subtitle">高效安全的数字药房运营套件</div>
+        </div>
+      </div>
+    </aside>
+    <main class="login-side">
+      <div class="login-card" role="form" aria-labelledby="login-title">
+        <header>
+          <div class="title" id="login-title">欢迎登录</div>
+          <div class="text-sm text-dim">进入智慧药房管理平台</div>
+        </header>
+        <div class="body">
+          <div id="message-container" class="message-area" aria-live="polite" aria-atomic="true"></div>
+          <form id="login-form" novalidate class="form-fields-wrap">
+            <div class="field">
+              <label class="label" for="tenant-select">店铺</label>
+              <div class="select-wrap">
+                <span class="field-icon"><i class="fa fa-building"></i></span>
+                <select id="tenant-select" class="input-modern" required>
+                  <option value="" disabled selected>请选择店铺</option>
+                  <optgroup label="标准租户">
+                    <option value="bht">🏥 百和堂药店</option>
+                    <option value="wx">💊 万欣药店</option>
+                    <option value="rzt">🏬 仁智堂药店</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="login-username">用户名</label>
+              <input id="login-username" type="text" class="input-modern" autocomplete="username" required placeholder="username" />
+            </div>
+            <div class="field">
+              <label class="label" for="login-password">密码</label>
+              <input id="login-password" type="password" class="input-modern" autocomplete="current-password" required placeholder="••••••••" />
+            </div>
+            <div class="actions">
+              <label class="meta"><input type="checkbox" id="remember" /> <span>记住状态</span></label>
+              <button type="submit" class="btn-modern" id="login-submit">登录系统</button>
+            </div>
+          </form>
+        </div>
+        <div class="foot">
+          <div>© 2026 智能药房收银系统</div>
+          <div><a href="privacy-policy.html">隐私政策</a> · <a href="terms-of-service.html">服务条款</a></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+  // 更新：内部消息显示替换 toast
+  (function(){
+    const form=document.getElementById('login-form');
+    const submitBtn=document.getElementById('login-submit');
+    const msgBox=document.getElementById('message-container');
+    function show(message,type='info'){ if(!msgBox) return; msgBox.innerHTML=`<div class="message-box ${type}"><i class="fa ${type==='error'?'fa-exclamation-circle':type==='success'?'fa-check-circle':'fa-info-circle'}"></i><span>${message}</span></div>`; }
+    async function doLogin(tenant,user,pass){
+      try {
+        submitBtn.disabled=true; submitBtn.textContent='登录中...'; show('正在验证登录信息...','info');
+        const resp= await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json','X-Shop-Id':tenant||''},body:JSON.stringify({username:user,password:pass})});
+        const data= await resp.json().catch(()=>({success:false,message:'解析响应失败'}));
+        if(!resp.ok || !data.success){ show(data.message||('登录失败: '+resp.status),'error'); submitBtn.disabled=false; submitBtn.textContent='登录系统'; return; }
+        try {
+            localStorage.setItem('authToken', data.token);
+            localStorage.setItem('authUser', JSON.stringify(data.user));
+            localStorage.setItem('authTenant', tenant);
+            // 为导航栏保存租户和角色信息
+            localStorage.setItem('selectedTenant', tenant);
+            if(data.user && data.user.roleId){
+                localStorage.setItem('userRoleId', String(data.user.roleId));
+            }
+        } catch(e){}
+        show('登录成功，正在跳转...','success'); setTimeout(()=>{ window.location.href='medicine-management.html'; },800);
+      } catch(err){ show('网络异常: '+ err.message,'error'); submitBtn.disabled=false; submitBtn.textContent='登录系统'; }
+    }
+    form.addEventListener('submit',e=>{ e.preventDefault(); const tenant=document.getElementById('tenant-select').value; const user=document.getElementById('login-username').value.trim(); const pass=document.getElementById('login-password').value.trim(); if(!tenant){ show('请选择店铺 / 租户','error'); return; } if(!user||!pass){ show('用户名或密码不能为空','error'); return; } doLogin(tenant,user,pass); });
+  })();
+  </script>
+</body>
+</html>

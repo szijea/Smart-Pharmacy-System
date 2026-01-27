@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script>(function(){if(!window.tailwind){window.tailwind={config:{}};} if(!window.tailwind.config){window.tailwind.config={};}})();</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧药房收银系统 - 员工管理</title>
+    <!-- 使用本地预编译的 Tailwind 样式 -->
+    <link rel="stylesheet" href="css/tailwind.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/theme-enhanced.css" />
+    <link rel="stylesheet" href="css/theme-premium.css" />
+    <link rel="stylesheet" href="css/theme-lightwide.css" />
+    <link rel="stylesheet" href="css/ui-enhanced.css" />
+    <link rel="stylesheet" href="css/ui-modern.css" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+
+    <style>
+        :root { --color-primary:#165DFF; --color-secondary:#36B37E; --color-accent:#FF5630; --color-warning:#FFAB00; }
+        body { font-family: Inter, system-ui, sans-serif; }
+        .sidebar-item { display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:.5rem;transition:.2s;cursor:pointer; }
+        .sidebar-item.active { background:var(--color-primary);color:#fff; }
+        .sidebar-item:not(.active):hover { background:#f3f4f6; }
+        .badge { display:inline-flex;align-items:center;padding:.25rem .5rem;border-radius:999px;font-size:.75rem;font-weight:500; }
+        .temperature-normal { background:#dcfce7;color:#166534; }
+        .temperature-high { background:rgba(255,171,0,.15);color:#b45309; }
+        /* 统一主内容滚动样式 */
+        .main-content{flex:1 1 auto;padding:1.5rem;min-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin;}
+        .main-content::-webkit-scrollbar{width:8px}
+        .main-content::-webkit-scrollbar-track{background:#f5f5f5;border-radius:4px}
+        .main-content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+        .main-content::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+        /* 页面特有附加样式：modal 相关保留 */
+        .modal-backdrop { position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;display:none; }
+        .modal { position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center; }
+        .modal-content { background:#fff;border-radius:.75rem;max-width:28rem;width:100%;margin:0 1rem;box-shadow:0 10px 25px -5px rgba(0,0,0,.1); }
+        /* 页面特有样式：员工管理 */
+        .layout-two-column { display: flex; gap: 1.5rem; }
+        .layout-sidebar { flex: 0 0 250px; }
+        .layout-main { flex: 1; }
+    </style>
+    <script src="js/common.js" defer></script>
+    <script src="js/common-nav.js" defer></script>
+</head>
+<body class="font-inter text-gray-800 min-h-screen flex enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+
+<div class="scroll-progress" id="scroll-progress"></div>
+<div id="common-nav" data-active="staff"></div>
+<div id="notification-panel" class="hidden absolute top-20 right-6 bg-white shadow-lg rounded-lg p-4 w-64 text-sm">
+  <div class="font-medium mb-2">通知面板</div>
+  <p class="text-gray-500">暂无通知</p>
+</div>
+<main class="flex-1 flex flex-col pt-16">
+  <div class="main-content" id="main-content"><div class="container-fluid section-gap"><div class="app-shell">
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 action-bar">
+      <div>
+        <h2 class="page-title font-bold page-title-decor">员工管理</h2>
+        <p class="text-gray-500">人员档案与权限配置</p>
+      </div>
+      <div class="flex gap-2 items-center">
+        <select id="filter-role" class="input-modern text-xs py-1.5 w-24" aria-label="职位筛选">
+            <option value="">所有职位</option>
+            <option value="1">管理员</option>
+            <option value="2">店长</option>
+            <option value="3">收银员</option>
+            <option value="4">药剂师</option>
+        </select>
+        <select id="filter-status" class="input-modern text-xs py-1.5 w-24" aria-label="状态筛选">
+            <option value="">所有状态</option>
+            <option value="1">在岗</option>
+            <option value="0">离职/禁用</option>
+        </select>
+        <div class="relative">
+            <input type="text" id="staff-search" class="input-modern text-xs py-1.5 pl-8 w-48" placeholder="搜索姓名/用户名/电话" aria-label="员工搜索">
+            <i class="fa fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+        </div>
+        <button class="btn btn-outline text-xs" id="refresh-staff"><i class="fa fa-refresh"></i> 刷新</button>
+        <button class="btn btn-primary text-xs" id="add-staff"><i class="fa fa-plus"></i> 新增员工</button>
+      </div>
+    </div>
+
+    <div class="dashboard-kpis kpi-horizontal mb-6" id="staff-kpi-row">
+      <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">员工总数</p><h3 class="text-xl font-bold" id="kpi-staff-total">--</h3></div>
+      <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">在岗</p><h3 class="text-xl font-bold" id="kpi-staff-active">--</h3></div>
+      <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">本月新增</p><h3 class="text-xl font-bold" id="kpi-staff-new">--</h3></div>
+      <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">请假/离岗</p><h3 class="text-xl font-bold" id="kpi-staff-leave">--</h3></div>
+    </div>
+
+    <div class="layout-main space-y-6">
+        <div class="card-modern">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 table-modern-compact">
+              <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">员工ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">姓名</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">职位</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">联系电话</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">入职日期</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+              </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200" id="staff-table"></tbody>
+            </table>
+          </div>
+          <div class="p-4 border-t border-gray-100 flex items-center justify-between large-click" id="staff-pagination">
+            <div class="text-sm text-gray-500" id="staff-summary">暂无数据</div>
+            <div class="flex gap-2" id="staff-page-buttons"></div>
+          </div>
+        </div>
+      </div>
+  </div></div></div> <!-- close app-shell / container-fluid / main-content -->
+</main>
+
+<!-- 引入通用脚本 -->
+<script src="js/common.js"></script>
+<script src="js/common-nav.js"></script>
+<script src="js/ui-global.js" defer></script>
+<script src="js/staff.js" defer></script>
+
+<div class="modal-backdrop" id="staff-modal-backdrop"></div>
+<div class="modal" id="staff-modal">
+    <div class="modal-content p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold" id="modal-title">新增员工</h3>
+            <button class="text-gray-400 hover:text-gray-600" id="close-staff-modal" aria-label="关闭员工编辑窗口"><span class="sr-only">关闭</span><i class="fa fa-times" aria-hidden="true"></i></button>
+        </div>
+        <form id="staff-form" class="space-y-4">
+            <input type="hidden" id="staff-id">
+            <div>
+                <label for="staff-username" class="block text-sm font-medium text-gray-700 mb-1">用户名 *</label>
+                <input type="text" class="input" id="staff-username" required name="username" aria-label="用户名">
+            </div>
+            <div>
+                <label for="staff-password" class="block text-sm font-medium text-gray-700 mb-1">密码 <span id="password-hint" class="text-xs text-gray-500 font-normal">(新增必填)</span></label>
+                <input type="password" class="input" id="staff-password" name="password" aria-label="密码">
+            </div>
+            <div>
+                <label for="staff-name" class="block text-sm font-medium text-gray-700 mb-1">姓名 *</label>
+                <input type="text" class="input" id="staff-name" required name="name" aria-label="员工姓名">
+            </div>
+            <div>
+                <label for="staff-role" class="block text-sm font-medium text-gray-700 mb-1">职位 *</label>
+                <select class="input" id="staff-role" required name="roleId" aria-label="员工职位">
+                    <option value="1">管理员</option>
+                    <option value="2">店长</option>
+                    <option value="3">收银员</option>
+                    <option value="4">药剂师</option>
+                </select>
+            </div>
+            <div>
+                <label for="staff-phone" class="block text-sm font-medium text-gray-700 mb-1">联系电话</label>
+                <input type="text" class="input" id="staff-phone" name="phone" aria-label="联系电话">
+            </div>
+            <div>
+                <label for="staff-status" class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <select class="input" id="staff-status" name="status" aria-label="状态">
+                    <option value="1">在岗</option>
+                    <option value="0">离职/禁用</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" class="btn btn-outline" id="cancel-staff">取消</button>
+                <button type="submit" class="btn btn-primary" id="save-staff">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<script>
+    (function(){
+      const bar=document.getElementById('scroll-progress');
+      function update(){const h=document.documentElement.scrollHeight - window.innerHeight;const sc=window.scrollY;bar&&(bar.style.width=(h>0?(sc/h)*100:0)+'%');}
+      window.addEventListener('scroll',update,{passive:true});update();
+      if(!document.getElementById('theme-toggle')){const btn=document.createElement('button');btn.id='theme-toggle';btn.className='theme-toggle';btn.innerHTML='<i class="fa fa-moon-o"></i>';btn.onclick=()=>{const dark=document.documentElement.classList.toggle('dark');btn.innerHTML='<i class="fa '+(dark?'fa-sun-o':'fa-moon-o')+'"></i>';};document.body.appendChild(btn);} })();
+  </script>
+<script src="js/a11y.js" defer></script>
+<!-- <script src="js/kpi.js"></script> -->
+</body>
+</html>

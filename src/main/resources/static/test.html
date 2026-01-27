@@ -1,0 +1,94 @@
+<!-- test.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试页面 - LightWide 主题</title>
+  <link rel="stylesheet" href="css/tailwind.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/theme-enhanced.css" />
+  <link rel="stylesheet" href="css/theme-premium.css" />
+  <link rel="stylesheet" href="css/theme-lightwide.css" />
+  <link rel="stylesheet" href="css/ui-enhanced.css" />
+  <link rel="stylesheet" href="css/ui-modern.css" />
+</head>
+<body class="font-inter text-gray-800 min-h-screen flex enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+
+<div class="scroll-progress" id="scroll-progress"></div>
+<div id="common-nav" data-active="test"></div>
+<div id="notification-panel" class="hidden absolute top-20 right-6 bg-white shadow-lg rounded-lg p-4 w-64 text-sm">
+  <div class="font-medium mb-2">通知面板</div>
+  <p class="text-gray-500">暂无通知</p>
+</div>
+<main class="flex-1 flex flex-col pt-16">
+  <div class="main-content" id="main-content">
+    <div class="container-fluid section-gap">
+      <div class="app-shell">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 action-bar">
+          <div>
+            <h2 class="page-title font-bold page-title-decor">后端连接测试</h2>
+            <p class="text-gray-500">快速验证 API 与数据库可用性</p>
+          </div>
+          <div class="flex gap-3">
+            <button class="btn btn-outline" onclick="location.reload()"><i class="fa fa-refresh"></i> 刷新页面</button>
+          </div>
+        </div>
+
+        <div class="cozy-grid cols-3">
+          <div class="card-modern p-6"><h3 class="font-bold mb-2 text-sm">基础连通性</h3><p class="text-xs text-gray-500 mb-4">测试 /api/health</p><button class="btn btn-primary text-xs" onclick="testHealth()">测试</button></div>
+          <div class="card-modern p-6"><h3 class="font-bold mb-2 text-sm">数据库连接</h3><p class="text-xs text-gray-500 mb-4">测试 /api/test/db</p><button class="btn btn-primary text-xs" onclick="testDatabase()">测试</button></div>
+          <div class="card-modern p-6"><h3 class="font-bold mb-2 text-sm">药品搜索</h3><p class="text-xs text-gray-500 mb-4">测试 /api/medicines/search</p><button class="btn btn-primary text-xs" onclick="testMedicineSearch()">测试</button></div>
+        </div>
+        <div class="card-modern p-6">
+          <h3 class="font-bold mb-4 text-lg">测试结果</h3>
+          <div id="result" class="text-sm whitespace-pre-wrap bg-gray-50 border border-gray-200 rounded p-4 min-h-[120px]"></div>
+        </div>
+        <div class="dashboard-kpis kpi-horizontal mb-6" id="test-kpi-row">
+          <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">健康检查</p><h3 class="text-xl font-bold" id="kpi-health">--</h3></div>
+          <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">数据库连接</p><h3 class="text-xl font-bold" id="kpi-db">--</h3></div>
+          <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">药品搜索</p><h3 class="text-xl font-bold" id="kpi-search">--</h3></div>
+        </div>
+      </div> <!-- end app-shell -->
+    </div> <!-- end container-fluid -->
+  </div> <!-- end main-content -->
+</main>
+<script src="js/common-nav.js"></script>
+<script>
+async function safeFetch(url){
+  const tenant=localStorage.getItem('selectedTenant')||'default';
+  return fetch(url,{headers:{'X-Shop-Id':tenant}});
+}
+async function testHealth(){await runTest('/api/health');}
+async function testDatabase(){await runTest('/api/test/db');}
+async function testMedicineSearch(){await runTest('/api/medicines/search?keyword=维');}
+async function runTest(endpoint){
+  const box=document.getElementById('result');
+  box.textContent='正在请求: '+endpoint+'...';
+  try {
+    const resp=await safeFetch(endpoint);
+    const text=await resp.text();
+    box.textContent='状态: '+resp.status+'\n'+text;
+  } catch(e){
+    box.textContent='请求失败: '+e.message;
+  }
+}
+</script>
+<script>
+    (function(){
+      const bar=document.getElementById('scroll-progress');
+      function update(){const h=document.documentElement.scrollHeight - window.innerHeight;const sc=window.scrollY;bar&&(bar.style.width=(h>0?(sc/h)*100:0)+'%');}
+      window.addEventListener('scroll',update,{passive:true});update();
+      if(!document.getElementById('theme-toggle')){const btn=document.createElement('button');btn.id='theme-toggle';btn.className='theme-toggle';btn.innerHTML='<i class="fa fa-moon-o"></i>';btn.onclick=()=>{const dark=document.documentElement.classList.toggle('dark');btn.innerHTML='<i class="fa '+(dark?'fa-sun-o':'fa-moon-o')+'"></i>';};document.body.appendChild(btn);} })();
+  </script>
+<script>(function(){var nav=document.getElementById('common-nav');if(nav&&!nav.classList.contains('nav-glass'))nav.classList.add('nav-glass');})();</script>
+<script src="js/a11y.js" defer></script>
+<script src="js/kpi.js"></script>
+<script>
+(function(){
+  function mark(id,status){ const el=document.getElementById(id); if(!el) return; el.textContent=status; el.classList.remove('text-green-600','text-red-600'); el.classList.add(/200|成功/.test(status)?'text-green-600':'text-red-600'); }
+  const origRun=window.runTest; window.runTest= async function(ep){ const res= await origRun(ep); try{ if(ep.includes('/health')) mark('kpi-health', document.getElementById('result').textContent.split('\n')[0]); if(ep.includes('/db')) mark('kpi-db', document.getElementById('result').textContent.split('\n')[0]); if(ep.includes('/medicines/search')) mark('kpi-search', document.getElementById('result').textContent.split('\n')[0]); }catch(e){ console.warn(e); } return res; };
+})();
+</script>
+</body>
+</html>

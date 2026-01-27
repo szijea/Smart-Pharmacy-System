@@ -1,0 +1,87 @@
+/* 全局滚动条样式 */
+* {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #cbd5e0 #f7fafc; /* Firefox */
+}
+
+/* Webkit浏览器滚动条样式 (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+::-webkit-scrollbar-corner {
+  background: #f7fafc;
+}
+
+/* 针对特定元素的滚动条样式 */
+.card::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.card::-webkit-scrollbar-thumb,
+.modal-content::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  * {
+    scrollbar-color: #4a5568 #2d3748; /* Firefox */
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #2d3748;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #4a5568;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+  }
+}
+
+.stock-status {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.stock-in-stock {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+}
+
+.stock-low-stock {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.stock-out-of-stock {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.add-to-cart-btn:disabled {
+    background-color: #ccc !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}

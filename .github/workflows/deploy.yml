@@ -1,0 +1,112 @@
+name: Deploy to Ubuntu
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secrets (optional)
+        run: |
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ] || [ -z "${{ secrets.SSH_HOST }}" ] || [ -z "${{ secrets.SSH_USER }}" ]; then
+            echo "Secrets missing, skipping deploy (this is expected if you don't use SSH-based deploy now).";
+            exit 0
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Remote deploy
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          REPO: ${{ github.repository }}
+        run: |
+          ssh -o StrictHostKeyChecking=yes ${SSH_USER}@${SSH_HOST} << 'EOF'
+          set -e
+          # Pull latest image from GHCR
+          sudo docker pull ghcr.io/${REPO}/springboot-main:latest || true
+          # Navigate to deployment directory
+          DEPLOY_DIR=/opt/springboot-main
+          sudo mkdir -p ${DEPLOY_DIR}
+          cd ${DEPLOY_DIR}
+          # Write/update docker-compose.yml using GHCR image
+          cat > docker-compose.yml << 'YAML'
+          services:
+            mysql:
+              image: mysql:8.0
+              restart: unless-stopped
+              environment:
+                MYSQL_ROOT_PASSWORD: rootpass
+                MYSQL_DATABASE: pharmacy
+              ports:
+                - "3306:3306"
+              volumes:
+                - mysql_data:/var/lib/mysql
+                - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+            app:
+              image: ghcr.io/${REPO}/springboot-main:latest
+              restart: unless-stopped
+              depends_on:
+                - mysql
+              environment:
+                JAVA_OPTS: -Xms256m -Xmx512m
+              ports:
+                - "8080:8080"
+          volumes:
+            mysql_data:
+          YAML
+          # Ensure init SQL exists (optional bind if available)
+          sudo mkdir -p docker/mysql/init
+          # Bring up services
+          sudo docker compose pull
+          sudo docker compose up -d
+          # Install/Configure Nginx for www.szijea.xin (HTTP)
+          if ! command -v nginx >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y nginx
+          fi
+          sudo bash -c 'cat > /etc/nginx/sites-available/szijea.xin' << 'NGINX'
+          server {
+            listen 80;
+            server_name www.szijea.xin szijea.xin;
+            location / {
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_pass http://127.0.0.1:8080;
+            }
+          }
+          NGINX
+          sudo ln -sf /etc/nginx/sites-available/szijea.xin /etc/nginx/sites-enabled/szijea.xin
+          sudo nginx -t && sudo systemctl restart nginx
+          # Install certbot and obtain HTTPS certificates
+          if ! command -v certbot >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y certbot python3-certbot-nginx
+          fi
+          # Obtain/renew certificates
+          sudo certbot --nginx -n --agree-tos -m admin@szijea.xin -d www.szijea.xin -d szijea.xin || true
+          # Force HTTP->HTTPS redirect by updating nginx config if needed
+          sudo bash -c 'cat > /etc/nginx/sites-available/szijea.xin' << 'NGINX'
+          server {
+            listen 80;
+            server_name www.szijea.xin szijea.xin;
+            return 301 https://$host$request_uri;
+          }
+          # HTTPS server block managed by certbot in /etc/nginx/sites-enabled/default or certbot config
+          NGINX
+          sudo ln -sf /etc/nginx/sites-available/szijea.xin /etc/nginx/sites-enabled/szijea.xin
+          sudo nginx -t && sudo systemctl reload nginx
+          echo "Deploy completed (HTTPS enabled)"
+          EOF

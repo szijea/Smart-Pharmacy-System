@@ -1,0 +1,70 @@
+/* ui-enhanced.css - 全局统一的增强样式 (卡片阴影 / 交互动画 / 焦点 / 运动可访问性)
+html.dark .btn[data-ripple]::after { background:radial-gradient(circle, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 60%); }
+/* Ripple 降级 (dark 模式) */
+
+.header-icon-btn:focus-visible { box-shadow:0 0 0 3px rgba(99,102,241,.5); }
+.header-icon-btn { position:relative; }
+/* Header按钮可访问增强 */
+
+.visually-hidden { position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+/* 统一导航区域角色辅助标记（ARIA 与 visually hidden） */
+
+@keyframes pageEnter { 0% { opacity:0; transform: translateY(16px);} 100% { opacity:1; transform: translateY(0);} }
+.page-enter { animation: pageEnter .6s var(--ui-ease); }
+/* 主容器进入动画 (页面根添加 .page-enter 已存在) */
+
+.sidebar-item:focus-visible { box-shadow:0 0 0 3px rgba(22,93,255,.45); }
+.sidebar-item { transition: background .35s var(--ui-ease), color .35s var(--ui-ease); }
+/* 侧边导航项动画 */
+
+#scroll-progress.enhanced-bar { height:4px; background:linear-gradient(90deg,#6366f1,#10b981,#06b6d4,#2563eb); box-shadow:0 0 8px rgba(99,102,241,.55); }
+/* Scroll progress 更细节可视化(保持已有 id，不强制覆盖) */
+
+.profit-negative { color:#b91c1c; }
+.profit-positive { color:#15803d; }
+/* 可访问颜色微调 */
+
+.divider-soft { height:1px; background:linear-gradient(90deg,rgba(0,0,0,.08),rgba(0,0,0,.04)); margin:1.5rem 0; }
+/* 更柔和分割线辅助类 */
+
+}
+  .card, .premium-card, .btn, .fade-slide-in, .table-modern tbody tr { transition: none !important; animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+/* 减少动画 - 用户 prefers-reduced-motion 时降级 */
+
+.table-modern tbody tr:hover { transform: translateY(-2px); }
+.table-modern tbody tr { transition: background .35s, transform .35s; }
+/* 表格行淡入 */
+
+@keyframes fadeSlideIn { 0% { opacity:0; transform: translateY(12px) scale(.98);} 60% { opacity:1;} 100% { opacity:1; transform: translateY(0) scale(1);} }
+.fade-slide-in { animation: fadeSlideIn .55s var(--ui-ease); }
+/* 渐进淡入动画容器 */
+
+.nav-key-current { background:#165DFF !important; color:#fff !important; }
+.kb-focus-outline { outline:2px solid #2563eb !important; outline-offset:2px; }
+/* 无障碍 - 键盘导航辅助类 */
+
+:focus-visible { outline: var(--ui-focus-ring); outline-offset: var(--ui-focus-offset); border-radius:8px; }
+/* 统一焦点可见样式 (不覆盖 theme-premium 强化，做兼容层) */
+
+.btn[data-ripple]:active::after { opacity:.9; transform:scale(2.5); }
+.btn[data-ripple]::after { content:""; position:absolute; inset:0; background:radial-gradient(circle, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 60%); opacity:0; transform:scale(.2); transition:opacity .6s, transform .6s; }
+.btn { position: relative; overflow: hidden; }
+/* 按钮交互反馈动画 / ripple */
+
+.card.super-elevate:hover { box-shadow: var(--ui-shadow-lg); transform: translateY(-6px); }
+.card.hover-elevate:hover, .card.card-interactive:hover, .premium-card.hover-elevate:hover { box-shadow: var(--ui-shadow-md); transform: translateY(-4px); }
+.card, .premium-card { transition: box-shadow .5s var(--ui-ease), transform .55s var(--ui-ease); }
+/* 卡片统一阴影与过渡 */
+
+}
+  --ui-border-soft: 1px solid rgba(0,0,0,.06);
+  --ui-focus-offset: 3px;
+  --ui-focus-ring: 3px solid rgba(99,102,241,.55);
+  --ui-shadow-lg: 0 10px 40px -8px rgba(0,0,0,.18), 0 18px 48px -12px rgba(0,0,0,.14);
+  --ui-shadow-md: 0 4px 18px -4px rgba(0,0,0,.12), 0 12px 32px -6px rgba(0,0,0,.10);
+  --ui-shadow-sm: 0 2px 8px -2px rgba(0,0,0,.08), 0 4px 14px -4px rgba(0,0,0,.06);
+  --ui-ease: cubic-bezier(.16,.8,.3,1);
+:root {
+   仅添加、不破坏现有 theme-premium.css 与 base/layout.css，可安全叠加 */
+

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BOSS - 管理后台</title>
+  <link rel="stylesheet" href="css/tailwind.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <style>
+    body { background-color: #f9fafb; }
+    .stat-card { background-color: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+    .stat-title { font-size: 0.875rem; color: #6b7280; }
+    .stat-value { font-size: 1.875rem; font-weight: bold; color: #111827; }
+  </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+
+  <div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">BOSS 管理后台</h1>
+      <button id="logout-button" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">登出</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+      <div class="stat-card">
+        <p class="stat-title">总销售额</p>
+        <p id="total-revenue" class="stat-value">加载中...</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-title">总库存量</p>
+        <p id="total-inventory" class="stat-value">加载中...</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-title">租户总数</p>
+        <p id="tenant-count" class="stat-value">加载中...</p>
+      </div>
+    </div>
+
+    <!-- Sections -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Transfer Logs -->
+      <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-4">调货记录</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">从</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">至</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">药品ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作员</th>
+              </tr>
+            </thead>
+            <tbody id="transfer-logs-body" class="bg-white divide-y divide-gray-200">
+              <!-- Logs will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-4">后台设置</h2>
+        <div>
+          <h3 class="text-lg font-medium mb-2">修改密码</h3>
+          <div class="space-y-3">
+            <div>
+              <label for="new-password" class="text-sm font-medium text-gray-700">新密码</label>
+              <input type="password" id="new-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+            </div>
+            <button id="change-password-button" class="w-full py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">确认修改</button>
+            <p id="password-message" class="text-sm"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const token = localStorage.getItem('boss_token');
+      if (!token) {
+        window.location.href = 'boss-login.html';
+        return;
+      }
+
+      const headers = { 'Authorization': token };
+
+      // Fetch and display dashboard data
+      fetch('/api/boss/dashboard', { headers })
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('total-revenue').textContent = `¥${data.totalRevenue.toFixed(2)}`;
+          document.getElementById('total-inventory').textContent = data.totalInventoryCount;
+          document.getElementById('tenant-count').textContent = data.tenantCount;
+        })
+        .catch(error => console.error('Error fetching dashboard data:', error));
+
+      // Fetch and display transfer logs
+      fetch('/api/boss/transfer-logs', { headers })
+        .then(response => response.json())
+        .then(logs => {
+          const logsBody = document.getElementById('transfer-logs-body');
+          if (logs.length === 0) {
+            logsBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">没有调货记录</td></tr>';
+            return;
+          }
+          logsBody.innerHTML = logs.map(log => `
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(log.transferTime).toLocaleString()}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.fromTenant}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.toTenant}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.medicineId}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.quantity}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.operatorId}</td>
+            </tr>
+          `).join('');
+        })
+        .catch(error => console.error('Error fetching transfer logs:', error));
+
+      // Logout button
+      document.getElementById('logout-button').addEventListener('click', () => {
+        localStorage.removeItem('boss_token');
+        window.location.href = 'boss-login.html';
+      });
+
+      // Change password
+      document.getElementById('change-password-button').addEventListener('click', async () => {
+        const newPassword = document.getElementById('new-password').value;
+        const passwordMessage = document.getElementById('password-message');
+        if (!newPassword) {
+          passwordMessage.textContent = '新密码不能为空。';
+          passwordMessage.style.color = 'red';
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/boss/change-password', {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newPassword })
+          });
+          const data = await response.json();
+          if (response.ok) {
+            passwordMessage.textContent = '密码修改成功！';
+            passwordMessage.style.color = 'green';
+            document.getElementById('new-password').value = '';
+          } else {
+            throw new Error(data.message || '修改失败');
+          }
+        } catch (error) {
+          passwordMessage.textContent = `错误: ${error.message}`;
+          passwordMessage.style.color = 'red';
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

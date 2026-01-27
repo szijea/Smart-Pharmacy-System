@@ -1,0 +1,94 @@
+spring:
+  datasource:
+    # 使用环境变量 DB_HOST, 默认 localhost；容器中通过 -e DB_HOST=db 指向 mysql 服务
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/rzt_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # 多租户店铺数据库列表示例（使用同一 DB_HOST 变量）
+  tenants:
+    - id: bht  # 原 shopA → bht（店铺标识）
+      url: jdbc:mysql://${DB_HOST:localhost}:3306/bht?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      username: root
+      password: 123456
+    - id: wx   # 原 shopB → wx（店铺标识）
+      url: jdbc:mysql://${DB_HOST:localhost}:3306/wx?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      username: root
+      password: 123456
+    - id: rzt  # 新增租户 rzt
+      url: jdbc:mysql://${DB_HOST:localhost}:3306/rzt_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      username: root
+      password: 123456
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          time_zone: Asia/Shanghai
+    open-in-view: false
+
+  flyway:
+    enabled: false
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+  mvc:
+    static-path-pattern: /**
+
+  main:
+    lazy-initialization: true
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+    session:
+      cookie:
+        same-site: None
+        secure: true
+  forward-headers-strategy: framework  # 支持 Nginx/X-Forwarded-* 解析
+
+member:
+  cache:
+    ttl-minutes: 10
+    batch-refresh-cron: "0 */15 * * * *" # 每15分钟执行批量刷新
+    evict-cron: "0 */20 * * * *"      # 修正为6字段标准 cron, 每20分钟清理过期缓存
+
+logging:
+  level:
+    com.pharmacy: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.pharmacy.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+health:
+  cache-ttl-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized

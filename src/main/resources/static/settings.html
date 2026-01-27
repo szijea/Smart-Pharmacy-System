@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script>(function(){if(!window.tailwind){window.tailwind={config:{}};} if(!window.tailwind.config){window.tailwind.config={};}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>智慧药房收银系统 - 系统设置</title>
+  <link rel="stylesheet" href="css/tailwind.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/theme-enhanced.css" />
+  <link rel="stylesheet" href="css/theme-premium.css" />
+  <link rel="stylesheet" href="css/theme-lightwide.css" />
+  <link rel="stylesheet" href="css/ui-enhanced.css" />
+  <link rel="stylesheet" href="css/ui-modern.css" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <style>
+    /* 统一主内容滚动样式 */
+    .main-content{flex:1 1 auto;padding:1.5rem;min-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin;}
+    .main-content::-webkit-scrollbar{width:8px}
+    .main-content::-webkit-scrollbar-track{background:#f5f5f5;border-radius:4px}
+    .main-content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+    .main-content::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+
+    /* sr-only 样式 */
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  </style>
+  <script src="js/common.js" defer></script>
+  <script src="js/common-nav.js" defer></script>
+</head>
+<body class="font-inter text-gray-800 min-h-screen flex enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+<a href="#settings-main" class="skip-link">跳到主内容</a>
+<div class="scroll-progress" id="scroll-progress"></div>
+<div id="common-nav" data-active="settings"></div>
+<!-- 统一通知面板占位（控制台格式） -->
+<div id="notification-panel" class="hidden absolute top-20 right-6 bg-white shadow-lg rounded-lg p-4 w-64 text-sm">
+  <div class="font-medium mb-2">通知面板</div>
+  <p class="text-gray-500">暂无通知</p>
+</div>
+<main class="flex-1 flex flex-col pt-16">
+  <div id="settings-main" class="main-content" ><div class="container-fluid section-gap"><div class="app-shell">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 action-bar mb-2">
+      <div>
+        <h2 class="page-title font-bold page-title-decor">系统设置</h2>
+        <p class="text-gray-500">业务参数与系统配置</p>
+      </div>
+    </div>
+    <div class="dashboard-kpis kpi-horizontal mb-6" id="settings-kpi-row">
+      <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">设置分类</p><h3 class="text-xl font-bold" id="kpi-settings-cats">--</h3></div>
+      <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">支付方式</p><h3 class="text-xl font-bold" id="kpi-settings-pay">--</h3></div>
+      <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">库存策略(占位)</p><h3 class="text-xl font-bold" id="kpi-settings-inv">--</h3></div>
+      <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">打印模板(占位)</p><h3 class="text-xl font-bold" id="kpi-settings-print">--</h3></div>
+    </div>
+    <!-- 主栅格 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 section-gap">
+      <!-- 左侧导航 -->
+      <div class="lg:col-span-1">
+        <div class="card-modern sticky top-6">
+          <div class="p-4 border-b border-gray-100">
+            <h3 class="font-bold">设置分类</h3>
+          </div>
+          <div class="p-2">
+            <button class="w-full text-left sidebar-item active" data-tab="basic">
+              <i class="fa fa-info-circle w-5 text-center"></i>
+              <span>基本设置</span>
+            </button>
+            <button class="w-full text-left sidebar-item" data-tab="inventory">
+              <i class="fa fa-warehouse w-5 text-center"></i>
+              <span>库存设置</span>
+            </button>
+            <button class="w-full text-left sidebar-item" data-tab="member">
+              <i class="fa fa-users w-5 text-center"></i>
+              <span>会员设置</span>
+            </button>
+            <button class="w-full text-left sidebar-item" data-tab="payment">
+              <i class="fa fa-credit-card w-5 text-center"></i>
+              <span>支付设置</span>
+            </button>
+            <button class="w-full text-left sidebar-item" data-tab="print">
+              <i class="fa fa-print w-5 text-center"></i>
+              <span>打印设置</span>
+            </button>
+            <button class="w-full text-left sidebar-item" data-tab="security">
+              <i class="fa fa-lock w-5 text-center"></i>
+              <span>安全设置</span>
+            </button>
+            <button class="w-full text-left sidebar-item" data-tab="backup">
+              <i class="fa fa-database w-5 text-center"></i>
+              <span>数据备份</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧内容 -->
+      <div class="lg:col-span-2 space-y-6 section-gap">
+        <!-- 基本设置 -->
+        <div class="setting-tab active" id="basic-tab">
+          <div class="card-modern p-6">
+            <h3 class="font-bold text-lg mb-6">店铺基本信息</h3>
+            <form id="basic-settings-form" class="space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-group">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">店铺名称 <span class="text-accent">*</span></label>
+                  <input type="text" id="store-name" class="input-modern" placeholder="请输入店铺名称" required>
+                  <div class="error-message" id="store-name-error">请输入店铺名称</div>
+                </div>
+                <div class="form-group">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">联系电话 <span class="text-accent">*</span></label>
+                  <input type="tel" id="store-phone" class="input" placeholder="请输入联系电话" required>
+                  <div class="error-message" id="store-phone-error">请输入有效的联系电话</div>
+                </div>
+                <div class="md:col-span-2 form-group">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">店铺地址 <span class="text-accent">*</span></label>
+                  <textarea id="store-address" class="input h-20" placeholder="请输入店铺详细地址" required></textarea>
+                  <div class="error-message" id="store-address-error">请输入店铺地址</div>
+                </div>
+                <div class="md:col-span-2 form-group">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">店铺简介</label>
+                  <textarea id="store-desc" class="input h-16" placeholder="请输入店铺简介"></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">营业时间</label>
+                  <div class="flex gap-3">
+                    <input type="time" id="open-time" class="input">
+                    <span class="flex items-center">至</span>
+                    <input type="time" id="close-time" class="input">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">营业执照编号</label>
+                  <input type="text" id="license-number" class="input" placeholder="请输入营业执照编号">
+                </div>
+              </div>
+              <div class="flex justify-end">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-save"></i> 保存设置
+                  <span class="loading hidden" id="basic-loading"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 库存设置 -->
+        <div class="setting-tab hidden" id="inventory-tab">
+          <div class="card-modern p-6">
+            <h3 class="font-bold text-lg mb-6">库存预警设置</h3>
+            <form id="inventory-settings-form" class="space-y-6">
+              <div class="form-group">
+                <label class="block text-sm font-medium text-gray-700 mb-1">低库存预警阈值 <span class="text-accent">*</span></label>
+                <div class="flex items-center gap-3">
+                  <input type="number" id="low-stock-threshold" class="input-modern max-w-xs" min="1" placeholder="例如：10" required>
+                  <span class="text-gray-500">当药品库存低于此值时触发预警</span>
+                </div>
+                <div class="error-message" id="threshold-error">请输入有效的阈值</div>
+              </div>
+
+              <div class="form-group">
+                <label class="block text-sm font-medium text-gray-700 mb-1">效期预警天数 <span class="text-accent">*</span></label>
+                <div class="flex items-center gap-3">
+                  <input type="number" id="expiry-warning-days" class="input-modern max-w-xs" min="1" placeholder="例如：30" value="30" required>
+                  <span class="text-gray-500">提前多少天提醒药品即将过期</span>
+                </div>
+                <div class="error-message" id="expiry-warning-error">请输入有效的天数（>=1）</div>
+              </div>
+
+              <div class="form-group">
+                <label class="block text-sm font-medium text-gray-700 mb-1">库存预警通知方式</label>
+                <div class="flex flex-wrap gap-4 mt-2">
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary" checked id="notify-system">
+                    <span>系统消息</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary" id="notify-email">
+                    <span>邮件通知</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary" checked id="notify-sms">
+                    <span>手机短信</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="notification-settings" class="space-y-4 pt-4 border-t border-gray-100">
+                <div id="email-settings" class="hidden">
+                  <h4 class="font-medium mb-3">邮件通知设��</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">接收邮箱</label>
+                      <input type="email" id="notify-email-address" class="input" placeholder="请输入接收通知的邮箱">
+                    </div>
+                    <div class="form-group">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">发送频率</label>
+                      <select id="email-frequency" class="input">
+                        <option value="immediate">即时发送</option>
+                        <option value="daily">每日汇总</option>
+                        <option value="weekly">每周汇总</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="sms-settings" class="hidden">
+                  <h4 class="font-medium mb-3">短信通知设置</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">接收手机号</label>
+                      <input type="tel" id="notify-phone" class="input" placeholder="请输入接收通知的手机号">
+                    </div>
+                    <div class="form-group">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">发送频率</label>
+                      <select id="sms-frequency" class="input">
+                        <option value="immediate">即时发送</option>
+                        <option value="daily">每日汇总</option>
+                        <option value="weekly">每周汇总</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="block text-sm font-medium text-gray-700 mb-1">库存盘点提醒周期</label>
+                <select id="inventory-check-cycle" class="input">
+                  <option value="weekly">每周一次</option>
+                  <option value="monthly" selected>每月一次</option>
+                  <option value="quarterly">每季度一次</option>
+                </select>
+              </div>
+
+              <div class="flex justify-end">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-save"></i> 保存设置
+                  <span class="loading hidden" id="inventory-loading"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 会员设置 -->
+        <div class="setting-tab hidden" id="member-tab">
+          <div class="card p-6">
+            <h3 class="font-bold text-lg mb-6">会员规则设置</h3>
+            <form id="member-settings-form" class="space-y-6">
+              <div class="form-group">
+                <label class="block text-sm font-medium text-gray-700 mb-1">会员积分规则 <span class="text-accent">*</span></label>
+                <div class="flex items-center gap-3">
+                  <input type="number" id="points-rule" class="input max-w-xs" min="0.1" step="0.1" value="1" required>
+                  <span class="text-gray-500">消费1元可获得的积分（例如：1）</span>
+                </div>
+                <div class="error-message" id="points-rule-error">请输入有效的积分规则</div>
+              </div>
+              <div class="form-group">
+                <label class="block text-sm font-medium text-gray-700 mb-1">积分抵现规则 <span class="text-accent">*</span></label>
+                <div class="flex items-center gap-3">
+                  <input type="number" id="cash-rule" class="input max-w-xs" min="10" step="10" value="100" required>
+                  <span class="text-gray-500">多少积分可抵扣1元（例如：100）</span>
+                </div>
+                <div class="error-message" id="cash-rule-error">请输入有效的抵现规则</div>
+              </div>
+
+              <div class="border-t border-gray-100 pt-4">
+                <h4 class="font-medium mb-4">会员等级设置</h4>
+                <div class="space-y-4">
+                  <div class="p-4 border rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                      <h5 class="font-medium">普通会员</h5>
+                      <span class="badge badge-success">默认</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="form-group">
+                        <label class="block text-sm text-gray-700 mb-1">消费满额升级</label>
+                        <input type="number" id="normal-to-silver" class="input max-w-xs" min="0" value="1000">
+                        <span class="text-xs text-gray-500">达到此金额自动升级为白银会员</span>
+                      </div>
+                      <div class="form-group">
+                        <label class="block text-sm text-gray-700 mb-1">折扣比例(%)</label>
+                        <input type="number" id="normal-discount" class="input max-w-xs" min="90" max="100" value="100" step="1">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="p-4 border rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                      <h5 class="font-medium">白银会员</h5>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="form-group">
+                        <label class="block text-sm text-gray-700 mb-1">消费满额升级</label>
+                        <input type="number" id="silver-to-gold" class="input max-w-xs" min="0" value="5000">
+                        <span class="text-xs text-gray-500">达到此金额自动升级为黄金会员</span>
+                      </div>
+                      <div class="form-group">
+                        <label class="block text-sm text-gray-700 mb-1">折扣比例(%)</label>
+                        <input type="number" id="silver-discount" class="input max-w-xs" min="80" max="100" value="95" step="1">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="p-4 border rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                      <h5 class="font-medium">黄金会员</h5>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="form-group">
+                        <label class="block text-sm text-gray-700 mb-1">消费满额升级</label>
+                        <input type="number" id="gold-to-platinum" class="input max-w-xs" min="0" value="10000">
+                        <span class="text-xs text-gray-500">达到此金额自动升级为铂金会员</span>
+                      </div>
+                      <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">折扣比例(%)</label>
+                        <input type="number" id="gold-discount" class="input max-w-xs" min="70" max="100" value="90" step="1">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex justify-end">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-save"></i> 保存设置
+                  <span class="loading hidden" id="member-loading"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 支付设置 -->
+        <div class="setting-tab hidden" id="payment-tab">
+          <div class="card-modern p-6">
+            <h3 class="font-bold text-lg mb-6">支付方式设置</h3>
+            <form id="payment-settings-form" class="space-y-6">
+              <div class="space-y-4">
+                <div class="p-4 border rounded-lg flex justify-between items-center">
+                  <div>
+                    <h4 class="font-medium">现金支付</h4>
+                    <p class="text-sm text-gray-500">支持现金交易</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer" checked id="enable-cash">
+                    <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></span>
+                  </label>
+                </div>
+
+                <div class="p-4 border rounded-lg">
+                  <div class="flex justify-between items-center mb-4">
+                    <div>
+                      <h4 class="font-medium">微信支付</h4>
+                      <p class="text-sm text-gray-500">支持微信扫码支付</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" value="" class="sr-only peer" checked id="enable-wechat">
+                      <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></span>
+                    </label>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">商户ID</label>
+                      <input type="text" id="wechat-mch-id" class="input-modern" placeholder="微信支付商户ID">
+                    </div>
+                    <div class="form-group">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">API密钥</label>
+                      <input type="password" id="wechat-api-key" class="input-modern" placeholder="微信支付API密钥">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-4 border rounded-lg">
+                  <div class="flex justify-between items-center mb-4">
+                    <div>
+                      <h4 class="font-medium">支付宝</h4>
+                      <p class="text-sm text-gray-500">支持支付宝扫码支付</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" value="" class="sr-only peer" checked id="enable-alipay">
+                      <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></span>
+                    </label>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">APP ID</label>
+                      <input type="text" id="alipay-app-id" class="input-modern" placeholder="支付宝APP ID">
+                    </div>
+                    <div class="form-group">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">商户私钥</label>
+                      <textarea id="alipay-private-key" class="input-modern h-16" placeholder="支付宝商户私钥"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-4 border rounded-lg flex justify-between items-center">
+                  <div>
+                    <h4 class="font-medium">会员卡支付</h4>
+                    <p class="text-sm text-gray-500">支持会员储值卡支付</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer" checked id="enable-member-card">
+                    <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="border-t border-gray-100 pt-4">
+                <h4 class="font-medium mb-4">找零设置</h4>
+                <div class="form-group">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">最小找零单位</label>
+                  <select id="change-unit" class="input-modern">
+                    <option value="0.01">1分</option>
+                    <option value="0.10" selected>1角</option>
+                    <option value="1.00">1元</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-end">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-save"></i> 保存设置
+                  <span class="loading hidden" id="payment-loading"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 打印设置 -->
+        <div class="setting-tab hidden" id="print-tab">
+          <div class="card-modern p-6">
+            <h3 class="font-bold text-lg mb-6">打印设置</h3>
+            <form id="print-settings-form" class="space-y-6">
+              <div class="form-group">
+                <label class="block text-sm font-medium text-gray-700 mb-1">默认打印机</label>
+                <select id="default-printer" class="input-modern">
+                  <option value="local">本地打印机</option>
+                  <option value="network">网络打印机</option>
+                  <option value="thermal">热敏打印机</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="block text-sm font-medium text-gray-700 mb-1">打印纸张大小</label>
+                <select id="paper-size" class="input-modern">
+                  <option value="a4">A4纸</option>
+                  <option value="pos80" selected>POS-80mm</option>
+                  <option value="pos58">POS-58mm</option>
+                </select>
+              </div>
+
+              <div class="border-t border-gray-100 pt-4">
+                <h4 class="font-medium mb-4">小票内容设置</h4>
+                <div class="space-y-3">
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary" checked id="print-logo">
+                    <span>打印店铺LOGO</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary" checked id="print-qrcode">
+                    <span>打印支付二维码</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary" checked id="print-member">
+                    <span>打印会员信息</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary" checked id="print-drug-detail">
+                    <span>打印药品详细信息</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary" checked id="print-usage">
+                    <span>打印用药指导</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded text-primary focus:ring-primary" id="print-footer">
+                    <span>打印底部广告信息</span>
+                  </label>
+                </div>
+
+                <div id="footer-text-container" class="mt-4 hidden">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">底部广告内容</label>
+                    <textarea id="footer-text" class="input-modern h-16" placeholder="请输入底部广告信息"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="border-t border-gray-100 pt-4">
+                <h4 class="font-medium mb-4">打印数量设置</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">销售小票打印份数</label>
+                    <input type="number" id="receipt-copies" class="input-modern max-w-xs" min="1" max="5" value="1">
+                  </div>
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">处方单打印份数</label>
+                    <input type="number" id="prescription-copies" class="input-modern max-w-xs" min="1" max="5" value="2">
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-3">
+                <button type="button" class="btn btn-outline" id="test-print">
+                  <i class="fa fa-print"></i> 打印测试页
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-save"></i> 保存设置
+                  <span class="loading hidden" id="print-loading"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 安全设置 -->
+        <div class="setting-tab hidden" id="security-tab">
+          <div class="card-modern p-6">
+            <h3 class="font-bold text-lg mb-6">账户安全设置</h3>
+            <div class="space-y-6">
+              <div class="flex justify-between items-center p-4 border rounded-lg">
+                <div>
+                  <h4 class="font-medium">修改登录密码</h4>
+                  <p class="text-sm text-gray-500">定期修改密码可提高账户安全性</p>
+                </div>
+                <button class="btn btn-outline" id="change-pwd-btn">
+                  <i class="fa fa-key"></i> 立即修改
+                </button>
+              </div>
+
+              <div class="p-4 border rounded-lg">
+                <h4 class="font-medium mb-3">操作日志设置</h4>
+                <div class="flex justify-between items-center mb-3">
+                  <p class="text-sm text-gray-500">记录系统关键操作，保障数据安全</p>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer" checked id="enable-log">
+                    <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></span>
+                  </label>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">日志保留时长</label>
+                    <select id="log-retention" class="input-modern">
+                      <option value="30">30天</option>
+                      <option value="90" selected>90天</option>
+                      <option value="180">180天</option>
+                      <option value="365">1年</option>
+                    </select>
+                  </div>
+                  <div class="form-group flex items-end">
+                    <button type="button" class="btn btn-outline w-full" id="view-log-btn">
+                      <i class="fa fa-list"></i> 查看操作日志
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-4 border rounded-lg">
+                <h4 class="font-medium mb-3">登录安全设置</h4>
+                <div class="space-y-4">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <p class="text-sm">密码有效期</p>
+                      <p class="text-xs text-gray-500">设置密码自动过期时间</p>
+                    </div>
+                    <select id="pwd-expiry" class="input-modern max-w-xs">
+                      <option value="0">永不失效</option>
+                      <option value="30">30天</option>
+                      <option value="90" selected>90天</option>
+                      <option value="180">180天</option>
+                    </select>
+                  </div>
+
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <p class="text-sm">登录失败限制</p>
+                      <p class="text-xs text-gray-500">连续失败后锁定账户</p>
+                    </div>
+                    <select id="login-attempts" class="input-modern max-w-xs">
+                      <option value="5" selected>5次</option>
+                      <option value="10">10次</option>
+                      <option value="15">15次</option>
+                      <option value="0">不限制</option>
+                    </select>
+                  </div>
+
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <p class="text-sm">登录IP限制</p>
+                      <p class="text-xs text-gray-500">仅允许指定IP登录</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" value="" class="sr-only peer" id="enable-ip-restrict">
+                      <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据备份 -->
+        <div class="setting-tab hidden" id="backup-tab">
+          <div class="card-modern p-6">
+            <h3 class="font-bold text-lg mb-6">数据备份与恢复</h3>
+            <div class="space-y-6">
+              <div class="p-4 border rounded-lg">
+                <h4 class="font-medium mb-3">自动备份设置</h4>
+                <div class="flex justify-between items-center mb-4">
+                  <p class="text-sm text-gray-500">开启后系统��自动定期备份数据</p>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer" checked id="auto-backup">
+                    <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></span>
+                  </label>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">备份周期</label>
+                    <select id="backup-cycle" class="input">
+                      <option value="daily">每天</option>
+                      <option value="weekly" selected>每周</option>
+                      <option value="monthly">每月</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">备份保留数量</label>
+                    <input type="number" id="backup-retention" class="input max-w-xs" min="1" max="30" value="5">
+                    <span class="text-xs text-gray-500">最多保留多少个备份文件</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-4 border rounded-lg">
+                <h4 class="font-medium mb-3">手动备份</h4>
+                <p class="text-sm text-gray-500 mb-4">创建即时数据备份，建议在系统重大操作前执行</p>
+                <button type="button" class="btn btn-primary" id="manual-backup-btn">
+                  <i class="fa fa-download"></i> 创建备份
+                  <span class="loading hidden" id="backup-loading"></span>
+                </button>
+              </div>
+
+              <div class="p-4 border rounded-lg">
+                <h4 class="font-medium mb-3">备份历史</h4>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                    <tr>
+                      <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备份时间</th>
+                      <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备份类型</th>
+                      <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">文件大小</th>
+                      <th class="px-3 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="backup-history">
+                    <!-- 备份历史记录将通过JS动态加载 -->
+                    <tr class="text-center">
+                      <td colspan="4" class="px-3 py-6 text-gray-500">暂无备份记录</td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="p-4 border rounded-lg bg-amber-50 border-amber-100">
+                <h4 class="font-medium mb-2 text-amber-800">数据恢复</h4>
+                <p class="text-sm text-amber-700 mb-4">从备份文件恢复数据，此操作将覆盖当前数据，请谨慎操作</p>
+                <div class="flex gap-3">
+                  <label class="btn btn-outline border-amber-200 text-amber-800 hover:bg-amber-100 cursor-pointer">
+                    <i class="fa fa-upload"></i> 选择备份文件
+                    <input type="file" accept=".bak,.zip" class="hidden" id="backup-file">
+                  </label>
+                  <button type="button" class="btn btn-danger" id="restore-btn" disabled>
+                    <i class="fa fa-refresh"></i> 恢复数据
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div></div> <!-- close app-shell / container-fluid / main-content -->
+</main>
+<!-- 密码修改模态框 -->
+<div class="modal-backdrop" id="pwd-modal-backdrop"></div>
+<div class="modal" id="pwd-modal">
+    <div class="modal-content p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold">修改密码</h3>
+            <button class="text-gray-400 hover:text-gray-600" id="close-pwd-modal">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <form id="change-pwd-form">
+            <div class="space-y-4">
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">当前密码 <span class="text-accent">*</span></label>
+                    <input type="password" id="old-pwd" class="input" placeholder="请输入当前密码" required>
+                    <div class="error-message" id="old-pwd-error">请输入当前密码</div>
+                </div>
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">新密码 <span class="text-accent">*</span></label>
+                    <input type="password" id="new-pwd" class="input" placeholder="请输入新密码（至少6位，包含字母和数字）" minlength="6" required>
+                    <div class="error-message" id="new-pwd-error">新密码不符合要求</div>
+                    <div class="text-xs text-gray-500 mt-1">密码至少6位，包含字母和数字</div>
+                </div>
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">确认新密码 <span class="text-accent">*</span></label>
+                    <input type="password" id="confirm-pwd" class="input" placeholder="请再次输入新密码" minlength="6" required>
+                    <div class="error-message" id="confirm-pwd-error">两次输入的密码不一致</div>
+                </div>
+            </div>
+            <div class="mt-6 flex gap-3 justify-end">
+                <button type="button" class="btn btn-outline" id="cancel-pwd">取消</button>
+                <button type="submit" class="btn btn-primary">
+                    确认修改
+                    <span class="loading hidden" id="pwd-loading"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 确认恢复数据模态框 -->
+<div class="modal-backdrop" id="confirm-restore-backdrop"></div>
+<div class="modal" id="confirm-restore-modal">
+    <div class="modal-content p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-amber-800">确认恢复数据</h3>
+            <button class="text-gray-400 hover:text-gray-600" id="close-confirm-restore">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div class="p-4 bg-amber-50 border border-amber-100 rounded-lg">
+                <p class="text-amber-800"><i class="fa fa-exclamation-triangle mr-2"></i> 警告：数据恢复将覆盖当前所有系统数据，且此操作不可撤销！</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">请输入管理员密码确认此操作：</p>
+                <input type="password" id="admin-pwd-confirm" class="input mt-2" placeholder="输入管理员密码">
+            </div>
+        </div>
+        <div class="mt-6 flex gap-3 justify-end">
+            <button type="button" class="btn btn-outline" id="cancel-restore">取消</button>
+            <button type="button" class="btn btn-danger" id="confirm-restore-btn">
+                确认恢复
+                <span class="loading hidden" id="restore-loading"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="sr-only" aria-hidden="true" id="a11y-hidden-labels-settings">
+  <label for="store-name">店铺名称</label>
+  <label for="store-phone">联系电话</label>
+  <label for="store-address">店铺地址</label>
+  <label for="store-desc">店铺简介</label>
+  <label for="open-time">营业开始时间</label>
+  <label for="close-time">营业结束时间</label>
+  <label for="license-number">营业执照编号</label>
+  <label for="low-stock-threshold">低库存预警阈值</label>
+  <label for="notify-system">系统消息通知</label>
+  <label for="notify-email">邮件通知</label>
+  <label for="notify-sms">短信通知</label>
+  <label for="notify-email-address">通知邮箱地址</label>
+  <label for="email-frequency">邮件发送频率</label>
+  <label for="notify-phone">通知手机号</label>
+  <label for="sms-frequency">短信发送频率</label>
+  <label for="inventory-check-cycle">盘点周期</label>
+  <label for="points-rule">积分规则</label>
+  <label for="cash-rule">积分抵现规则</label>
+  <label for="normal-to-silver">普通升白银消费满额</label>
+  <label for="normal-discount">普通会员折扣</label>
+  <label for="silver-to-gold">白银升黄金消费满额</label>
+  <label for="silver-discount">白银会员折扣</label>
+  <label for="gold-to-platinum">黄金升铂金消费满额</label>
+  <label for="gold-discount">黄金会员折扣</label>
+  <label for="enable-cash">启用现金支付</label>
+  <label for="enable-wechat">启用微信支付</label>
+  <label for="enable-alipay">启用支付宝支付</label>
+  <label for="enable-member-card">启用会员卡支付</label>
+  <label for="wechat-mch-id">微信商户ID</label>
+  <label for="wechat-api-key">微信API密钥</label>
+  <label for="alipay-app-id">支付宝APP ID</label>
+  <label for="alipay-private-key">支付宝商户私钥</label>
+  <label for="change-unit">最小找零单位</label>
+  <label for="default-printer">默认打印机</label>
+  <label for="paper-size">打印纸张大小</label>
+  <label for="print-logo">打印LOGO</label>
+  <label for="print-qrcode">打印支付二维码</label>
+  <label for="print-member">打印会员信息</label>
+  <label for="print-drug-detail">打印药品信息</label>
+  <label for="print-usage">打印用药指导</label>
+  <label for="print-footer">打印底部广告</label>
+  <label for="footer-text">底部广告内容</label>
+  <label for="receipt-copies">销售小票份数</label>
+  <label for="prescription-copies">处方单份数</label>
+  <label for="enable-log">启用操作日志</label>
+  <label for="log-retention">日志保留时长</label>
+  <label for="pwd-expiry">密码有效期</label>
+  <label for="login-attempts">登录失败限制次数</label>
+  <label for="enable-ip-restrict">启用IP限制</label>
+  <label for="auto-backup">启用自动备份</label>
+  <label for="backup-cycle">备份周期</label>
+  <label for="backup-retention">备份保留数量</label>
+  <label for="old-pwd">当前密码</label>
+  <label for="expiry-warning-days">效期预警天数</label>
+  <label for="new-pwd">新密码</label>
+  <label for="confirm-pwd">确认新密码</label>
+  <label for="admin-pwd-confirm">管理员密码确认</label>
+</div>
+
+<!-- 补充为所有开关型 label 添加 for -->
+<script>
+  (function attachFor(){
+    document.querySelectorAll('label.relative.inline-flex').forEach(l=>{
+      const inp=l.querySelector('input[id]'); if(inp){ l.setAttribute('for', inp.id); }
+      l.querySelectorAll('div').forEach(d=>d.setAttribute('aria-hidden','true'));
+    });
+  })();
+</script>
+<script>
+(function ensureAdmin(){
+  const roleId = localStorage.getItem('userRoleId');
+  if(roleId !== '1'){
+    alert('仅管理员可访问系统设置');
+    window.location.href = 'index.html';
+    return;
+  }
+  // 显示主内容容器
+  var el = document.getElementById('settings-main');
+  if(el){ el.style.display='block'; }
+})();
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded',()=>{ initSettingsLoad(); });
+async function initSettingsLoad(){
+  try {
+    const data = await (window.api?.settingAPI? window.api.settingAPI.get() : fetch('/api/settings').then(r=>r.json()));
+    fillBasicSettings(data);
+  } catch(e){ console.error('加载设置失败',e); showTempMsg('加载设置失败:'+e.message,'error'); }
+}
+function fillBasicSettings(d){
+  if(!d) return;
+  setVal('store-name', d.storeName);
+  setVal('store-phone', d.storePhone);
+  setVal('store-address', d.storeAddress);
+  setVal('store-desc', d.storeDesc);
+  setVal('low-stock-threshold', d.lowStockThreshold);
+  setVal('points-rule', d.pointsRule);
+  setVal('cash-rule', d.cashRule);
+  setVal('expiry-warning-days', d.expiryWarningDays);
+  // 微信/支付宝等
+  setChecked('enable-wechat', d.enableWechat);
+  setChecked('enable-alipay', d.enableAlipay);
+  setChecked('enable-member-card', d.enableMemberCard);
+  setVal('wechat-mch-id', d.wechatMchId);
+  setVal('wechat-api-key', d.wechatApiKey);
+  setVal('alipay-app-id', d.alipayAppId);
+  setVal('alipay-private-key', d.alipayPrivateKey);
+  setVal('change-unit', d.changeUnit);
+  setVal('default-printer', d.defaultPrinter);
+  setVal('paper-size', d.paperSize);
+  setChecked('print-logo', d.printLogo);
+  setChecked('print-qrcode', d.printQrcode);
+  setChecked('print-member', d.printMember);
+  setChecked('print-drug-detail', d.printDrugDetail);
+  setChecked('print-usage', d.printUsage);
+  setChecked('print-footer', d.printFooter);
+  setVal('footer-text', d.footerText);
+  setVal('receipt-copies', d.receiptCopies);
+  setVal('prescription-copies', d.prescriptionCopies);
+  setChecked('enable-log', d.enableLog);
+  setVal('log-retention', d.logRetention);
+  setVal('pwd-expiry', d.pwdExpiry);
+  setVal('login-attempts', d.loginAttempts);
+  setChecked('enable-ip-restrict', d.enableIpRestrict);
+  setChecked('auto-backup', d.autoBackup);
+  setVal('backup-cycle', d.backupCycle);
+  setVal('backup-retention', d.backupRetention);
+}
+function setVal(id,v){ const el=document.getElementById(id); if(el&&v!==undefined&&v!==null) el.value=v; }
+function setChecked(id,v){ const el=document.getElementById(id); if(el) el.checked= !!v; }
+// 保存表单（支付设置举例）
+const paymentForm = document.getElementById('payment-settings-form');
+if(paymentForm){ paymentForm.addEventListener('submit', async e=>{ e.preventDefault(); await saveSettings(); }); }
+const printForm = document.getElementById('print-settings-form');
+if(printForm){ printForm.addEventListener('submit', async e=>{ e.preventDefault(); await saveSettings(); }); }
+async function saveSettings(){
+  const btns = document.querySelectorAll('form button[type="submit"]');
+  btns.forEach(b=>{ b.disabled=true; b.innerHTML='<i class="fa fa-spinner fa-spin"></i> 保存中'; });
+  const payload = {
+    storeName: gv('store-name'), storePhone: gv('store-phone'), storeAddress: gv('store-address'), storeDesc: gv('store-desc'),
+    lowStockThreshold: gv('low-stock-threshold'), pointsRule: gv('points-rule'), cashRule: gv('cash-rule'),
+    enableWechat: gc('enable-wechat'), enableAlipay: gc('enable-alipay'), enableMemberCard: gc('enable-member-card'),
+    wechatMchId: gv('wechat-mch-id'), wechatApiKey: gv('wechat-api-key'), alipayAppId: gv('alipay-app-id'), alipayPrivateKey: gv('alipay-private-key'),
+    changeUnit: gv('change-unit'), defaultPrinter: gv('default-printer'), paperSize: gv('paper-size'),
+    printLogo: gc('print-logo'), printQrcode: gc('print-qrcode'), printMember: gc('print-member'), printDrugDetail: gc('print-drug-detail'),
+    printUsage: gc('print-usage'), printFooter: gc('print-footer'), footerText: gv('footer-text'),
+    receiptCopies: gv('receipt-copies'), prescriptionCopies: gv('prescription-copies'), enableLog: gc('enable-log'),
+    logRetention: gv('log-retention'), pwdExpiry: gv('pwd-expiry'), loginAttempts: gv('login-attempts'), enableIpRestrict: gc('enable-ip-restrict'),
+    autoBackup: gc('auto-backup'), backupCycle: gv('backup-cycle'), backupRetention: gv('backup-retention')
+    ,expiryWarningDays: parseInt(gv('expiry-warning-days')||'0', 10)
+  };
+  try {
+    const api = window.api?.settingAPI; const resp = api? await api.update(payload) : await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json());
+    showTempMsg('设置保存成功','success');
+  } catch(e){ showTempMsg('保存失败:'+e.message,'error'); }
+  finally {
+    btns.forEach(b=>{ b.disabled=false; b.innerHTML='<i class="fa fa-save"></i> 保存设���'; });
+  }
+}
+function gv(id){ const el=document.getElementById(id); return el? el.value : null; }
+function gc(id){ const el=document.getElementById(id); return !!(el && el.checked); }
+function showTempMsg(msg,type){ const d=document.createElement('div'); d.className=`fixed top-4 right-4 px-4 py-2 rounded shadow z-50 ${type==='success'?'bg-green-500 text-white':'bg-red-500 text-white'}`; d.textContent=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
+</script>
+<script>
+    (function(){
+      const bar=document.getElementById('scroll-progress');
+      function update(){const h=document.documentElement.scrollHeight - window.innerHeight;const sc=window.scrollY;bar&&(bar.style.width=(h>0?(sc/h)*100:0)+'%');}
+      window.addEventListener('scroll',update,{passive:true});update();
+      if(!document.getElementById('theme-toggle')){const btn=document.createElement('button');btn.id='theme-toggle';btn.className='theme-toggle';btn.innerHTML='<i class="fa fa-moon-o"></i>';btn.onclick=()=>{const dark=document.documentElement.classList.toggle('dark');btn.innerHTML='<i class="fa '+(dark?'fa-sun-o':'fa-moon-o')+'"></i>';};document.body.appendChild(btn);} })();
+  </script>
+<script src="js/a11y.js" defer></script>
+<script src="js/kpi.js"></script>
+<script>
+(function(){
+  function updateSettingsKpis(){
+    const catBtns=document.querySelectorAll('#settings-main .sidebar-item');
+    const payMethods=['现金','微信','支付宝','医保','银行卡'];
+    const set=(id,val)=>{const el=document.getElementById(id); if(el) el.textContent=val;};
+    set('kpi-settings-cats',catBtns.length||'--');
+    set('kpi-settings-pay',payMethods.length);
+    set('kpi-settings-inv','待配置');
+    set('kpi-settings-print','默认');
+  }
+  document.addEventListener('DOMContentLoaded',updateSettingsKpis);
+})();
+</script>
+<!-- 插入完整交互脚本 -->
+<script>
+/* settings page interactions: tab switching, toggles, forms, backup, modals */
+document.addEventListener('DOMContentLoaded', function(){
+  // --- sidebar tab switching ---
+  document.querySelectorAll('.sidebar-item').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.getAttribute('data-tab');
+      document.querySelectorAll('.setting-tab').forEach(t=>{ t.classList.add('hidden'); t.classList.remove('active'); });
+      const target = document.getElementById(tab + '-tab');
+      if(target){ target.classList.remove('hidden'); target.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+    });
+  });
+
+  // --- notification toggles (email / sms) ---
+  const notifyEmail = document.getElementById('notify-email');
+  const notifySms = document.getElementById('notify-sms');
+  function updateNotifyPanels(){
+    const emailPanel = document.getElementById('email-settings');
+    const smsPanel = document.getElementById('sms-settings');
+    if(emailPanel) emailPanel.classList.toggle('hidden', !(notifyEmail && notifyEmail.checked));
+    if(smsPanel) smsPanel.classList.toggle('hidden', !(notifySms && notifySms.checked));
+  }
+  if(notifyEmail) notifyEmail.addEventListener('change', updateNotifyPanels);
+  if(notifySms) notifySms.addEventListener('change', updateNotifyPanels);
+  updateNotifyPanels();
+
+  // --- print footer toggle ---
+  const printFooter = document.getElementById('print-footer');
+  const footerContainer = document.getElementById('footer-text-container');
+  function updateFooter(){ if(footerContainer) footerContainer.classList.toggle('hidden', !(printFooter && printFooter.checked)); }
+  if(printFooter){ printFooter.addEventListener('change', updateFooter); updateFooter(); }
+
+  // --- attach save handler to all forms so each section can save ---
+  ['basic-settings-form','inventory-settings-form','member-settings-form','payment-settings-form','print-settings-form'].forEach(id=>{
+    const f = document.getElementById(id);
+    if(f){ f.addEventListener('submit', async function(e){ e.preventDefault(); await saveSettings(); }); }
+  });
+
+  // --- change password modal ---
+  const pwdModal = document.getElementById('pwd-modal');
+  const pwdBackdrop = document.getElementById('pwd-modal-backdrop');
+  const openPwdBtn = document.getElementById('change-pwd-btn');
+  const closePwdBtn = document.getElementById('close-pwd-modal');
+  const cancelPwdBtn = document.getElementById('cancel-pwd');
+  function togglePwdModal(show){ if(pwdModal) pwdModal.style.display = show ? 'block' : 'none'; if(pwdBackdrop) pwdBackdrop.style.display = show ? 'block' : 'none'; }
+  if(openPwdBtn) openPwdBtn.addEventListener('click', ()=> togglePwdModal(true));
+  if(closePwdBtn) closePwdBtn.addEventListener('click', ()=> togglePwdModal(false));
+  if(cancelPwdBtn) cancelPwdBtn.addEventListener('click', ()=> togglePwdModal(false));
+
+  const changePwdForm = document.getElementById('change-pwd-form');
+  if(changePwdForm){
+    changePwdForm.addEventListener('submit', async function(e){
+      e.preventDefault();
+      const oldPwd = gv('old-pwd'); const newPwd = gv('new-pwd'); const confirmPwd = gv('confirm-pwd');
+      if(!oldPwd){ showTempMsg('请输入当前密码','error'); return; }
+      if(!newPwd || newPwd.length < 6 || !/[A-Za-z]/.test(newPwd) || !/[0-9]/.test(newPwd)){ showTempMsg('新密码需至少6位并包含字母和数字','error'); return; }
+      if(newPwd !== confirmPwd){ showTempMsg('两次输入的密码不一致','error'); return; }
+      const loader = document.getElementById('pwd-loading'); try{
+        loader && loader.classList.remove('hidden');
+        const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/users/change-password';
+        const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({oldPassword: oldPwd, newPassword: newPwd}) });
+        if(!resp.ok){ const txt = await resp.text().catch(()=>null); throw new Error(txt || resp.statusText); }
+        showTempMsg('密码修改成功','success'); togglePwdModal(false);
+      }catch(err){ showTempMsg('修改失败: '+ (err.message||err),'error'); }
+      finally{ loader && loader.classList.add('hidden'); }
+    });
+  }
+
+  // --- view logs ---
+  const viewLogBtn = document.getElementById('view-log-btn');
+  if(viewLogBtn){ viewLogBtn.addEventListener('click', ()=>{
+    const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/logs'; window.open(url,'_blank');
+  }); }
+
+  // --- backup history load / actions ---
+  async function loadBackupHistory(){
+    const tbody = document.getElementById('backup-history'); if(!tbody) return;
+    tbody.innerHTML = '<tr class="text-center"><td colspan="4">加载中...</td></tr>';
+    try{
+      const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/list';
+      const resp = await fetch(url); if(!resp.ok){ const t=await resp.text().catch(()=>null); throw new Error(t||resp.statusText); }
+      const json = await resp.json(); const list = json.data || json.backups || [];
+      if(!list.length){ tbody.innerHTML = '<tr class="text-center"><td colspan="4" class="px-3 py-6 text-gray-500">暂无备份记录</td></tr>'; return; }
+      tbody.innerHTML = '';
+      list.forEach(item=>{
+        const tr = document.createElement('tr');
+        const date = item.createdAt || item.time || item.date || ''; const type = item.type || item.backupType || '自动'; const size = item.size || item.fileSize || '-'; const fname = item.file || item.name || '';
+        tr.innerHTML = `<td class="px-3 py-3 text-sm">${utils.formatDateTime(date)}</td><td class="px-3 py-3 text-sm">${type}</td><td class="px-3 py-3 text-sm">${size}</td><td class="px-3 py-3 text-right text-sm"><button class="btn btn-outline btn-sm" data-file="${fname}" data-action="download">下载</button> <button class="btn btn-danger btn-sm" data-file="${fname}" data-action="delete">删除</button></td>`;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('button[data-action]').forEach(b=>{
+        b.addEventListener('click', async function(){ const action = this.getAttribute('data-action'); const file = this.getAttribute('data-file'); if(!file){ showTempMsg('无效文件标识','error'); return; }
+          if(action==='download'){ const dl = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/download?file=' + encodeURIComponent(file); window.open(dl,'_blank'); }
+          if(action==='delete'){ if(!confirm('确认删除该备份吗？')) return; try{ const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/delete?file=' + encodeURIComponent(file); const r = await fetch(url,{method:'POST'}); if(!r.ok) throw new Error(await r.text()); showTempMsg('删除成功','success'); await loadBackupHistory(); }catch(err){ showTempMsg('删除失败:'+ (err.message||err),'error'); } }
+        });
+      });
+    }catch(err){ tbody.innerHTML = '<tr class="text-center"><td colspan="4" class="px-3 py-6 text-gray-500">加载失败</td></tr>'; console.warn(err); }
+  }
+  loadBackupHistory();
+
+  // manual backup
+  const manualBtn = document.getElementById('manual-backup-btn');
+  if(manualBtn){ manualBtn.addEventListener('click', async function(){ const loader = document.getElementById('backup-loading'); try{ loader && loader.classList.remove('hidden'); manualBtn.disabled=true; const url=(window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/manual'; const r = await fetch(url,{method:'POST'}); if(!r.ok) throw new Error(await r.text()); showTempMsg('备份已创建','success'); await loadBackupHistory(); }catch(err){ showTempMsg('备份失败:'+ (err.message||err),'error'); } finally{ loader && loader.classList.add('hidden'); manualBtn.disabled=false; } }); }
+
+  // restore flow
+  const backupFileInput = document.getElementById('backup-file'); const restoreBtn = document.getElementById('restore-btn'); let selectedFile = null;
+  if(backupFileInput){ backupFileInput.addEventListener('change', function(){ selectedFile = backupFileInput.files && backupFileInput.files[0] ? backupFileInput.files[0] : null; if(restoreBtn) restoreBtn.disabled = !selectedFile; }); }
+  if(restoreBtn){ restoreBtn.addEventListener('click', function(){ document.getElementById('confirm-restore-modal').style.display='block'; document.getElementById('confirm-restore-backdrop').style.display='block'; }); }
+  document.getElementById('close-confirm-restore')?.addEventListener('click', function(){ document.getElementById('confirm-restore-modal').style.display='none'; document.getElementById('confirm-restore-backdrop').style.display='none'; });
+  document.getElementById('cancel-restore')?.addEventListener('click', function(){ document.getElementById('confirm-restore-modal').style.display='none'; document.getElementById('confirm-restore-backdrop').style.display='none'; });
+  document.getElementById('confirm-restore-btn')?.addEventListener('click', async function(){ const adminPwd = gv('admin-pwd-confirm'); if(!adminPwd){ showTempMsg('请输入管理员密码','error'); return; } if(!selectedFile){ showTempMsg('请选择备份文件','error'); return; } const loader = document.getElementById('restore-loading'); try{ loader && loader.classList.remove('hidden'); const fd = new FormData(); fd.append('file', selectedFile); fd.append('adminPassword', adminPwd); const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/restore'; const r = await fetch(url,{method:'POST', body: fd}); if(!r.ok) throw new Error(await r.text()); showTempMsg('恢复任务已提交','success'); document.getElementById('confirm-restore-modal').style.display='none'; document.getElementById('confirm-restore-backdrop').style.display='none'; }catch(err){ showTempMsg('恢复失败:'+ (err.message||err),'error'); } finally{ loader && loader.classList.add('hidden'); } });
+
+  // allow closing modals by clicking backdrop
+  document.getElementById('pwd-modal-backdrop')?.addEventListener('click', ()=>{ document.getElementById('pwd-modal').style.display='none'; document.getElementById('pwd-modal-backdrop').style.display='none'; });
+  document.getElementById('confirm-restore-backdrop')?.addEventListener('click', ()=>{ document.getElementById('confirm-restore-modal').style.display='none'; document.getElementById('confirm-restore-backdrop').style.display='none'; });
+
+});
+</script>
+</body>
+</html>

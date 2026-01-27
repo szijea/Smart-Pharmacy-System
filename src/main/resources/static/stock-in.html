@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧药房收银系统 - 智能入库</title>
+    <link rel="stylesheet" href="css/tailwind.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/theme-enhanced.css" />
+    <link rel="stylesheet" href="css/theme-premium.css" />
+    <link rel="stylesheet" href="css/theme-lightwide.css" />
+    <link rel="stylesheet" href="css/ui-enhanced.css" />
+    <link rel="stylesheet" href="css/ui-modern.css" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- avoid CDN blocked by Tracking Prevention -->
+    <link rel="stylesheet" href="css/font-awesome.min.css" />
+    <script>(function(){if(!window.tailwind){window.tailwind={config:{}};} if(!window.tailwind.config){window.tailwind.config={};}})();</script>
+    <script>if(typeof tailwind==='undefined'){window.tailwind={config:{}};}</script>
+    <script>tailwind.config={theme:{extend:{colors:{primary:'#165DFF',secondary:'#36B37E',accent:'#FF5630'},fontFamily:{inter:['Inter','system-ui','sans-serif']}}}};</script>
+    <style>.main-content{flex:1 1 auto;padding:1rem;min-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin;}.main-content::-webkit-scrollbar{width:8px}.main-content::-webkit-scrollbar-track{background:#f5f5f5;border-radius:4px}.main-content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}.main-content::-webkit-scrollbar-thumb:hover{background:#9ca3af}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;} .layout-two-column{display:grid;grid-template-columns:380px 1fr;gap:.6rem;}@media(max-width:1200px){.layout-two-column{grid-template-columns:1fr;}} .main-content .container-fluid{max-width:100%;margin:0 auto;} body, .main-content, .app-shell{background:#fff;}
+    /* Limit width */
+    .app-shell { max-width: 1440px !important; margin: 0 auto; }
+    </style>
+    <script src="js/common.js" defer></script>
+    <script src="js/common-nav.js" defer></script>
+    <!-- SheetJS (xlsx) for client-side Excel parsing - Local -->
+    <script src="js/xlsx.full.min.js"></script>
+
+    <script>document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('show'));});</script>
+</head>
+<body class="font-inter text-gray-800 min-h-screen flex enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+
+<div class="scroll-progress" id="scroll-progress"></div>
+  <div id="common-nav" data-active="stock-in"></div>
+  <div id="notification-panel" class="hidden absolute top-20 right-6 bg-white shadow-lg rounded-lg p-4 w-64 text-sm"><div class="font-medium mb-2">通知面板</div><p class="text-gray-500">暂时无通知</p></div>
+  <main class="flex-1 flex flex-col pt-16">
+    <div class="main-content" id="main-content"><div class="container-fluid section-gap"><div class="app-shell">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 action-bar"><div><h2 class="page-title font-bold page-title-decor">智能入库</h2><p class="text-gray-500">药品批次与入库记录管理</p></div><div class="flex gap-3"><button class="btn btn-outline" id="import-data-top"><i class="fa fa-upload"></i> 批量导入</button><button class="btn btn-primary" id="new-stock"><i class="fa fa-plus"></i> 新建入库单</button></div></div>
+      <div class="layout-two-column">
+        <aside class="layout-sidebar space-y-4">
+          <div class="card-modern p-4 smart-suggestion"><div class="flex items-center gap-2 mb-2"><i class="fa fa-lightbulb-o text-blue-500"></i><h3 class="font-medium text-sm">操作提示</h3></div><ul class="space-y-2 text-xs text-gray-600"><li>确保药品信息准确，尤其批准文号与有效期</li><li>注意批号是否正确</li><li>入库前仔细核对药品与实物是否一致</li></ul></div>
+          <div class="card-modern p-4"><h3 class="font-bold text-sm mb-3">入库流程</h3><ol class="space-y-2 text-xs text-gray-600"><li>1. 创建入库单</li><li>2. 添加药品</li><li>3. 确认信息</li><li>4. 完成入库</li></ol></div>
+          <div class="card-modern p-6"><h3 class="font-bold mb-4 text-sm">入库单信息</h3><div class="space-y-3 text-xs"><label class="block" for="org-name">机构名称</label><input type="text" class="input-modern text-sm mb-2" id="org-name" value="" placeholder="请输入机构名称"><label class="block" for="stock-date">入库日期</label><input type="date" class="input-modern text-sm mb-2" id="stock-date"><label class="block" for="location-input">货位</label><input type="text" class="input-modern text-sm mb-2" id="location-input" placeholder="可输入或选择货位"><label class="block" for="remark-input">备注</label><input type="text" class="input-modern text-sm mb-2" id="remark-input" placeholder="请输入备注信息"><div class="flex justify-end gap-2 pt-2"><button class="btn btn-outline text-xs">重置</button><button class="btn btn-primary text-xs"><i class="fa fa-save"></i> 保存</button></div></div></div>
+        </aside>
+        <div class="layout-main space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-none" id="stockin-kpi-row">
+<div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">当前入库商品数</p><h3 class="text-xl font-bold" id="kpi-item-count">0</h3></div><div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">预计总进货额</p><h3 class="text-xl font-bold" id="kpi-total-cost">¥0.00</h3></div><div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">预计总零售价</p><h3 class="text-xl font-bold" id="kpi-total-price">¥0.00</h3></div><div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">预计综合毛利</p><h3 class="text-xl font-bold" id="kpi-total-profit">¥0.00</h3></div></div>
+          <div class="card-modern p-4 mb-2"><div class="flex flex-wrap gap-2 action-bar"><button class="btn btn-success" id="complete-stock"><i class="fa fa-check-circle"></i> 完成入库</button><button class="btn btn-warning" id="quick-add"><i class="fa fa-bolt"></i> 快速添加</button><button class="btn btn-info" id="add-medicine"><i class="fa fa-plus"></i> 添加药品</button><button class="btn btn-outline" id="import-data-bulk"><i class="fa fa-upload"></i> 批量导入</button></div></div>
+          <div class="card-modern p-3 mb-2 hidden" id="import-progress" style="display:none;"><div class="text-sm text-gray-600 mb-1" id="import-progress-text">正在导入...</div><div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden"><div id="import-progress-bar" class="bg-blue-500 h-3" style="width:0%"></div></div></div>
+          <div class="card-modern"><div class="p-6 border-b border-gray-100 flex justify-between items-center"><h3 class="font-bold">药品入库明细</h3><div class="flex items-center gap-3"><div class="text-sm text-gray-500">共 <span id="item-count">0</span> 条记录</div></div></div><div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200 table-modern-compact"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">序号</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">药品名称</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">规格</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">生产厂家</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">批号</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">有效期</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">进货价</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">零售价</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">利润</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th></tr></thead><tbody class="bg-white divide-y divide-gray-200" id="medicine-table-body"><tr><td colspan="11" class="text-center py-8 text-gray-500"><i class="fa fa-inbox text-3xl mb-2"></i><p>暂无入库药品数据</p></td></tr></tbody><tfoot class="bg-gray-50 font-medium"><tr><td colspan="6" class="px-6 py-4 text-right">合计:</td><td class="px-6 py-4" id="total-quantity">0</td><td class="px-6 py-4" id="total-cost">¥0.00</td><td class="px-6 py-4" id="total-price">¥0.00</td><td class="px-6 py-4" id="total-profit">¥0.00</td><td class="px-6 py-4"></td></tr></tfoot></table></div></div>
+        </div>
+      </div>
+    </div></div></div>
+    <!-- 背景遮罩 -->
+    <div id="drawer-backdrop" style="position:fixed;inset:0;background:rgba(15,23,42,.35);backdrop-filter:blur(2px);display:none;z-index:49"></div>
+    <!-- 隐藏的批量导入文件选择框 -->
+    <input type="file" id="bulk-file" accept=".xls,.xlsx,.csv,.txt" style="display:none" />
+     <!-- 右侧抽屉：新增药品 -->
+    <div id="add-med-drawer" style="position:fixed;top:0;right:0;height:100%;width:420px;max-width:90vw;background:#fff;border-left:1px solid #e5e7eb;box-shadow:0 12px 32px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .3s ease-in-out;z-index:50;display:flex;flex-direction:column;">
+      <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="font-bold">新增药品</h3>
+        <button id="close-med-drawer" class="text-gray-500 hover:text-accent"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="p-4 space-y-3 text-sm" style="flex:1 1 auto;overflow-y:auto;">
+        <label class="block">通用名<input id="fm-genericName" class="input-modern mt-1" placeholder="如：对乙酰氨基酚" /></label>
+        <label class="block">商品名<input id="fm-tradeName" class="input-modern mt-1" placeholder="可选" /></label>
+        <label class="block">规格<input id="fm-spec" class="input-modern mt-1" placeholder="如：500mg*10片" /></label>
+        <label class="block">生产厂家<input id="fm-manufacturer" class="input-modern mt-1" placeholder="如：XX药业" /></label>
+        <label class="block">单位<input id="fm-unit" class="input-modern mt-1" value="盒" /></label>
+        <label class="block">是否处方药<select id="fm-isRx" class="input-modern mt-1"><option value="false">否</option><option value="true">是</option></select></label>
+        <label class="block">批准文号<span class="text-red-500">*</span><input id="fm-approvalNo" class="input-modern mt-1" placeholder="必填" /></label>
+        <label class="block">条形码<input id="fm-barcode" class="input-modern mt-1" placeholder="可选：扫描或输入条码" /></label>
+        <label class="block">零售价<input id="fm-retailPrice" type="number" step="0.01" class="input-modern mt-1" value="0" /></label>
+        <label class="block">会员价<input id="fm-memberPrice" type="number" step="0.01" class="input-modern mt-1" value="" placeholder="可选：会员售价" /></label>
+        <label class="block">分类ID<input id="fm-categoryId" type="number" class="input-modern mt-1" value="1" /></label>
+        <label class="block">用法用量<input id="fm-usageDosage" class="input-modern mt-1" placeholder="如：口服，一日三次" /></label>
+        <label class="block">忌口/禁忌<input id="fm-contraindication" class="input-modern mt-1" placeholder="如：孕妇禁用，忌辛辣" /></label>
+        <div class="divider-fine"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block">批号<input id="fm-batch" class="input-modern mt-1" value="" /></label>
+          <label class="block">生产日期<input id="fm-production" type="date" class="input-modern mt-1" /></label>
+          <label class="block">到期日期<input id="fm-expiry" type="date" class="input-modern mt-1" /></label>
+          <label class="block">数量<input id="fm-qty" type="number" class="input-modern mt-1" value="10" /></label>
+          <label class="block">进货价<input id="fm-unitPrice" type="number" step="0.01" class="input-modern mt-1" value="0" /></label>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 p-4 border-t border-gray-100" style="flex:0 0 auto;">
+        <button id="fm-cancel" class="btn btn-outline">取消</button>
+        <button id="fm-submit" class="btn btn-primary"><i class="fa fa-save"></i> 保存并加入入库</button>
+      </div>
+    </div>
+  </main>
+<script src="js/ui-global.js" defer></script>
+<!-- <script src="js/stock-in.js" defer></script> -->
+<script src="js/stock-in-inline.js" defer></script>
+</body>
+</html>

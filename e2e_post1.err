@@ -1,0 +1,29 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Host localhost:8080 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8080...
+* Connected to localhost (::1) port 8080
+* using HTTP/1.x
+> POST /api/medicines HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/8.14.1
+> Accept: */*
+>  Content-Type: application/json
+> Content-Length: 234
+> Content-Type: application/x-www-form-urlencoded
+> 
+} [234 bytes data]
+* upload completely sent off: 234 bytes
+< HTTP/1.1 415 
+< Vary: Origin
+< Vary: Access-Control-Request-Method
+< Vary: Access-Control-Request-Headers
+< Accept: application/json, application/*+json
+< Content-Length: 0
+< Date: Mon, 10 Nov 2025 12:19:40 GMT
+< 
+100   234    0     0  100   234      0  22142 --:--:-- --:--:-- --:--:-- 23400
+* Connection #0 to host localhost left intact

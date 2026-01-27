@@ -1,0 +1,24 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : 
+Content           : {"expiryStatus":null,"code":200,"data":{"medicineId":"E2E_M2","genericName":"E2Eè¯","tradeName":"E2Eç","spec":"20mg","approvalNo":"E2E-AP
+                    P-002","categoryId":2,"manufacturer":"Eå","retailPrice":22...
+RawContent        : HTTP/1.1 200 
+                    Vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+                    Transfer-Encoding: chunked
+                    Content-Type: application/json
+                    Date: Sun, 14 Dec 2025 05:38:24 GMT
+                    
+                    {"expirySta...
+Forms             : {}
+Headers           : {[Vary, Origin,Access-Control-Request-Method,Access-Control-Request-Headers], [Transfer-Encoding, chunked], [Content-Type, application/json]
+                    , [Date, Sun, 14 Dec 2025 05:38:24 GMT]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 515
+
+
+

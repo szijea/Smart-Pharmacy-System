@@ -1,0 +1,293 @@
+-- 1. 创建数据库并指定字符集（若已存在则跳过）
+CREATE DATABASE IF NOT EXISTS rzt_db 
+  CHARACTER SET utf8mb4 
+  COLLATE utf8mb4_general_ci;
+
+-- 切换到目标数据库
+USE rzt_db;
+
+-- 临时禁用外键检查，确保导入顺利
+SET FOREIGN_KEY_CHECKS = 0;
+
+
+-- 2. 基础配置表（先删除旧表，再创建新表）
+-- 药品分类表
+DROP TABLE IF EXISTS `category`;
+CREATE TABLE `category` (
+  `category_id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '分类ID',
+  `category_name` VARCHAR(50) NOT NULL COMMENT '分类名称（如：感冒药、消炎药）',
+  `parent_id` INT DEFAULT 0 COMMENT '父分类ID（0表示一级分类）',
+  `sort` INT DEFAULT 0 COMMENT '排序（数字越小越靠前）',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  UNIQUE KEY `uk_name` (`category_name`) COMMENT '分类名称唯一'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '药品分类表';
+
+-- 角色表（权限管理）
+DROP TABLE IF EXISTS `role`;
+CREATE TABLE `role` (
+  `role_id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '角色ID',
+  `role_name` VARCHAR(50) NOT NULL COMMENT '角色名称（如：管理员、收银员）',
+  `permissions` TEXT COMMENT '权限列表（JSON格式，如：["cashier","inventory"]）',
+  UNIQUE KEY `uk_role_name` (`role_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '角色表';
+
+-- 会员表
+DROP TABLE IF EXISTS `member`;
+CREATE TABLE `member` (
+  `member_id` VARCHAR(32) PRIMARY KEY COMMENT '会员ID（如：M001）',
+  `name` VARCHAR(50) NOT NULL COMMENT '姓名',
+  `phone` VARCHAR(20) NOT NULL COMMENT '手机号（登录/查询用）',
+  `card_no` VARCHAR(50) COMMENT '会员卡编号',
+  `level` TINYINT DEFAULT 0 COMMENT '会员等级：0-普通，1-银卡，2-金卡',
+  `points` INT DEFAULT 0 COMMENT '当前积分',
+  `allergic_history` TEXT COMMENT '过敏史',
+  `medical_card_no` VARCHAR(50) COMMENT '医保卡号',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
+  UNIQUE KEY `uk_phone` (`phone`) COMMENT '手机号唯一',
+  KEY `idx_card` (`card_no`) COMMENT '按卡号查询'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '会员表';
+
+-- 处方表
+DROP TABLE IF EXISTS `prescription`;
+CREATE TABLE `prescription` (
+  `prescription_id` VARCHAR(32) PRIMARY KEY COMMENT '处方ID（如：P001）',
+  `patient_name` VARCHAR(50) COMMENT '患者姓名',
+  `doctor_name` VARCHAR(50) COMMENT '开方医生',
+  `hospital` VARCHAR(100) COMMENT '医院名称',
+  `prescription_date` DATE COMMENT '开方日期',
+  `img_url` VARCHAR(255) NOT NULL COMMENT '处方图片URL（存储路径）',
+  `verify_status` TINYINT DEFAULT 0 COMMENT '审核状态：0-待审核，1-通过，2-拒绝',
+  `verify_remark` VARCHAR(200) COMMENT '审核备注',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
+  KEY `idx_patient` (`patient_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '处方表（处方药必备）';
+
+
+-- 3. 依赖基础表的核心业务表
+-- 员工表（依赖role表）
+DROP TABLE IF EXISTS `employee`;
+CREATE TABLE `employee` (
+  `employee_id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '员工ID',
+  `username` VARCHAR(50) NOT NULL COMMENT '登录账号',
+  `password` VARCHAR(100) NOT NULL COMMENT '密码（加密存储）',
+  `name` VARCHAR(50) NOT NULL COMMENT '姓名',
+  `role_id` INT NOT NULL COMMENT '角色ID（关联role表）',
+  `phone` VARCHAR(20) COMMENT '手机号',
+  `status` TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-正常',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uk_username` (`username`),
+  KEY `idx_role` (`role_id`),
+  CONSTRAINT `fk_employee_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '员工表';
+
+-- 药品信息表（依赖category表）
+DROP TABLE IF EXISTS `medicine`;
+CREATE TABLE `medicine` (
+  `medicine_id` VARCHAR(32) PRIMARY KEY COMMENT '药品ID（自定义唯一标识，如：M001）',
+  `generic_name` VARCHAR(100) NOT NULL COMMENT '通用名（如：复方氨酚烷胺胶囊）',
+  `trade_name` VARCHAR(100) COMMENT '商品名（如：快克）',
+  `spec` VARCHAR(50) NOT NULL COMMENT '规格（如：12粒/盒）',
+  `approval_no` VARCHAR(50) NOT NULL COMMENT '批准文号（国药准字XXX）',
+  `category_id` INT NOT NULL COMMENT '所属分类ID（关联category表）',
+  `manufacturer` VARCHAR(100) COMMENT '生产厂家',
+  `retail_price` DECIMAL(10,2) NOT NULL COMMENT '零售价',
+  `member_price` DECIMAL(10,2) COMMENT '会员价',
+  `is_rx` TINYINT NOT NULL DEFAULT 0 COMMENT '是否处方药：0-非处方药，1-处方药',
+  `unit` VARCHAR(20) COMMENT '单位（如：盒、瓶）',
+  `description` TEXT COMMENT '药品描述（适应症等）',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_category` (`category_id`) COMMENT '按分类查询索引',
+  KEY `idx_name` (`generic_name`,`trade_name`) COMMENT '按名称搜索索引',
+  KEY `idx_approval` (`approval_no`) COMMENT '按批准文号查询索引',
+  CONSTRAINT `fk_medicine_category` FOREIGN KEY (`category_id`) REFERENCES `category` (`category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '药品信息表';
+
+
+-- 4. 依赖核心业务表的扩展表
+-- 库存表（依赖medicine表）
+DROP TABLE IF EXISTS `inventory`;
+CREATE TABLE `inventory` (
+  `inventory_id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '库存ID',
+  `medicine_id` VARCHAR(32) NOT NULL COMMENT '药品ID（关联medicine表）',
+  `batch_no` VARCHAR(50) COMMENT '批号',
+  `expire_date` DATE COMMENT '有效期至',
+  `stock_quantity` INT NOT NULL DEFAULT 0 COMMENT '当前库存数量',
+  `min_threshold` INT DEFAULT 10 COMMENT '最低库存阈值（低于此值预警）',
+  `purchase_price` DECIMAL(10,2) COMMENT '采购价（用于计算成本）',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '库存更新时间',
+  UNIQUE KEY `uk_medicine_batch` (`medicine_id`,`batch_no`) COMMENT '同一药品同一批号唯一',
+  KEY `idx_medicine` (`medicine_id`) COMMENT '按药品查询库存',
+  KEY `idx_expire` (`expire_date`) COMMENT '按效期查询（近效期预警）',
+  CONSTRAINT `fk_inventory_medicine` FOREIGN KEY (`medicine_id`) REFERENCES `medicine` (`medicine_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '药品库存表（按药品+批号管理）';
+
+-- 会员积分记录表（依赖member表）
+DROP TABLE IF EXISTS `member_point`;
+CREATE TABLE `member_point` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `member_id` VARCHAR(32) NOT NULL COMMENT '会员ID',
+  `point` INT NOT NULL COMMENT '积分变动（正数增加，负数减少）',
+  `type` TINYINT NOT NULL COMMENT '类型：1-消费获得，2-积分抵扣，3-积分兑换',
+  `related_order_id` VARCHAR(32) COMMENT '关联订单ID',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '变动时间',
+  KEY `idx_member` (`member_id`),
+  CONSTRAINT `fk_point_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '会员积分变动记录';
+
+-- 库存变动记录表（依赖medicine、employee表）
+DROP TABLE IF EXISTS `stock_record`;
+CREATE TABLE `stock_record` (
+  `record_id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '记录ID',
+  `medicine_id` VARCHAR(32) NOT NULL COMMENT '药品ID',
+  `batch_no` VARCHAR(50) COMMENT '批号',
+  `change_type` TINYINT NOT NULL COMMENT '变动类型：1-入库，2-出库（销售），3-盘点调整，4-退货入库',
+  `quantity` INT NOT NULL COMMENT '变动数量（正数为增加，负数为减少）',
+  `operator_id` INT NOT NULL COMMENT '操作人ID（关联employee表）',
+  `related_order_id` VARCHAR(32) COMMENT '关联订单ID（出库时必填）',
+  `remark` VARCHAR(200) COMMENT '备注（如：采购入库、销售出库）',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '变动时间',
+  KEY `idx_medicine` (`medicine_id`),
+  KEY `idx_time` (`create_time`),
+  CONSTRAINT `fk_stock_medicine` FOREIGN KEY (`medicine_id`) REFERENCES `medicine` (`medicine_id`),
+  CONSTRAINT `fk_stock_employee` FOREIGN KEY (`operator_id`) REFERENCES `employee` (`employee_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '库存变动记录表（用于追踪库存变更）';
+
+-- 挂单表（依赖employee表）
+DROP TABLE IF EXISTS `hang_order`;
+CREATE TABLE `hang_order` (
+  `hang_id` VARCHAR(32) PRIMARY KEY COMMENT '挂单ID（如：H20240520001）',
+  `cashier_id` INT NOT NULL COMMENT '操作人ID（关联employee表）',
+  `hang_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '挂单时间',
+  `status` TINYINT DEFAULT 0 COMMENT '状态：0-未结算，1-已结算，2-已取消',
+  `remark` VARCHAR(200) COMMENT '备注',
+  KEY `idx_cashier` (`cashier_id`),
+  KEY `idx_time` (`hang_time`),
+  CONSTRAINT `fk_hang_employee` FOREIGN KEY (`cashier_id`) REFERENCES `employee` (`employee_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '挂单表（临时保存未结算订单）';
+
+-- 挂单项表（依赖hang_order表）
+DROP TABLE IF EXISTS `hang_order_item`;
+CREATE TABLE `hang_order_item` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `hang_id` VARCHAR(32) NOT NULL COMMENT '挂单ID（关联hang_order表）',
+  `medicine_id` VARCHAR(32) NOT NULL COMMENT '药品ID',
+  `quantity` INT NOT NULL COMMENT '数量',
+  `unit_price` DECIMAL(10,2) NOT NULL COMMENT '单价',
+  KEY `idx_hang` (`hang_id`),
+  CONSTRAINT `fk_hang_item` FOREIGN KEY (`hang_id`) REFERENCES `hang_order` (`hang_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '挂单项表';
+
+-- 订单表（依赖employee、member表）
+DROP TABLE IF EXISTS `order`;
+CREATE TABLE `order` (
+  `order_id` VARCHAR(32) PRIMARY KEY COMMENT '订单ID（如：O20240520001）',
+  `cashier_id` INT NOT NULL COMMENT '收银员ID（关联employee表）',
+  `member_id` VARCHAR(32) COMMENT '会员ID（非会员为NULL，关联member表）',
+  `total_amount` DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
+  `discount_amount` DECIMAL(10,2) DEFAULT 0 COMMENT '优惠金额（会员价/积分抵扣等）',
+  `actual_payment` DECIMAL(10,2) NOT NULL COMMENT '实付金额',
+  `payment_type` TINYINT NOT NULL COMMENT '支付方式：1-现金，2-微信，3-支付宝，4-医保',
+  `payment_status` TINYINT NOT NULL DEFAULT 0 COMMENT '支付状态：0-未支付，1-已支付，2-退款',
+  `used_points` INT DEFAULT 0 COMMENT '使用的积分（抵扣金额）',
+  `created_points` INT DEFAULT 0 COMMENT '本次消费产生的积分',
+  `order_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '下单时间',
+  `pay_time` DATETIME COMMENT '支付时间',
+  `remark` VARCHAR(200) COMMENT '备注（如：挂单后结算）',
+  KEY `idx_cashier` (`cashier_id`),
+  KEY `idx_member` (`member_id`),
+  KEY `idx_time` (`order_time`),
+  CONSTRAINT `fk_order_employee` FOREIGN KEY (`cashier_id`) REFERENCES `employee` (`employee_id`),
+  CONSTRAINT `fk_order_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '订单表';
+
+-- 订单项表（依赖order、medicine、prescription表）
+DROP TABLE IF EXISTS `order_item`;
+CREATE TABLE `order_item` (
+  `item_id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '订单项ID',
+  `order_id` VARCHAR(32) NOT NULL COMMENT '订单ID（关联order表）',
+  `medicine_id` VARCHAR(32) NOT NULL COMMENT '药品ID（关联medicine表）',
+  `quantity` INT NOT NULL COMMENT '购买数量',
+  `unit_price` DECIMAL(10,2) NOT NULL COMMENT '实际成交单价（零售价/会员价）',
+  `subtotal` DECIMAL(10,2) NOT NULL COMMENT '小计金额（数量×单价）',
+  `prescription_id` VARCHAR(32) COMMENT '处方ID（处方药必填，关联prescription表）',
+  KEY `idx_order` (`order_id`),
+  KEY `idx_medicine` (`medicine_id`),
+  CONSTRAINT `fk_item_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`),
+  CONSTRAINT `fk_item_medicine` FOREIGN KEY (`medicine_id`) REFERENCES `medicine` (`medicine_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '订单项表（订单关联的药品明细）';
+
+
+-- 5. 初始化基础数据
+INSERT INTO `category` (`category_name`, `parent_id`, `sort`) VALUES 
+('感冒药', 0, 1),
+('消炎药', 0, 2),
+('慢性病药', 0, 3),
+('维生素类', 0, 4),
+('中药饮片', 0, 5),
+('保健品', 0, 6);
+
+INSERT INTO `role` (`role_name`, `permissions`) VALUES 
+('管理员', '["cashier","inventory","member","order","analysis","system"]'),
+('收银员', '["cashier","order","member"]'),
+('库管员', '["inventory","stock_record"]');
+
+INSERT INTO `employee` (`username`, `password`, `name`, `role_id`, `phone`) VALUES 
+('admin', 'e10adc3949ba59abbe56e057f20f883e', '系统管理员', 1, '13800138000'),
+('cashier01', 'e10adc3949ba59abbe56e057f20f883e', '张三（收银员）', 2, '13900139000');
+
+INSERT INTO `member` (`member_id`, `name`, `phone`, `level`, `points`) VALUES 
+('M00001', '李四', '13700137000', 1, 500),
+('M00002', '王五', '13600136000', 0, 120);
+
+-- 6. 添加药品数据
+INSERT INTO `medicine` (`medicine_id`, `generic_name`, `trade_name`, `spec`, `approval_no`, `category_id`, `manufacturer`, `retail_price`, `member_price`, `is_rx`, `unit`, `description`) VALUES 
+-- 感冒药
+('MED001', '复方氨酚烷胺片', '感康', '12片/盒', '国药准字H22026193', 1, '吉林吴太感康药业有限公司', 15.80, 14.50, 0, '盒', '用于缓解普通感冒及流行性感冒引起的发热、头痛、四肢酸痛、打喷嚏、流鼻涕、鼻塞、咽痛等症状。'),
+('MED002', '连花清瘟胶囊', '以岭', '24粒/盒', '国药准字Z20040063', 1, '石家庄以岭药业股份有限公司', 28.50, 26.80, 0, '盒', '清瘟解毒，宣肺泄热。用于治疗流行性感冒属热毒袭肺证。'),
+('MED003', '感冒灵颗粒', '999', '10袋/盒', '国药准字Z44021970', 1, '华润三九医药股份有限公司', 12.50, 11.00, 0, '盒', '解热镇痛。用于感冒引起的头痛，发热，鼻塞，流涕，咽痛。'),
+
+-- 消炎药
+('MED004', '阿莫西林胶囊', '阿莫仙', '24粒/盒', '国药准字H44021518', 2, '珠海联邦制药股份有限公司', 18.90, 17.50, 1, '盒', '适用于敏感菌所致的下列感染：中耳炎、鼻窦炎、咽炎、扁桃体炎等上呼吸道感染。'),
+('MED005', '头孢克肟胶囊', '世福素', '6粒/盒', '国药准字H20020501', 2, '广州白云山医药集团', 35.60, 33.80, 1, '盒', '适用于敏感菌引起的支气管炎、支气管扩张合并感染、慢性呼吸道疾患继发感染、肺炎等。'),
+('MED006', '罗红霉素片', '仁苏', '12片/盒', '国药准字H20033044', 2, '扬子江药业集团有限公司', 26.80, 24.90, 1, '盒', '适用于化脓性链球菌引起的咽炎及扁桃体炎，敏感菌所致的鼻窦炎、中耳炎、急性支气管炎等。'),
+
+-- 慢性病药
+('MED007', '硝苯地平控释片', '拜新同', '30mg*7片', '国药准字J20130115', 3, '拜耳医药保健有限公司', 38.50, 36.00, 1, '盒', '用于治疗高血压、冠心病、慢性稳定型心绞痛。'),
+('MED008', '盐酸二甲双胍片', '格华止', '0.5g*20片', '国药准字H20023370', 3, '中美上海施贵宝制药有限公司', 28.90, 26.50, 1, '盒', '用于单纯饮食控制不满意的2型糖尿病患者，尤其是肥胖和伴高胰岛素血症者。'),
+('MED009', '阿托伐他汀钙片', '立普妥', '20mg*7片', '国药准字J20120050', 3, '辉瑞制药有限公司', 52.80, 49.90, 1, '盒', '用于治疗高胆固醇血症和混合型高脂血症；冠心病和脑中风的防治。'),
+
+-- 维生素类
+('MED010', '维生素C片', '力度伸', '1.0g*10片', '国药准字H20090303', 4, '拜耳医药保健有限公司', 45.00, 42.00, 0, '盒', '用于预防和治疗坏血病，也可用于各种急慢性传染疾病及紫癜等的辅助治疗。'),
+('MED011', '维生素B族片', '21金维他', '60片/瓶', '国药准字H33022075', 4, '杭州赛诺菲民生健康药业有限公司', 68.00, 62.00, 0, '瓶', '用于预防和治疗B族维生素缺乏所致的营养不良、厌食、脚气病、糙皮病等。'),
+('MED012', '维生素D钙片', '钙尔奇', '60片/瓶', '国药准字H10950029', 4, '惠氏制药有限公司', 75.50, 69.80, 0, '瓶', '用于妊娠和哺乳期妇女、更年期妇女、老年人等的钙补充剂，并帮助防治骨质疏松症。'),
+
+-- 中药饮片
+('MED013', '金银花', NULL, '100g/袋', '中药材', 5, '河南宛西制药股份有限公司', 25.80, 23.50, 0, '袋', '清热解毒，疏散风热。用于痈肿疔疮，喉痹，丹毒，热毒血痢，风热感冒，温病发热。'),
+('MED014', '枸杞', NULL, '250g/袋', '中药材', 5, '宁夏中宁枸杞有限公司', 38.00, 35.00, 0, '袋', '滋补肝肾，益精明目。用于虚劳精亏，腰膝酸痛，眩晕耳鸣，阳萎遗精，内热消渴，血虚萎黄，目昏不明。'),
+
+-- 保健品
+('MED015', '蛋白粉', '汤臣倍健', '450g/罐', '食健字G20120001', 6, '汤臣倍健股份有限公司', 198.00, 185.00, 0, '罐', '补充蛋白质，增强免疫力。适用于需要补充蛋白质的成人。'),
+('MED016', '鱼油软胶囊', '自然之宝', '100粒/瓶', '食健字G20110085', 6, '美国自然之宝公司', 156.00, 145.00, 0, '瓶', '辅助降血脂，改善记忆。适用于血脂偏高者及需改善记忆的成年人。');
+
+-- 7. 添加库存数据
+INSERT INTO `inventory` (`medicine_id`, `batch_no`, `expire_date`, `stock_quantity`, `min_threshold`, `purchase_price`) VALUES 
+('MED001', 'B20240101', '2026-01-01', 150, 20, 12.50),
+('MED002', 'B20240215', '2025-12-31', 80, 15, 22.00),
+('MED003', 'B20240320', '2025-10-15', 200, 30, 9.80),
+('MED004', 'B20240410', '2026-04-10', 60, 10, 14.50),
+('MED005', 'B20240505', '2026-05-05', 45, 8, 28.00),
+('MED006', 'B20240612', '2026-06-12', 75, 12, 20.50),
+('MED007', 'B20240708', '2026-07-08', 90, 15, 30.80),
+('MED008', 'B20240825', '2026-08-25', 120, 20, 22.00),
+('MED009', 'B20240930', '2026-09-30', 55, 10, 42.50),
+('MED010', 'B20241015', '2025-11-15', 100, 15, 35.00),
+('MED011', 'B20241120', '2026-11-20', 65, 10, 52.00),
+('MED012', 'B20241205', '2026-12-05', 85, 12, 58.00),
+('MED013', 'B20250110', '2026-01-10', 180, 25, 18.50),
+('MED014', 'B20250215', '2026-02-15', 140, 20, 28.00),
+('MED015', 'B20250320', '2025-09-20', 50, 8, 150.00),
+('MED016', 'B20250425', '2025-10-25', 70, 10, 120.00);
+
+-- 重新启用外键检查
+SET FOREIGN_KEY_CHECKS = 1;

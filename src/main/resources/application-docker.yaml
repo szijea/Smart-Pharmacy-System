@@ -1,0 +1,44 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:db}:3306/rzt_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  tenants:
+    - id: bht
+      url: jdbc:mysql://${DB_HOST:db}:3306/bht?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      username: root
+      password: 123456
+    - id: wx
+      url: jdbc:mysql://${DB_HOST:db}:3306/wx?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      username: root
+      password: 123456
+    - id: rzt
+      url: jdbc:mysql://${DB_HOST:db}:3306/rzt_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      username: root
+      password: 123456
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
+logging:
+  level:
+    com.pharmacy: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

@@ -1,0 +1,69 @@
+# ---- Maven / Spring Boot build output ----
+/target/
+
+# Keep Maven wrapper
+.mvn/
+!.mvn/wrapper/
+!.mvn/wrapper/maven-wrapper.jar
+
+# ---- Node / Frontend tooling ----
+/node_modules/
+/dist/
+/.cache/
+/build/
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- IDE / Editor ----
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# ---- OS / Misc ----
+.DS_Store
+Thumbs.db
+*.swp
+
+# ---- Environment / Secrets ----
+.env
+.env.*
+*.pem
+*.key
+
+# ---- Archives / Packages ----
+*.jar
+*.war
+*.zip
+*.tar
+*.gz
+
+# ---- Test reports / Generated ----
+/surefire-reports/
+/hs_err_pid*
+
+# ---- Temporary ----
+/tmp/
+*.tmp
+
+# ---- Dependency scan / Reports ----
+/qodana/
+
+# ---- Frontend build artifacts under static (keep sources) ----
+# You can ignore minified bundles if generated; adjust as needed
+# /src/main/resources/static/js/*.min.js
+# /src/main/resources/static/css/*.min.css
+
+# ---- Optional: exclude local scripts ----
+# e2e_run.ps1
+
+# ---- Allow SQL migration scripts ----
+# (We keep *.sql at root intentionally)
+
+# ---- Tailwind JIT artifacts ----
+/.tailwind-cache/
+

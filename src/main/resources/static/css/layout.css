@@ -1,0 +1,109 @@
+/* layout.css: 统一布局与组件基础样式，无 Tailwind 构建依赖版本 */
+/* 容器 */
+.main-content { padding: 1.5rem; width: 100%; }
+@media (min-width: 1024px){ .main-content { padding: 2rem 2.25rem; } }
+
+/* 卡片 */
+.card { background:#ffffff; border:1px solid #e5e7eb; border-radius:0.75rem; box-shadow:0 1px 2px rgba(0,0,0,0.05); overflow:hidden; }
+.card > .card-header { padding:1rem 1.25rem; border-bottom:1px solid #f0f2f5; font-weight:600; }
+
+/* 按钮基础 */
+.btn { display:inline-flex; align-items:center; gap:.5rem; font-size:.875rem; font-weight:500; line-height:1.25rem; padding:.55rem 1rem; border-radius:.5rem; border:1px solid transparent; cursor:pointer; transition:background .15s,color .15s,border-color .15s,box-shadow .15s; text-decoration:none; }
+.btn i { font-size:.875rem; }
+.btn:disabled { opacity:.6; cursor:not-allowed; }
+
+/* 按钮主题 */
+.btn-primary { background:#165DFF; color:#fff; }
+.btn-primary:hover { background:#0d4dcc; }
+.btn-outline { background:#fff; color:#374151; border-color:#d1d5db; }
+.btn-outline:hover { background:#f3f4f6; }
+.btn-danger { background:#FF5630; color:#fff; }
+.btn-danger:hover { background:#e64925; }
+.btn-success { background:#36B37E; color:#fff; }
+.btn-success:hover { background:#2f996c; }
+.btn-warning { background:#f59e0b; color:#fff; }
+.btn-warning:hover { background:#d98207; }
+.btn-info { background:#0ea5e9; color:#fff; }
+.btn-info:hover { background:#0285c7; }
+
+/* 输入控件 */
+.input { width:100%; padding:.55rem .75rem; font-size:.875rem; line-height:1.25rem; border:1px solid #d1d5db; border-radius:.45rem; background:#fff; color:#1f2937; outline:none; }
+.input:focus { border-color:#165DFF; box-shadow:0 0 0 3px rgba(22,93,255,0.15); }
+
+/* 徽章 */
+.badge { display:inline-flex; align-items:center; padding:.25rem .5rem; border-radius:999px; font-size:.625rem; font-weight:500; letter-spacing:.5px; }
+.badge-success { background:#dcfce7; color:#166534; }
+.badge-warning { background:#fef3c7; color:#92400e; }
+.badge-error { background:#fee2e2; color:#991b1b; }
+.badge-info { background:#dbeafe; color:#1e3a8a; }
+
+/* 分页按钮（与产品页面统一） */
+.pagination-btn { width:2rem; height:2rem; display:flex; align-items:center; justify-content:center; border:1px solid #d1d5db; border-radius:.375rem; font-size:.75rem; cursor:pointer; background:#fff; transition:.15s; margin:0 2px; }
+.pagination-btn:hover { background:#f1f5f9; }
+.pagination-btn.active { background:#165DFF; color:#fff; border-color:#165DFF; }
+.pagination-btn.disabled { color:#94a3b8; cursor:not-allowed; }
+
+/* 页面标题 */
+.page-title { font-size:clamp(1.25rem,2vw,1.75rem); line-height:1.2; }
+
+/* 步骤指示器 */
+.step-indicator { width:2.25rem; height:2.25rem; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#f3f4f6; font-weight:600; color:#6b7280; position:relative; }
+.step-indicator.active { background:#165DFF; color:#fff; }
+.step-indicator.completed { background:#36B37E; color:#fff; }
+
+/* 提示样式 */
+.profit-positive { color:#16a34a; }
+.profit-negative { color:#dc2626; }
+
+/* 自定义滚动条轻度优化 */
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:#f1f5f9; }
+::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
+
+/* 通知面板 */
+#notification-panel { animation:fadeIn .25s ease-in; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(-4px);} to { opacity:1; transform:translateY(0);} }
+
+/* 导航占位(如果 common-nav.js 未加载时) */
+#common-nav:empty { width:240px; background:#0f172a; color:#fff; }
+
+/* 表格 hover */
+.table-row-hover:hover { background:#f8fafc; }
+
+/* 表单错误高亮（用于脚本动态添加） */
+.input-error { border-color:#dc2626 !important; box-shadow:0 0 0 3px rgba(220,38,38,0.18); }
+/* ==== Comfortable layout extensions ==== */
+.container-xl { max-width: 1480px; margin: 0 auto; padding: 0 1.25rem; }
+@media (max-width: 640px){ .container-xl { padding: 0 .9rem; } }
+/* 新增全宽容器：不限制最大宽度，铺满页面 */
+.container-fluid { width:100%; max-width:none; margin:0; padding:0 1.25rem; }
+@media (max-width:640px){ .container-fluid { padding:0 .9rem; } }
+/* 全局固定宽度 1800px 应用到主要容器 */
+.container-fluid, .app-shell, .app-shell-narrow, .member-cap { max-width:1800px; margin-left:auto; margin-right:auto; }
+/* 移动端保持全宽，仅在大屏受限 */
+@media (max-width: 640px){ .container-fluid, .app-shell, .app-shell-narrow, .member-cap { max-width:100%; } }
+
+.section-gap > * + * { margin-top: 1.75rem; }
+@media (min-width:1024px){ .section-gap > * + * { margin-top: 2rem; } }
+
+.action-bar { display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }
+.action-bar .btn { min-height:2.5rem; }
+
+.cozy-grid { display:grid; gap:1.25rem; }
+@media(min-width:640px){ .cozy-grid.cols-2 { grid-template-columns:repeat(2,1fr);} }
+@media(min-width:1024px){ .cozy-grid.cols-3 { grid-template-columns:repeat(3,1fr);} .cozy-grid.cols-4 { grid-template-columns:repeat(4,1fr);} }
+
+.large-click button, .large-click .pagination-btn { min-width:2.25rem; min-height:2.25rem; }
+
+.responsive-wrap { display:flex; flex-wrap:wrap; gap:.75rem; }
+.responsive-wrap > * { flex: 0 0 auto; }
+/* End comfortable layout extensions */
+/* 两列主布局辅助类与侧栏样式 */
+.layout-two-column { display:grid; grid-template-columns: 280px 1fr; gap:1.5rem; align-items:start; }
+@media (max-width: 1024px){ .layout-two-column { grid-template-columns: 1fr; } }
+.layout-sidebar { position:sticky; top:5rem; display:flex; flex-direction:column; gap:1rem; }
+.layout-sidebar .card { box-shadow:none; border-color:#e2e8f0; }
+.layout-main { min-width:0; }
+/* 侧栏分组标题 */
+.sidebar-section-title { font-size:.75rem; font-weight:600; letter-spacing:.5px; color:#64748b; text-transform:uppercase; padding:0 .25rem; }

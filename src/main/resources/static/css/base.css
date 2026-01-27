@@ -1,0 +1,114 @@
+/* base.css - 公共样式与设计令牌，供 Tailwind 与回退同时使用 */
+:root {
+  --color-primary:#1e3a8a;
+  --color-secondary:#3b82f6;
+  --color-neutral-50:#f8fafc;
+  --color-neutral-100:#f1f5f9;
+  --color-neutral-200:#e2e8f0;
+  --color-neutral-300:#cbd5e1;
+  --color-neutral-800:#1e293b;
+  --color-neutral-900:#0f172a;
+  --radius-sm:0.5rem;
+  --radius-md:0.75rem;
+  --radius-lg:1rem;
+  --shadow-soft:0 2px 15px -3px rgba(0,0,0,0.05),0 10px 20px -2px rgba(0,0,0,0.03);
+  --shadow-hover:0 10px 25px -5px rgba(0,0,0,0.08),0 8px 10px -6px rgba(0,0,0,0.04);
+  --transition:0.25s ease;
+}
+
+/* 全局浅色覆盖：统一所有页面背景与底部区域样式 */
+html, body {
+  background: var(--lw-bg, linear-gradient(135deg, #f8fbff 0%, #f0f7ff 40%, #eef5ff 100%)) !important;
+  color: #334155 !important;
+}
+/* 禁用任何深色 premium 背景变量的应用 */
+body.enhanced-ui,
+body.theme-lightwide,
+body.modern-ui {
+  background: var(--lw-bg, linear-gradient(135deg, #f8fbff 0%, #f0f7ff 40%, #eef5ff 100%)) !important;
+}
+/* 统一卡片与容器浅色 */
+.card,
+.container,
+.app-shell,
+.main-content,
+.section-gap {
+  background-color: #ffffff00; /* 透明以显示浅色渐变 */
+}
+/* 隐藏常见的底部黑色区域（固定底栏/页脚覆盖层） */
+.app-footer,
+#page-footer,
+footer.app-footer,
+footer#page-footer,
+.footer-fixed,
+.footer,
+.page-bottom-bar {
+  display: none !important;
+  visibility: hidden !important;
+}
+/* 任何全屏黑色遮罩如果误常驻，默认隐藏 */
+.modal-backdrop,
+.backdrop,
+.overlay,
+.page-overlay {
+  background: transparent !important;
+}
+/* 侧边栏与页头保持浅色 */
+aside,
+header {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* 语义类 */
+.card-luxury {background:#fff;border:1px solid var(--color-neutral-200);border-radius:1.25rem;box-shadow:var(--shadow-soft);overflow:hidden;transition:var(--transition);}
+.card-luxury:hover {box-shadow:var(--shadow-hover);}
+.input-lux {width:100%;padding:.85rem 1rem;background:var(--color-neutral-50);border:1px solid var(--color-neutral-200);border-radius:1rem;color:var(--color-neutral-800);font-size:.95rem;transition:var(--transition);}
+.input-lux:focus {outline:2px solid var(--color-primary);outline-offset:2px;}
+.btn-lux {display:inline-block;width:100%;padding:.9rem 1.2rem;background:var(--color-primary);color:#fff;font-weight:500;border:none;border-radius:1rem;cursor:pointer;transition:var(--transition);}
+.btn-lux:hover {background:#183170;}
+.link-elegant {color:var(--color-neutral-600,#475569);text-decoration:none;position:relative;transition:color .3s;}
+.link-elegant:hover {color:var(--color-primary);}
+.link-elegant:hover::after {width:100%;}
+.link-elegant::after {content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--color-primary);transition:width .3s;}
+.divider-fine {height:1px;background:var(--color-neutral-200);margin:2rem 0;}
+.bg-pattern {background-image:radial-gradient(circle at 25% 25%, rgba(30,58,138,.05) 0%, transparent 50%),radial-gradient(circle at 75% 75%, rgba(30,58,138,.05) 0%, transparent 50%);background-size:100px 100px;}
+
+/* 通用工具（少量，避免与 Tailwind 冲突） */
+.flex {display:flex;} .items-center{align-items:center;} .justify-center{justify-content:center;} .justify-between{justify-content:space-between;} .gap-4{gap:1rem;} .rounded-xl{border-radius:var(--radius-lg);} .text-center{text-align:center;} .w-full{width:100%;}
+
+/* 动画 & 滚动条 */
+.fade-in {animation:fade-in .4s ease;} @keyframes fade-in {from{opacity:0;transform:translateY(4px);} to{opacity:1;transform:translateY(0);} }
+::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-track{background:#f1f5f9;} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;} ::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
+
+/* === Unified component styles (migrated from inline Tailwind @apply blocks) === */
+.sidebar-item {display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:.5rem;transition:all .2s;cursor:pointer;color:#374151;background:transparent;}
+.sidebar-item.active {background:#165DFF;color:#fff;}
+.sidebar-item:not(.active):hover {background:#f3f4f6;}
+.card {background:#fff;border-radius:.75rem;border:1px solid #f1f5f9;box-shadow:0 1px 2px 0 rgba(0,0,0,.05);overflow:hidden;transition:all .3s;}
+.card:hover {box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);}
+.btn {display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:.5rem;font-weight:500;line-height:1.25;cursor:pointer;transition:background .2s,box-shadow .2s,border-color .2s;text-decoration:none;border:1px solid transparent;background:#f9fafb;color:#374151;}
+.btn:hover {background:#f3f4f6;}
+.btn-primary {background:#165DFF;color:#fff;border-color:#165DFF;}
+.btn-primary:hover {background:#0f4dcc;}
+.btn-outline {background:#fff;color:#374151;border-color:#d1d5db;}
+.btn-outline:hover {background:#f9fafb;}
+.btn-danger {background:#FF5630;color:#fff;border-color:#FF5630;}
+.btn-danger:hover {background:#e94c26;}
+.input {width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:.5rem;background:#fff;color:#374151;font-size:.875rem;line-height:1.25;transition:border-color .15s,box-shadow .15s;}
+.input:focus {outline:0;border-color:#165DFF;box-shadow:0 0 0 2px rgba(22,93,255,.25);}
+.badge {display:inline-flex;align-items:center;padding:.25rem .5rem;border-radius:9999px;font-size:.625rem;font-weight:500;line-height:1;background:#e5e7eb;color:#374151;}
+.main-content {flex:1;padding:1.5rem;background:#f9fafb;min-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin;}
+.main-content::-webkit-scrollbar {width:8px;}
+.main-content::-webkit-scrollbar-track {background:#f1f5f9;}
+.main-content::-webkit-scrollbar-thumb {background:#cbd5e1;border-radius:4px;}
+.main-content::-webkit-scrollbar-thumb:hover {background:#94a3b8;}
+.member-level-tag {display:inline-flex;align-items:center;padding:.25rem .5rem;border-radius:9999px;font-size:.625rem;font-weight:500;background:#eff6ff;color:#1d4ed8;}
+.cart-item-highlight {background:#fef9c3;}
+/* 统一控制台标题样式 */
+.page-title {font-size:clamp(1.25rem,2vw,1.75rem);line-height:1.2;}
+.app-shell {max-width:1280px;margin-left:auto;margin-right:auto;width:100%;padding-left:1rem;padding-right:1rem;}
+@media (min-width:1600px){.app-shell{max-width:1400px;}}
+/* optional narrower variant */
+.app-shell-narrow {max-width:960px;margin:0 auto;padding-left:1rem;padding-right:1rem;}
+/* end app-shell additions */

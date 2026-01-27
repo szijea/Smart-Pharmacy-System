@@ -1,0 +1,42 @@
+# Normalize line endings
+* text=auto
+
+# Treat shell and batch scripts as text explicitly
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+
+# Markdown / documentation
+*.md text
+
+# Java / Source
+*.java text
+*.xml text
+*.yml text
+*.yaml text
+*.properties text
+
+# CSS / JS / HTML
+*.css text
+*.js text
+*.html text
+
+# SQL
+*.sql text
+
+# Images (binary)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg text
+
+# Archives / JARs (binary)
+*.jar binary
+*.zip binary
+*.war binary
+
+# Fonts
+*.woff binary
+*.woff2 binary
+

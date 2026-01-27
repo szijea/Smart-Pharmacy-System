@@ -1,0 +1,181 @@
+springboot-pharmacy/  # 项目根目录
+├── docker-compose.yml               # Docker容器编排配置（服务+数据库）
+├── Dockerfile                       # 项目Docker镜像构建脚本
+├── .gitignore                       # Git忽略文件配置（target、IDE配置等）
+├── .gitattributes                   # Git文件属性配置（换行符、编码等）
+├── mvnw                             # Maven包装器（Linux/Mac）
+├── mvnw.cmd                         # Maven包装器（Windows）
+├── pom.xml                          # Maven核心配置（依赖、插件、项目信息）
+├── README.md                        # 项目说明文档（启动步骤、功能介绍）
+├── rzt.sql                          # 数据库初始化脚本（表结构+基础数据）
+├── compile_errors.txt               # 编译错误日志（临时文件）
+├── deepseek_text_20251017_098643.txt # 临时文本文件（笔记/草稿）
+├── logs/                            # 运行时日志目录（自动生成）
+├── docs/                            # 项目文档
+│   ├── api-docs.md                  # 接口文档（请求参数+响应格式）
+│   ├── db-design.md                 # 数据库设计文档（表结构+关系）
+│   └── user-manual.md               # 用户操作手册
+├── scripts/                         # 部署/运维脚本
+│   ├── deploy-prod.sh               # 生产环境部署脚本
+│   └── db-backup.sh                 # 数据库定时备份脚本
+├── .idea/                           # IntelliJ IDEA配置目录（本地IDE使用）
+├── .mvn/                            # Maven包装器支持目录
+├── target/                          # Maven构建输出目录
+│   ├── classes/                     # 主程序编译结果（对应src/main）
+│   ├── test-classes/                # 测试类编译结果（对应src/test）
+│   ├── springboot-pharmacy-1.0.0.jar # 可执行JAR包
+│   └── surefire-reports/            # 单元测试报告
+└── src/
+    ├── main/
+    │   ├── java/com/pharmacy/
+    │   │   ├── PharmacyApplication.java       # 项目启动类（Spring Boot入口）
+    │   │   ├── config/                        # 配置类
+    │   │   │   ├── SwaggerConfig.java         # Swagger接口文档配置
+    │   │   │   ├── WebMvcConfig.java          # MVC配置（拦截器、跨域）
+    │   │   │   ├── SecurityConfig.java        # 安全配置（登录验证、权限）
+    │   │   │   ├── RedisConfig.java           # Redis缓存配置（连接池、序列化）
+    │   │   │   ├── MyBatisConfig.java         # MyBatis配置（mapper扫描、分页）
+    │   │   │   └── RabbitMQConfig.java        # 消息队列配置（订单通知等）
+    │   │   ├── controller/                    # 控制器层（HTTP接口）
+    │   │   │   ├── CategoryController.java    # 药品分类接口
+    │   │   │   ├── MedicineController.java    # 药品信息接口
+    │   │   │   ├── OrderController.java       # 订单管理接口
+    │   │   │   ├── HangOrderController.java   # 挂单（临时订单）接口
+    │   │   │   ├── StockController.java       # 库存操作接口
+    │   │   │   ├── SupplierController.java    # 供应商管理接口
+    │   │   │   ├── PrescriptionController.java # 处方管理接口
+    │   │   │   ├── MemberController.java      # 会员管理接口
+    │   │   │   └── EmployeeController.java    # 员工管理接口
+    │   │   ├── entity/                        # 实体类（数据库映射）
+    │   │   │   ├── Category.java              # 药品分类（id、名称、父分类）
+    │   │   │   ├── Medicine.java              # 药品信息（名称、规格、批号、有效期）
+    │   │   │   ├── Order.java                 # 订单（编号、金额、状态、会员ID）
+    │   │   │   ├── HangOrder.java             # 挂单（临时订单，未支付）
+    │   │   │   ├── StockRecord.java           # 库存记录（操作类型、数量、时间）
+    │   │   │   ├── MedicineStock.java         # 药品库存（药品ID、当前库存、预警阈值）
+    │   │   │   ├── Supplier.java              # 供应商（名称、联系方式、地址）
+    │   │   │   ├── Prescription.java          # 处方（编号、患者、医生、审核状态）
+    │   │   │   ├── Member.java                # 会员（手机号、积分、等级）
+    │   │   │   └── Employee.java              # 员工（用户名、密码、角色、权限）
+    │   │   ├── repository/                    # 数据访问层（DAO）
+    │   │   │   ├── CategoryRepository.java    # 药品分类数据操作
+    │   │   │   ├── MedicineRepository.java    # 药品信息数据操作
+    │   │   │   ├── OrderRepository.java       # 订单数据操作
+    │   │   │   ├── HangOrderRepository.java   # 挂单数据操作
+    │   │   │   ├── StockRecordRepository.java # 库存记录数据操作
+    │   │   │   ├── MedicineStockRepository.java # 药品库存数据操作
+    │   │   │   ├── SupplierRepository.java    # 供应商数据操作
+    │   │   │   ├── PrescriptionRepository.java # 处方数据操作
+    │   │   │   ├── MemberRepository.java      # 会员数据操作
+    │   │   │   └── EmployeeRepository.java    # 员工数据操作
+    │   │   ├── service/                       # 业务逻辑层
+    │   │   │   ├── CategoryService.java       # 药品分类业务接口
+    │   │   │   ├── MedicineService.java       # 药品信息业务接口
+    │   │   │   ├── OrderService.java          # 订单业务接口
+    │   │   │   ├── HangOrderService.java      # 挂单业务接口
+    │   │   │   ├── StockService.java          # 库存业务接口
+    │   │   │   ├── SupplierService.java       # 供应商业务接口
+    │   │   │   ├── PrescriptionService.java   # 处方业务接口
+    │   │   │   ├── MemberService.java         # 会员业务接口
+    │   │   │   ├── EmployeeService.java       # 员工业务接口
+    │   │   │   └── impl/                      # 业务实现类
+    │   │   │       ├── CategoryServiceImpl.java
+    │   │   │       ├── MedicineServiceImpl.java
+    │   │   │       ├── OrderServiceImpl.java
+    │   │   │       ├── HangOrderServiceImpl.java
+    │   │   │       ├── StockServiceImpl.java
+    │   │   │       ├── SupplierServiceImpl.java
+    │   │   │       ├── PrescriptionServiceImpl.java
+    │   │   │       ├── MemberServiceImpl.java
+    │   │   │       └── EmployeeServiceImpl.java
+    │   │   ├── dto/                           # 数据传输对象（前后端交互）
+    │   │   │   ├── CategoryDTO.java           # 分类传输对象
+    │   │   │   ├── MedicineDTO.java           # 药品传输对象
+    │   │   │   ├── OrderRequest.java          # 订单创建请求参数
+    │   │   │   ├── OrderResponse.java         # 订单响应结果
+    │   │   │   ├── SalesTrendDTO.java         # 销售趋势数据
+    │   │   ├── vo/                            # 视图对象（前端展示专用）
+    │   │   │   ├── MedicineDetailVO.java      # 药品详情页展示数据
+    │   │   │   ├── OrderStatisticsVO.java     # 订单统计视图（日/月销量）
+    │   │   │   └── MemberCardVO.java          # 会员卡片展示数据
+    │   │   ├── enums/                         # 枚举类（状态/类型定义）
+    │   │   │   ├── OrderStatusEnum.java       # 订单状态（待支付/已完成/取消）
+    │   │   │   ├── MedicineTypeEnum.java      # 药品类型（处方药/非处方药）
+    │   │   │   └── StockOperateEnum.java      # 库存操作类型（入库/出库/盘点）
+    │   │   ├── util/                          # 工具类
+    │   │   │   ├── Result.java                # 统一响应结果封装
+    │   │   │   ├── DateUtil.java              # 日期处理工具
+    │   │   │   ├── ExcelUtil.java             # Excel导入导出工具
+    │   │   │   ├── PasswordUtil.java          # 密码加密工具（MD5/SHA）
+    │   │   │   └── JwtUtil.java               # JWT令牌工具
+    │   │   ├── exception/                     # 异常处理
+    │   │   │   ├── GlobalExceptionHandler.java # 全局异常处理器
+    │   │   │   ├── BusinessException.java     # 自定义业务异常
+    │   │   │   └── ValidationException.java   # 参数校验异常
+    │   │   ├── aspect/                        # AOP切面
+    │   │   │   ├── LogAspect.java             # 接口日志切面（记录请求/响应）
+    │   │   │   └── TransactionAspect.java     # 事务切面（自定义事务控制）
+    │   │   ├── interceptor/                   # 拦截器
+    │   │   │   ├── LoginInterceptor.java      # 登录验证拦截器
+    │   │   │   └── PermissionInterceptor.java # 权限校验拦截器
+    │   │   └── listener/                      # 事件监听器
+    │   │       └── OrderStatusListener.java   # 订单状态变更监听器
+    │   └── resources/                         # 资源文件
+    │       ├── application.properties         # 主配置文件
+    │       ├── application-dev.properties     # 开发环境配置
+    │       ├── application-prod.properties    # 生产环境配置
+    │       ├── logback-spring.xml             # 日志配置（Logback）
+    │       ├── db/
+    │       │   ├── migration/                 # Flyway数据库迁移脚本
+    │       │   │   ├── V1__init_table.sql     # 初始化表结构
+    │       │   │   └── V2__init_data.sql      # 初始化基础数据
+    │       │   └── mybatis/                   # MyBatis映射文件
+    │       │       ├── MedicineMapper.xml
+    │       │       └── OrderMapper.xml
+    │       ├── redis/
+    │       │   └── redis.properties           # Redis连接配置
+    │       ├── i18n/                          # 国际化配置
+    │       │   ├── messages_zh_CN.properties  # 中文
+    │       │   └── messages_en_US.properties  # 英文
+    │       ├── static/                        # 静态资源
+    │       │   ├── js/
+    │       │   │   ├── common.js              # 通用工具函数
+    │       │   │   ├── api.js                 # API请求封装
+    │       │   │   ├── medicine-import.js     # 药品导入逻辑
+    │       │   │   ├── stock.js               # 库存操作逻辑
+    │       │   │   └── member.js              # 会员相关逻辑
+    │       │   ├── css/
+    │       │   │   ├── main.css               # 主样式
+    │       │   │   └── pagination.css         # 分页样式
+    │       │   ├── images/
+    │       │   │   ├── drug/                  # 药品图片
+    │       │   │   └── icons/                 # 功能图标
+    │       │   ├── fonts/                     # 字体文件
+    │       │   └── plugins/                   # 第三方插件
+    │       │       ├── jquery/
+    │       │       └── layui/
+    │       └── templates/                     # 动态模板（Thymeleaf）
+    │           ├── index.html                 # 首页
+    │           ├── login.html                 # 登录页
+    │           ├── order/
+    │           │   ├── order-list.html        # 订单列表页
+    │           │   └── order-add.html         # 新增订单页
+    │           ├── medicine/
+    │           │   ├── medicine-list.html     # 药品列表页
+    │           │   └── medicine-detail.html   # 药品详情页
+    │           └── member/
+    │               └── member-card.html       # 会员卡片页
+    └── test/                                  # 测试目录
+        └── java/com/pharmacy/
+            ├── controller/
+            │   ├── OrderControllerTest.java
+            │   └── MedicineControllerTest.java
+            ├── service/
+            │   ├── OrderServiceImplTest.java
+            │   └── StockServiceImplTest.java
+            ├── repository/
+            │   └── MedicineRepositoryTest.java
+            ├── util/
+            │   └── JwtUtilTest.java
+            └── integration/
+                └── OrderFlowTest.java          # 下单全流程集成测试

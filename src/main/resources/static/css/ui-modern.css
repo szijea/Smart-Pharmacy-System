@@ -1,0 +1,88 @@
+/* ui-modern.css - 统一现代化UI增强层 */
+:root{
+  --color-bg-soft:#f8fafc;
+  --color-border:#e2e8f0;
+  --color-card:#ffffff;
+  --color-primary:#1e3a8a;
+  --color-primary-rgb:30,58,138;
+  --radius-base:14px;
+  --shadow-soft:0 4px 12px -3px rgba(0,0,0,.08),0 10px 24px -6px rgba(0,0,0,.05);
+  --shadow-hover:0 12px 32px -8px rgba(0,0,0,.18),0 8px 12px -8px rgba(0,0,0,.08);
+  --density-card-padding: 1.25rem;
+  --density-gap: .9rem;
+  --density-input-pad-y: .7rem;
+  --density-input-pad-x: 1rem;
+  --density-btn-pad-y: .8rem;
+  --density-btn-pad-x: 1.25rem;
+  --density-table-cell-pad-y: .85rem;
+  --density-table-cell-pad-x: 1.15rem;
+}
+body.modern-ui{background:linear-gradient(145deg,#f0f4f9,#ffffff 55%,#f0f4f9);}
+.card-modern{background:var(--color-card);border:1px solid var(--color-border);border-radius:var(--radius-base);box-shadow:var(--shadow-soft);transition:.35s;position:relative;overflow:hidden;padding: 1.25rem;}
+.card-modern:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px);}
+.btn-modern{display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.15rem;border-radius:10px;font-weight:600;background:rgba(var(--color-primary-rgb),.92);color:#fff;box-shadow:0 4px 12px -3px rgba(var(--color-primary-rgb),.5);transition:.25s;border:1px solid rgba(var(--color-primary-rgb),.6);}
+.btn-modern:hover{background:rgba(var(--color-primary-rgb),1);transform:translateY(-1px);}
+.btn-modern:active{transform:translateY(0);}
+.badge-soft{display:inline-flex;align-items:center;padding:.35rem .7rem;font-size:.65rem;font-weight:500;border-radius:999px;background:#eef2ff;color:#1e3a8a;letter-spacing:.5px;}
+.input-modern{width:100%;border:1px solid var(--color-border);background:#f1f5f9;border-radius:10px;padding:.65rem .9rem;font-size:.85rem;transition:.25s;}
+.input-modern:focus{background:#fff;border-color:#94a3b8;outline:none;box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.section-title-modern{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:.55rem;margin-top:.25rem;}
+.section-title-modern:before{content:"";display:inline-block;width:7px;height:7px;border-radius:3px;background:var(--color-primary);box-shadow:0 0 0 4px rgba(var(--color-primary-rgb),.12);}
+.table-modern-compact thead{background:#f1f5f9;font-size:.65rem;letter-spacing:.5px;text-transform:uppercase;color:#64748b;}
+.table-modern-compact td,.table-modern-compact th{padding:.75rem 1rem;}
+.table-modern-compact tbody tr{border-bottom:1px solid #e2e8f0;transition:.25s;}
+.table-modern-compact tbody tr:hover{background:#f8fafc;}
+.empty-state-modern{padding:2.5rem 1.25rem;text-align:center;color:#64748b;}
+.empty-state-modern i{display:block;font-size:2rem;margin-bottom:.75rem;color:#93a1b5;}
+.action-row-modern{display:flex;flex-wrap:wrap;gap:.9rem;margin-bottom:1rem;}
+.filter-bar-modern{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+.reset-tenant{color:#64748b;font-size:.7rem;cursor:pointer;margin-left:.5rem;transition:.25s;}
+.reset-tenant:hover{color:#ef4444;text-decoration:underline;}
+.spinner-modern{border:3px solid #e2e8f0;border-top-color:var(--color-primary);border-radius:50%;width:28px;height:28px;animation:spin .8s linear infinite;margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.fade-enter{animation:fadeIn .4s ease;}@keyframes fadeIn{0%{opacity:0;transform:translateY(6px);}100%{opacity:1;transform:translateY(0);}}
+.global-loader{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.55);backdrop-filter:blur(4px);z-index:1000;}
+.global-loader.active{display:flex;}
+.global-loader .box{background:#fff;border:1px solid #e2e8f0;padding:1.25rem 1.75rem;border-radius:16px;box-shadow:var(--shadow-soft);display:flex;flex-direction:column;align-items:center;gap:.85rem;}
+.global-loader .box p{font-size:.75rem;color:#475569;letter-spacing:.5px;}
+/* 轻量自适应文本 */
+.text-dim{color:#64748b;}
+/* 页内小标签 */
+.inline-hint{font-size:.65rem;padding:.2rem .45rem;background:#f1f5f9;border-radius:6px;color:#475569;}
+/* 新增：提高整体行高与段落间距 */
+body{ line-height: 1.6; }
+.card-modern > * + *{ margin-top: .75rem; }
+/* 小屏自动堆叠 action-row，使按钮和输入不拥挤 */
+@media (max-width: 768px){
+  .action-row-modern{ flex-direction: column; align-items: stretch; }
+  .action-row-modern .btn-modern{ width: 100%; }
+}
+/* 页面主内容的节间距增强（需要容器类时） */
+.section-gap-md{ padding: .75rem 0; }
+/* 表格在小屏横向滚动更舒适 */
+.table-wrapper{ overflow-x:auto; -webkit-overflow-scrolling: touch; }
+/* 密度控制：舒适版（默认） */
+.density-comfortable :where(.card-modern){ padding: calc(var(--density-card-padding) * 1.2); }
+.density-comfortable :where(.action-row-modern){ gap: calc(var(--density-gap) * 1.2); }
+.density-comfortable :where(.input-modern){ padding: calc(var(--density-input-pad-y) * 1.2) calc(var(--density-input-pad-x) * 1.2); font-size: .9rem; }
+.density-comfortable :where(.btn-modern){ padding: calc(var(--density-btn-pad-y) * 1.15) calc(var(--density-btn-pad-x) * 1.15); font-size: .9rem; }
+.density-comfortable :where(.table-modern-compact td),
+.density-comfortable :where(.table-modern-compact th){ padding: calc(var(--density-table-cell-pad-y) * 1.15) calc(var(--density-table-cell-pad-x) * 1.15); }
+.density-comfortable :where(.section-title-modern){ margin-top: .4rem; }
+/* 密度控制：紧凑版（如数据密集场景） */
+.density-compact :where(.card-modern){ padding: calc(var(--density-card-padding) * .8); }
+.density-compact :where(.action-row-modern){ gap: calc(var(--density-gap) * .7); }
+.density-compact :where(.input-modern){ padding: calc(var(--density-input-pad-y) * .7) calc(var(--density-input-pad-x) * .7); font-size: .82rem; }
+.density-compact :where(.btn-modern){ padding: calc(var(--density-btn-pad-y) * .75) calc(var(--density-btn-pad-x) * .75); font-size: .82rem; }
+.density-compact :where(.table-modern-compact td),
+.density-compact :where(.table-modern-compact th){ padding: calc(var(--density-table-cell-pad-y) * .85) calc(var(--density-table-cell-pad-x) * .85); }
+/* 默认将 body 视为舒适密度 */
+body.modern-ui{ line-height: 1.65; }
+/* 作为舒适密度容器 */
+body.modern-ui.density-compact{ line-height: 1.5; }
+/* 控制台风格的模块外间距增强（更通透） */
+.console-spacing .card-modern{ margin-bottom: 1.25rem; }
+.console-spacing .table-wrapper{ margin-top: .75rem; }
+@media (min-width: 1024px){
+  .console-spacing .card-modern{ margin-bottom: 1.5rem; }
+}

@@ -1,0 +1,23 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : 
+Content           : {"port":8080,"service":"Medicine Service","status":"UP","timestamp":"2025-12-14T13:38:23.888411"}
+RawContent        : HTTP/1.1 200 
+                    Vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+                    Transfer-Encoding: chunked
+                    Keep-Alive: timeout=60
+                    Connection: keep-alive
+                    Content-Type: application/json
+                    Da...
+Forms             : {}
+Headers           : {[Vary, Origin,Access-Control-Request-Method,Access-Control-Request-Headers], [Transfer-Encoding, chunked], [Keep-Alive, timeout=60], [Conne
+                    ction, keep-alive]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 97
+
+
+

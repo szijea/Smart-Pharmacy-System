@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自定义层扩展 */
+@layer components {
+  .sidebar-item { @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer; }
+  .sidebar-item.active { @apply bg-primary text-white; }
+  .sidebar-item:not(.active):hover { @apply bg-gray-100; }
+  .card { @apply bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow; }
+  .btn { @apply px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors; }
+  .btn-primary { @apply bg-primary text-white hover:bg-primary/90; }
+  .btn-success { @apply bg-secondary text-white hover:bg-secondary/90; }
+  .btn-warning { @apply bg-warning text-white hover:bg-warning/90; }
+  .btn-info { @apply bg-blue-500 text-white hover:bg-blue-600; }
+  .btn-outline { @apply border border-gray-300 hover:bg-gray-50; }
+  .input { @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all; }
+  .badge { @apply px-2 py-1 rounded-full text-xs font-medium; }
+  .badge-success { @apply bg-green-100 text-green-800; }
+  .badge-warning { @apply bg-yellow-100 text-yellow-800; }
+  .badge-error { @apply bg-red-100 text-red-800; }
+  .smart-suggestion { @apply bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm; }
+  .step-indicator { @apply flex items-center justify-center w-8 h-8 rounded-full border-2 border-primary text-primary font-medium; }
+  .step-indicator.active { @apply bg-primary text-white; }
+  .step-indicator.completed { @apply bg-green-100 border-green-500 text-green-700; }
+  .price-input-container { @apply relative; }
+  .price-input { @apply pl-8; }
+  .profit-positive { @apply text-green-600 font-medium; }
+  .profit-negative { @apply text-red-600 font-medium; }
+  .info-tooltip { @apply relative inline-block; }
+  .info-tooltip .tooltip-text { @apply invisible w-48 bg-black text-white text-center rounded-lg py-2 px-3 absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 transition-opacity; }
+  .info-tooltip:hover .tooltip-text { @apply visible opacity-100; }
+  .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50; }
+  .modal-content { @apply bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0; }
+  .modal-overlay.show .modal-content { @apply scale-100 opacity-100; }
+  .modal-overlay.show { @apply flex; }
+  .main-content { @apply flex-1 p-6 bg-gray-50; height: calc(100vh - 64px); overflow-y: scroll; scrollbar-width: thin; }
+}
+
+/* 非 @apply 的原生样式 */
+.main-content::-webkit-scrollbar { width: 8px; }
+.main-content::-webkit-scrollbar-track { background: #f5f5f5; }
+.main-content::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+.main-content::-webkit-scrollbar-thumb:hover { background: #9ca3af; }

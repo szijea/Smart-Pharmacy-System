@@ -1,0 +1,24 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : 
+Content           : {"stockInId":6,"stockInNo":"SI1765690705743","supplier":{"supplierId":1,"supplierName":null,"contactPerson":null,"phone":null,"address":null
+                    ,"createTime":null},"stockInDate":"2025-11-10T12:00:00","tot...
+RawContent        : HTTP/1.1 200 
+                    Vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+                    Transfer-Encoding: chunked
+                    Content-Type: application/json
+                    Date: Sun, 14 Dec 2025 05:38:24 GMT
+                    
+                    {"stockInId...
+Forms             : {}
+Headers           : {[Vary, Origin,Access-Control-Request-Method,Access-Control-Request-Headers], [Transfer-Encoding, chunked], [Content-Type, application/json]
+                    , [Date, Sun, 14 Dec 2025 05:38:24 GMT]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 937
+
+
+
