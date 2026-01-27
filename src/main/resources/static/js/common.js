@@ -15,7 +15,13 @@ async function apiCall(endpoint, options = {}) {
         const url = `${BASE_URL}${endpoint}`;
         const tenant = (typeof localStorage !== 'undefined') ? localStorage.getItem('selectedTenant') : null;
         if(!options.headers) options.headers = {};
-        if(tenant){ options.headers['X-Shop-Id'] = tenant; } else { console.warn('[apiCall] 未找到 selectedTenant, 使用 default:', url); }
+        const defaultTenant = 'wx';
+        if(tenant){
+            options.headers['X-Shop-Id'] = tenant;
+        } else {
+            console.warn('[apiCall] 未找到 selectedTenant, 使用默认租户', defaultTenant, '，请求URL:', url);
+            options.headers['X-Shop-Id'] = defaultTenant;
+        }
         const method = (options.method || (options.body ? 'POST' : 'GET')).toUpperCase();
         // 自动序列化 body
         if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData) && !(options.body instanceof Blob)) {
