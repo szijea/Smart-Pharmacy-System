@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS order_item (
   id INT PRIMARY KEY AUTO_INCREMENT,
   order_id VARCHAR(32) NOT NULL,
   medicine_id VARCHAR(32) NOT NULL,
+  prescription_id VARCHAR(32),
   quantity INT NOT NULL,
   unit_price DECIMAL(10,2) NOT NULL,
   subtotal DECIMAL(10,2) NOT NULL,
