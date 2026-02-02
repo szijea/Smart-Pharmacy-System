@@ -48,7 +48,6 @@ public class DashboardServiceImpl implements DashboardService {
             Double todaySales = getTodaySales();
             // 使用区间查询获取昨日数据
             LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
-            LocalDateTime todayEnd = todayStart.plusDays(1);
             LocalDateTime yStart = todayStart.minusDays(1);
             LocalDateTime yEnd = todayStart;
             Double yesterdaySales = orderRepository.getPaidSalesBetween(yStart, yEnd);

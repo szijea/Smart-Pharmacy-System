@@ -47,6 +47,7 @@ public class MultiTenantSchemaInitializer {
                     ensureEmployeeTable(conn, catalog);
                     ensureMedicineTable(conn, catalog);
                     ensureInventoryTable(conn, catalog);
+                    ensureSystemSettingsTable(conn, catalog);
                     ensureOrderTable(conn, catalog);
                     ensureOrderItemTable(conn, catalog);
                     ensureHangOrderTable(conn, catalog);
@@ -399,6 +400,131 @@ public class MultiTenantSchemaInitializer {
                     "KEY idx_med(medicine_id)" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
             try (Statement st = conn.createStatement()) { st.executeUpdate(ddl); System.out.println("[SchemaInit] 已创建表 order_item"); }
+        }
+    }
+
+    private void ensureSystemSettingsTable(Connection conn, String catalog) throws SQLException {
+        if (!tableExists(conn, catalog, "system_settings")) {
+            String ddl = "CREATE TABLE system_settings (" +
+                    "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                    "store_name VARCHAR(255) NULL, " +
+                    "store_phone VARCHAR(50) NULL, " +
+                    "store_address VARCHAR(255) NULL, " +
+                    "store_desc VARCHAR(255) NULL, " +
+                    "low_stock_threshold INT NULL, " +
+                    "notify_methods VARCHAR(255) NULL, " +
+                    "points_rule DOUBLE NULL, " +
+                    "cash_rule INT NULL, " +
+                    "operation_log TINYINT(1) NULL, " +
+                    "created_at DATETIME NULL, " +
+                    "updated_at DATETIME NULL, " +
+                    "open_time VARCHAR(10) NULL, " +
+                    "close_time VARCHAR(10) NULL, " +
+                    "license_number VARCHAR(64) NULL, " +
+                    "notify_system TINYINT(1) NULL, " +
+                    "notify_email TINYINT(1) NULL, " +
+                    "notify_sms TINYINT(1) NULL, " +
+                    "notify_email_address VARCHAR(128) NULL, " +
+                    "email_frequency VARCHAR(20) NULL, " +
+                    "notify_phone VARCHAR(20) NULL, " +
+                    "sms_frequency VARCHAR(20) NULL, " +
+                    "inventory_check_cycle VARCHAR(20) NULL, " +
+                    "normal_to_silver INT NULL, " +
+                    "normal_discount INT NULL, " +
+                    "silver_to_gold INT NULL, " +
+                    "silver_discount INT NULL, " +
+                    "gold_to_platinum INT NULL, " +
+                    "gold_discount INT NULL, " +
+                    "enable_cash TINYINT(1) NULL, " +
+                    "enable_wechat TINYINT(1) NULL, " +
+                    "enable_alipay TINYINT(1) NULL, " +
+                    "enable_member_card TINYINT(1) NULL, " +
+                    "wechat_mch_id VARCHAR(64) NULL, " +
+                    "wechat_api_key VARCHAR(128) NULL, " +
+                    "alipay_app_id VARCHAR(64) NULL, " +
+                    "alipay_private_key TEXT NULL, " +
+                    "change_unit VARCHAR(10) NULL, " +
+                    "default_printer VARCHAR(32) NULL, " +
+                    "paper_size VARCHAR(32) NULL, " +
+                    "print_logo TINYINT(1) NULL, " +
+                    "print_qrcode TINYINT(1) NULL, " +
+                    "print_member TINYINT(1) NULL, " +
+                    "print_drug_detail TINYINT(1) NULL, " +
+                    "print_usage TINYINT(1) NULL, " +
+                    "print_footer TINYINT(1) NULL, " +
+                    "footer_text VARCHAR(512) NULL, " +
+                    "receipt_copies INT NULL, " +
+                    "prescription_copies INT NULL, " +
+                    "enable_log TINYINT(1) NULL, " +
+                    "log_retention INT NULL, " +
+                    "pwd_expiry INT NULL, " +
+                    "login_attempts INT NULL, " +
+                    "enable_ip_restrict TINYINT(1) NULL, " +
+                    "auto_backup TINYINT(1) NULL, " +
+                    "backup_cycle VARCHAR(20) NULL, " +
+                    "backup_retention INT NULL" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+            try (Statement st = conn.createStatement()) {
+                st.executeUpdate(ddl);
+                System.out.println("[SchemaInit] 已创建表 system_settings");
+            }
+        } else {
+            addColumnIfMissing(conn, "system_settings", "store_name", "VARCHAR(255) NULL");
+            addColumnIfMissing(conn, "system_settings", "store_phone", "VARCHAR(50) NULL");
+            addColumnIfMissing(conn, "system_settings", "store_address", "VARCHAR(255) NULL");
+            addColumnIfMissing(conn, "system_settings", "store_desc", "VARCHAR(255) NULL");
+            addColumnIfMissing(conn, "system_settings", "low_stock_threshold", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "notify_methods", "VARCHAR(255) NULL");
+            addColumnIfMissing(conn, "system_settings", "points_rule", "DOUBLE NULL");
+            addColumnIfMissing(conn, "system_settings", "cash_rule", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "operation_log", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "created_at", "DATETIME NULL");
+            addColumnIfMissing(conn, "system_settings", "updated_at", "DATETIME NULL");
+            addColumnIfMissing(conn, "system_settings", "open_time", "VARCHAR(10) NULL");
+            addColumnIfMissing(conn, "system_settings", "close_time", "VARCHAR(10) NULL");
+            addColumnIfMissing(conn, "system_settings", "license_number", "VARCHAR(64) NULL");
+            addColumnIfMissing(conn, "system_settings", "notify_system", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "notify_email", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "notify_sms", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "notify_email_address", "VARCHAR(128) NULL");
+            addColumnIfMissing(conn, "system_settings", "email_frequency", "VARCHAR(20) NULL");
+            addColumnIfMissing(conn, "system_settings", "notify_phone", "VARCHAR(20) NULL");
+            addColumnIfMissing(conn, "system_settings", "sms_frequency", "VARCHAR(20) NULL");
+            addColumnIfMissing(conn, "system_settings", "inventory_check_cycle", "VARCHAR(20) NULL");
+            addColumnIfMissing(conn, "system_settings", "normal_to_silver", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "normal_discount", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "silver_to_gold", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "silver_discount", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "gold_to_platinum", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "gold_discount", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "enable_cash", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "enable_wechat", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "enable_alipay", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "enable_member_card", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "wechat_mch_id", "VARCHAR(64) NULL");
+            addColumnIfMissing(conn, "system_settings", "wechat_api_key", "VARCHAR(128) NULL");
+            addColumnIfMissing(conn, "system_settings", "alipay_app_id", "VARCHAR(64) NULL");
+            addColumnIfMissing(conn, "system_settings", "alipay_private_key", "TEXT NULL");
+            addColumnIfMissing(conn, "system_settings", "change_unit", "VARCHAR(10) NULL");
+            addColumnIfMissing(conn, "system_settings", "default_printer", "VARCHAR(32) NULL");
+            addColumnIfMissing(conn, "system_settings", "paper_size", "VARCHAR(32) NULL");
+            addColumnIfMissing(conn, "system_settings", "print_logo", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "print_qrcode", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "print_member", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "print_drug_detail", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "print_usage", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "print_footer", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "footer_text", "VARCHAR(512) NULL");
+            addColumnIfMissing(conn, "system_settings", "receipt_copies", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "prescription_copies", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "enable_log", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "log_retention", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "pwd_expiry", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "login_attempts", "INT NULL");
+            addColumnIfMissing(conn, "system_settings", "enable_ip_restrict", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "auto_backup", "TINYINT(1) NULL");
+            addColumnIfMissing(conn, "system_settings", "backup_cycle", "VARCHAR(20) NULL");
+            addColumnIfMissing(conn, "system_settings", "backup_retention", "INT NULL");
         }
     }
 

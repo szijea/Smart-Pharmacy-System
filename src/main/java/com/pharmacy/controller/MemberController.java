@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/members")
@@ -710,6 +711,8 @@ public class MemberController {
                 return ResponseEntity.badRequest().body(Map.of("message", "无效的请求参数：rewardId 缺失"));
             }
             Long rewardId = Long.valueOf(rewardIdObj.toString());
+            Objects.requireNonNull(memberId, "memberId");
+            Objects.requireNonNull(rewardId, "rewardId");
             Optional<Member> memberOpt = memberRepository.findById(memberId);
             if (memberOpt.isEmpty()) {
                 return ResponseEntity.notFound().build();

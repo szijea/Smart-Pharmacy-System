@@ -309,9 +309,6 @@ public class InventoryController {
                 String gn = dto.getMedicineGenericName();
                 String tn = dto.getMedicineTradeName();
                 String spec = dto.getMedicineSpec();
-                String mfr = null; // InventoryDTO 目前没有厂家字段
-                String ap = null;  // InventoryDTO 目前没有批准文号字段
-                String bc = null;  // InventoryDTO 目前没有条码字段
                 return (bno!=null && bno.toLowerCase().contains(low))
                         || (gn!=null && gn.toLowerCase().contains(low))
                         || (tn!=null && tn.toLowerCase().contains(low))

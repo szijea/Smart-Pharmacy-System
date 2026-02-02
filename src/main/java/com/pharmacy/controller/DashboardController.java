@@ -1,8 +1,6 @@
 package com.pharmacy.controller;
 
 import com.pharmacy.entity.Medicine;
-import com.pharmacy.repository.MedicineRepository;
-import com.pharmacy.repository.OrderItemRepository;
 import com.pharmacy.repository.OrderRepository;
 import com.pharmacy.service.InventoryService;
 import com.pharmacy.service.MedicineService;
@@ -23,13 +21,9 @@ public class DashboardController {
     @Autowired
     private OrderRepository orderRepository;
     @Autowired
-    private OrderItemRepository orderItemRepository;
-    @Autowired
     private MedicineService medicineService;
     @Autowired
     private InventoryService inventoryService;
-    @Autowired
-    private MedicineRepository medicineRepository;
 
     @GetMapping("/metrics")
     public ResponseEntity<Map<String,Object>> metrics(){

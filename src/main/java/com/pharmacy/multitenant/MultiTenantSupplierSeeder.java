@@ -5,10 +5,10 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.util.Map;
+import java.util.Objects;
 
 @Configuration
 public class MultiTenantSupplierSeeder {
@@ -23,7 +23,8 @@ public class MultiTenantSupplierSeeder {
                 if ("default".equals(tenantId)) continue;
 
                 try {
-                    JdbcTemplate jdbc = new JdbcTemplate(entry.getValue());
+                    DataSource dataSource = Objects.requireNonNull(entry.getValue(), "dataSource");
+                    JdbcTemplate jdbc = new JdbcTemplate(dataSource);
                     Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM supplier WHERE supplier_name = ?", Integer.class, "默认供应商");
 
                     if (count != null && count == 0) {

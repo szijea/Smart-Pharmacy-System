@@ -1,7 +1,6 @@
 package com.pharmacy.util;
 
 import java.time.LocalDate;
-import java.util.Objects;
 
 /**
  * 统一的库存/有效期状态计算工具。

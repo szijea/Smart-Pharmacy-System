@@ -43,6 +43,16 @@
     <script src="js/common-nav.js" defer></script>
 </head>
 <body class="font-inter text-gray-800 min-h-screen flex enhanced-ui theme-modern theme-lightwide page-enter modern-ui density-comfortable console-spacing">
+  <div class="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-sm flex items-center justify-center">
+    <div class="max-w-md w-full mx-6 p-6 rounded-xl border border-gray-200 shadow-lg bg-white">
+      <h2 class="text-lg font-bold text-gray-800 mb-2">药品档案页面已取消</h2>
+      <p class="text-sm text-gray-600 mb-4">正在为你跳转到库存管理页…</p>
+      <a href="inventory.html" class="btn btn-primary">立即前往库存管理</a>
+    </div>
+  </div>
+  <script>
+    setTimeout(function(){ window.location.href = 'inventory.html'; }, 1200);
+  </script>
 
 <div class="scroll-progress" id="scroll-progress"></div>
   <div id="common-nav" data-active="products"></div>

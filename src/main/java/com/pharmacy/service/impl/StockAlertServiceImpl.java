@@ -4,7 +4,6 @@ import com.pharmacy.entity.Inventory;
 import com.pharmacy.entity.Medicine;
 import com.pharmacy.entity.StockAlert;
 import com.pharmacy.repository.InventoryRepository;
-import com.pharmacy.repository.MedicineRepository;
 import com.pharmacy.repository.StockAlertRepository;
 import com.pharmacy.service.StockAlertService;
 import com.pharmacy.util.StockStatusUtil;
@@ -12,21 +11,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 
 @Service
 public class StockAlertServiceImpl implements StockAlertService {
 
     @Autowired
     private InventoryRepository inventoryRepository;
-
-    @Autowired
-    private MedicineRepository medicineRepository;
 
     @Autowired
     private StockAlertRepository stockAlertRepository;
@@ -50,6 +45,7 @@ public class StockAlertServiceImpl implements StockAlertService {
 
     @Override
     public boolean handleAlert(Long alertId) {
+        Objects.requireNonNull(alertId, "alertId");
         return stockAlertRepository.findById(alertId)
                 .map(alert -> {
                     alert.setIsHandled(true);

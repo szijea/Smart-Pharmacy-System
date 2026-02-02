@@ -1,6 +1,5 @@
 package com.pharmacy.config;
 
-import com.pharmacy.shared.service.BossService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import com.pharmacy.multitenant.TenantContext;
@@ -9,12 +8,10 @@ import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
+import java.util.Objects;
 
 @Component
 public class BossDataInitializer implements CommandLineRunner {
-
-    @Autowired
-    private BossService bossService;
 
     @Autowired
     @Qualifier("defaultDataSource")
@@ -25,7 +22,7 @@ public class BossDataInitializer implements CommandLineRunner {
         try {
             TenantContext.setCurrentTenant("default");
 
-            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            JdbcTemplate jdbc = new JdbcTemplate(Objects.requireNonNull(dataSource, "dataSource"));
             jdbc.execute("CREATE TABLE IF NOT EXISTS boss (" +
                     "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
                     "username VARCHAR(50) NOT NULL UNIQUE, " +

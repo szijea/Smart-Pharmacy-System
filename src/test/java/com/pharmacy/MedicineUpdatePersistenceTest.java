@@ -3,7 +3,6 @@ package com.pharmacy;
 import com.pharmacy.entity.Medicine;
 import com.pharmacy.repository.MedicineRepository;
 import com.pharmacy.service.MedicineService;
-import com.pharmacy.service.InventoryService;
 import com.pharmacy.dto.MedicineWithStockDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -22,8 +21,6 @@ public class MedicineUpdatePersistenceTest {
     private MedicineRepository medicineRepository;
     @Autowired
     private MedicineService medicineService;
-    @Autowired
-    private InventoryService inventoryService;
 
     @Test
     @Transactional

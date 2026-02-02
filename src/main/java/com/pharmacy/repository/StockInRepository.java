@@ -25,5 +25,4 @@ public interface StockInRepository extends JpaRepository<StockIn, Long> {
     @Query("SELECT s FROM StockIn s WHERE s.stockInNo LIKE %:keyword% OR s.supplier.supplierName LIKE %:keyword%")
     Page<StockIn> findByKeyword(String keyword, Pageable pageable);
 
-    Page<StockIn> findAll(Pageable pageable);
 }

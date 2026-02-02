@@ -1,6 +1,5 @@
 package com.pharmacy.service;
 
-import com.pharmacy.entity.Inventory;
 import com.pharmacy.shared.entity.ProductTransferLog;
 import com.pharmacy.multitenant.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;

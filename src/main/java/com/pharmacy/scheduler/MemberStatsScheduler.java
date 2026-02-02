@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
@@ -47,12 +48,13 @@ public class MemberStatsScheduler {
             System.out.println("[MemberStatsScheduler] 没有可用的 TaskScheduler，跳过定时任务注册");
             return;
         }
+        Objects.requireNonNull(env, "env");
         // read cron props (fall back to defaults). Defaults chosen to 6-field Spring style.
-        String evictCron = env.getProperty("member.cache.evict-cron", "0 0/20 * * * ?");
-        String batchCron = env.getProperty("member.cache.batch-refresh-cron", "0 0/15 * * * ?");
+        String evictCron = Objects.requireNonNull(env.getProperty("member.cache.evict-cron", "0 0/20 * * * ?"), "evictCron");
+        String batchCron = Objects.requireNonNull(env.getProperty("member.cache.batch-refresh-cron", "0 0/15 * * * ?"), "batchCron");
 
-        evictCron = normalizeCron(evictCron);
-        batchCron = normalizeCron(batchCron);
+        evictCron = Objects.requireNonNull(normalizeCron(evictCron), "evictCron");
+        batchCron = Objects.requireNonNull(normalizeCron(batchCron), "batchCron");
 
         try{
             evictFuture = taskScheduler.schedule(this::evictExpired, new CronTrigger(evictCron));

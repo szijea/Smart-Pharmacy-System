@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/hang-orders")
@@ -79,6 +80,7 @@ public class HangOrderController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteHangOrder(@PathVariable String id) {
         try {
+            Objects.requireNonNull(id, "id");
             hangOrderRepository.deleteById(id);
             return ResponseEntity.ok(Map.of("code", 200, "message", "挂单已删除"));
         } catch (Exception e) {

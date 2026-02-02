@@ -15,6 +15,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
+import java.util.Objects;
 
 @Configuration
 @EnableTransactionManagement
@@ -55,6 +56,6 @@ public class DefaultPersistenceConfig {
     @Bean(name = "defaultTransactionManager")
     public PlatformTransactionManager defaultTransactionManager(
             @Qualifier("defaultEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactory) {
-        return new JpaTransactionManager(entityManagerFactory.getObject());
+        return new JpaTransactionManager(Objects.requireNonNull(entityManagerFactory.getObject(), "EntityManagerFactory"));
     }
 }

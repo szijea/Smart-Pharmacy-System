@@ -2,7 +2,6 @@ package com.pharmacy.controller;
 
 import com.pharmacy.entity.Category;
 import com.pharmacy.service.CategoryService;
-import com.pharmacy.util.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -55,7 +55,6 @@
         ];
         // 仅管理员可见的链接
         var adminLinks = [
-            {href: 'products.html', icon: 'fa-pills', text: '药品档案', key: 'products'},
             {href: 'staff.html', icon: 'fa-user-md', text: '员工管理', key: 'staff'},
             {href: 'settings.html', icon: 'fa-cog', text: '系统设置', key: 'settings'}
         ];

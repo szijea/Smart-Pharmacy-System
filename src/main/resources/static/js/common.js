@@ -1,4 +1,10 @@
 // common.js - 统一版
+(function(){
+if (typeof window !== 'undefined' && window.__COMMON_JS_LOADED__) {
+    console.warn('[common.js] 已加载，跳过重复初始化');
+    return;
+}
+if (typeof window !== 'undefined') { window.__COMMON_JS_LOADED__ = true; }
 
 // 统一 API 基础地址：优先使用部署时注入的 window.API_BASE，其次 location.origin + '/api'
 const BASE_URL = (function(){
@@ -222,6 +228,7 @@ function showMessage(message, type = 'success') {
     // 把本模块的命名空间合并到 window.api
     Object.assign(window.api, {
         BASE_URL,
+        apiCall,
         medicineAPI,
         categoryAPI,
         memberAPI,
@@ -236,6 +243,10 @@ function showMessage(message, type = 'success') {
         settingAPI
     });
 
+    // 兼容旧脚本直接调用 apiCall/BASE_URL
+    window.apiCall = window.apiCall || apiCall;
+    window.BASE_URL = window.BASE_URL || BASE_URL;
+
     console.log('=== common.js 加载完成 ===');
     console.log('API 对象已挂载到 window.api');
     try {
@@ -249,7 +260,7 @@ function showMessage(message, type = 'success') {
 if (typeof window.refreshDashboardWidgets !== 'function') {
   window.refreshDashboardWidgets = async function(){
     try {
-      const base = window.api?.BASE_URL || '/api';
+            const base = window.api?.BASE_URL || '/api';
       const [alertsResp, hotResp] = await Promise.all([
         fetch(base + '/dashboard/stock-alerts').then(r=>r.json()).catch(()=>null),
         fetch(base + '/dashboard/hot-products').then(r=>r.json()).catch(()=>null)
@@ -264,3 +275,5 @@ if (typeof window.refreshDashboardWidgets !== 'function') {
     } catch(e){ console.warn('refreshDashboardWidgets failed', e); }
   }
 }
+
+})();

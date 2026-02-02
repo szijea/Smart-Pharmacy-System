@@ -3,7 +3,6 @@ package com.pharmacy.config;
 import com.pharmacy.multitenant.TenantFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
-import com.pharmacy.config.BossAuthFilter;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration

@@ -1,7 +1,6 @@
 // ExportController.java - 改进版本
 package com.pharmacy.controller;
 
-import com.pharmacy.dto.ApiResponse;
 import com.pharmacy.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/export")
@@ -22,11 +22,12 @@ public class ExportController {
 
     @Autowired
     public ExportController(DashboardService dashboardService) {
-        this.dashboardService = dashboardService;
+        this.dashboardService = Objects.requireNonNull(dashboardService, "dashboardService");
     }
 
     @PostMapping("/dashboard-report")
     public ResponseEntity<byte[]> exportDashboardReport() {
+        MediaType jsonType = Objects.requireNonNull(MediaType.APPLICATION_JSON, "jsonType");
         try {
             Map<String, Object> exportData = dashboardService.getExportData();
 
@@ -39,7 +40,7 @@ public class ExportController {
 
             // 设置响应头
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setContentType(jsonType);
             headers.setContentDispositionFormData("attachment", fileName);
             headers.setCacheControl("no-cache, no-store, must-revalidate");
             headers.setPragma("no-cache");
@@ -53,7 +54,7 @@ public class ExportController {
             // 返回错误响应
             String errorJson = "{\"error\": \"报表导出失败: " + e.getMessage() + "\"}";
             return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(jsonType)
                     .body(errorJson.getBytes(StandardCharsets.UTF_8));
         }
     }

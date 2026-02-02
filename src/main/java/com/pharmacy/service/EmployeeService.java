@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -19,10 +20,12 @@ public class EmployeeService {
     }
 
     public Optional<Employee> findById(Integer id) {
+        Objects.requireNonNull(id, "id");
         return employeeRepository.findById(id);
     }
 
     public Employee save(Employee employee) {
+        Objects.requireNonNull(employee, "employee");
         // 如果是新增且密码为空，设置默认密码
         if (employee.getEmployeeId() == null && employee.getPassword() == null) {
             employee.setPassword(md5("123456")); // 默认密码
@@ -34,6 +37,7 @@ public class EmployeeService {
     }
 
     public void delete(Integer id) {
+        Objects.requireNonNull(id, "id");
         employeeRepository.deleteById(id);
     }
 

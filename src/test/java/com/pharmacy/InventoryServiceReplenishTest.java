@@ -2,7 +2,6 @@ package com.pharmacy;
 
 import com.pharmacy.entity.Inventory;
 import com.pharmacy.service.InventoryService;
-import com.pharmacy.repository.InventoryRepository;
 import com.pharmacy.repository.MedicineRepository;
 import com.pharmacy.entity.Medicine;
 import org.junit.jupiter.api.Test;
@@ -13,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,11 +23,10 @@ class InventoryServiceReplenishTest {
     @Autowired
     private InventoryService inventoryService;
     @Autowired
-    private InventoryRepository inventoryRepository;
-    @Autowired
     private MedicineRepository medicineRepository;
 
     private Medicine ensureMedicine(String id){
+        Objects.requireNonNull(id, "id");
         return medicineRepository.findById(id).orElseGet(() -> {
             Medicine m = new Medicine();
             m.setMedicineId(id);

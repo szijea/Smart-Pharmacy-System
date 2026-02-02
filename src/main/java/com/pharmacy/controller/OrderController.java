@@ -108,8 +108,6 @@ public class OrderController {
         try { return new BigDecimal(String.valueOf(v)); } catch(Exception e){ return null; }
     }
     private Integer toInt(Object v){ if(v==null) return null; if(v instanceof Number n) return n.intValue(); try { return Integer.parseInt(String.valueOf(v)); } catch(Exception e){ return null; } }
-    private Long toLong(Object v){ if(v==null) return null; if(v instanceof Number n) return n.longValue(); try { return Long.parseLong(String.valueOf(v)); } catch(Exception e){ return null; } }
-    private String val(java.util.Map<?,?> m, String k){ Object v=m.get(k); return v==null? null: String.valueOf(v); }
 
     @GetMapping("/debug-headers")
     public ResponseEntity<?> debugHeaders(@RequestHeader Map<String,String> headers){
@@ -136,13 +134,18 @@ public class OrderController {
                     itemMap.put("quantity", oi.getQuantity());
                     itemMap.put("unitPrice", oi.getUnitPrice());
                     itemMap.put("subtotal", oi.getSubtotal());
-                    Medicine med = medicineRepository.findById(oi.getMedicineId()).orElse(null);
-                    if (med != null) {
-                        itemMap.put("genericName", med.getGenericName());
-                        itemMap.put("tradeName", med.getTradeName());
-                        itemMap.put("spec", med.getSpec());
-                        itemMap.put("manufacturer", med.getManufacturer());
-                        itemMap.put("barcode", med.getBarcode());
+                    String medId = oi.getMedicineId();
+                    if (medId != null) {
+                        Medicine med = medicineRepository.findById(medId).orElse(null);
+                        if (med != null) {
+                            itemMap.put("genericName", med.getGenericName());
+                            itemMap.put("tradeName", med.getTradeName());
+                            itemMap.put("spec", med.getSpec());
+                            itemMap.put("manufacturer", med.getManufacturer());
+                            itemMap.put("barcode", med.getBarcode());
+                        } else {
+                            itemMap.put("genericName", "未知药品");
+                        }
                     } else {
                         itemMap.put("genericName", "未知药品");
                     }
@@ -165,8 +168,12 @@ public class OrderController {
                 orderMap.put("usedPoints", order.getUsedPoints());
                 orderMap.put("createdPoints", order.getCreatedPoints());
                 orderMap.put("items", items);
-                if(order.getMemberId()!=null){
-                    try { Member m = memberRepository.findById(order.getMemberId()).orElse(null); if(m!=null){ orderMap.put("memberName", m.getName()); } } catch(Exception ignored){}
+                String memberId = order.getMemberId();
+                if (memberId != null && !memberId.isBlank()) {
+                    try {
+                        Member m = memberRepository.findById(memberId).orElse(null);
+                        if(m!=null){ orderMap.put("memberName", m.getName()); }
+                    } catch(Exception ignored){}
                 }
                 return ResponseEntity.ok(Map.of("code",200,"message","success","data",orderMap));
             } else {

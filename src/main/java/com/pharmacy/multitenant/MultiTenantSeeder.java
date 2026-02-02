@@ -1,6 +1,5 @@
 package com.pharmacy.multitenant;
 
-import com.pharmacy.multitenant.TenantContext;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -9,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.util.*;
+import java.util.Objects;
 
 /**
  * 在应用启动后对所有租户进行最小化的表与初始账号/角色校验与补种。
@@ -42,6 +42,7 @@ public class MultiTenantSeeder implements ApplicationRunner {
                 System.err.println("[Seeder] Skip tenant="+tenant+" (null DataSource)");
                 continue;
             }
+            Objects.requireNonNull(ds, "dataSource");
             TenantContext.setTenant(tenant);
             try {
                 if ("default".equals(tenant)) {
@@ -58,7 +59,7 @@ public class MultiTenantSeeder implements ApplicationRunner {
     }
 
     private void provisionTenant(String tenant, DataSource ds){
-        JdbcTemplate jdbc = new JdbcTemplate(ds);
+        JdbcTemplate jdbc = new JdbcTemplate(Objects.requireNonNull(ds, "dataSource"));
 
         // 默认供应商插入（ID=1 不保证，按名称判断）
         try {

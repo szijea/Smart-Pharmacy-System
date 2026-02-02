@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +28,6 @@ public class MedicineController {
     @Autowired
     private InventoryService inventoryService;
 
-    @Autowired
-    private com.pharmacy.repository.OrderItemRepository orderItemRepository;
 
     // 注意：这里只有药品相关的服务，没有memberService
 
@@ -351,7 +348,6 @@ public class MedicineController {
     }
 
     private String stringField(Object v){ return v==null?null:String.valueOf(v).trim(); }
-    private Long longField(Object v){ try { return v==null?null:Long.valueOf(String.valueOf(v)); } catch(Exception e){ return null; } }
     private Integer intField(Object v, Integer def){ try { return v==null?def:Integer.valueOf(String.valueOf(v)); } catch(Exception e){ return def; } }
     private java.math.BigDecimal bigDecimalField(Object v, String def){ try { return v==null?(def==null?null:new java.math.BigDecimal(def)):new java.math.BigDecimal(String.valueOf(v)); } catch(Exception e){ return def==null?null:new java.math.BigDecimal(def); } }
     private Boolean boolField(Object v, Boolean def){ if (v==null) return def; if (v instanceof Boolean b) return b; return "true".equalsIgnoreCase(String.valueOf(v)); }

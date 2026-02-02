@@ -1,6 +1,5 @@
 package com.pharmacy.service.impl;
 
-import com.pharmacy.entity.Order;
 import com.pharmacy.repository.OrderRepository;
 import com.pharmacy.repository.OrderItemRepository;
 import com.pharmacy.service.StatsService;

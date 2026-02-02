@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -22,22 +23,26 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Category findById(Integer id) {
+        Objects.requireNonNull(id, "id");
         Optional<Category> category = categoryRepository.findById(id);
         return category.orElse(null);
     }
 
     @Override
     public Category save(Category category) {
+        Objects.requireNonNull(category, "category");
         return categoryRepository.save(category);
     }
 
     @Override
     public void deleteById(Integer id) {
+        Objects.requireNonNull(id, "id");
         categoryRepository.deleteById(id);
     }
 
     @Override
     public List<Category> findByParentId(Integer parentId) {
+        Objects.requireNonNull(parentId, "parentId");
         return categoryRepository.findByParentId(parentId);
     }
 

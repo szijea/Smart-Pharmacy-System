@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -25,6 +26,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
     @Override
     public Prescription findById(String prescriptionId) {
+        Objects.requireNonNull(prescriptionId, "prescriptionId");
         return prescriptionRepository.findById(prescriptionId).orElse(null);
     }
 
@@ -46,6 +48,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Override
     @Transactional
     public Prescription save(Prescription prescription) {
+        Objects.requireNonNull(prescription, "prescription");
         if (prescription.getPrescriptionId() == null) {
             // 生成处方ID
             String prescriptionId = "P" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8);
@@ -62,6 +65,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Override
     @Transactional
     public Prescription verifyPrescription(String prescriptionId, Integer status, String remark) {
+        Objects.requireNonNull(prescriptionId, "prescriptionId");
+        Objects.requireNonNull(status, "status");
         Prescription prescription = prescriptionRepository.findById(prescriptionId)
                 .orElseThrow(() -> new RuntimeException("处方不存在"));
 

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PreDestroy;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +28,6 @@ public class MemberConsumptionUpdater {
 
     // 简单内存缓存：memberId -> CacheEntry
     private final ConcurrentHashMap<String, CacheEntry> cache = new ConcurrentHashMap<>();
-    private static final Duration TTL = Duration.ofMinutes(10); // 条目有效期
     @Value("${member.cache.ttl-minutes:10}")
     private int ttlMinutes;
     private final ConcurrentLinkedQueue<String> recentActiveMembers = new ConcurrentLinkedQueue<>();

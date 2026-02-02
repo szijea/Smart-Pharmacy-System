@@ -4,7 +4,6 @@ import com.pharmacy.entity.StockIn;
 import com.pharmacy.entity.StockInItem;
 import com.pharmacy.repository.InventoryRepository;
 import com.pharmacy.repository.MedicineRepository;
-import com.pharmacy.repository.StockInItemRepository;
 import com.pharmacy.repository.StockInRepository;
 import com.pharmacy.repository.SupplierRepository;
 import org.apache.poi.ss.usermodel.*;
@@ -22,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,9 +38,6 @@ public class StockInController {
 
     @Autowired
     private MedicineRepository medicineRepository;
-
-    @Autowired
-    private StockInItemRepository stockInItemRepository;
 
     @Autowired
     private InventoryRepository inventoryRepository;
@@ -60,6 +57,7 @@ public class StockInController {
 
     @GetMapping("/{id}")
     public ResponseEntity<StockIn> getStockInById(@PathVariable Long id) {
+        Objects.requireNonNull(id, "id");
         Optional<StockIn> stockIn = stockInRepository.findById(id);
         return stockIn.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -75,7 +73,8 @@ public class StockInController {
             }
             // 供应商处理
             if (stockIn.getSupplier() != null && stockIn.getSupplier().getSupplierId() != null) {
-                if (!supplierRepository.existsById(stockIn.getSupplier().getSupplierId())) {
+                Integer supplierId = stockIn.getSupplier().getSupplierId();
+                if (supplierId != null && !supplierRepository.existsById(supplierId)) {
                     System.out.println("供应商不存在, 改用默认供应商 ID=1");
                     Optional<com.pharmacy.entity.Supplier> defaultSupplier = supplierRepository.findById(1);
                     if (defaultSupplier.isPresent()) {
@@ -172,6 +171,8 @@ public class StockInController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateStockIn(@PathVariable Long id, @RequestBody StockIn stockInDetails) {
         try {
+            Objects.requireNonNull(id, "id");
+            Objects.requireNonNull(stockInDetails, "stockInDetails");
             Optional<StockIn> optionalStockIn = stockInRepository.findById(id);
             if (optionalStockIn.isPresent()) {
                 StockIn stockIn = optionalStockIn.get();
@@ -219,6 +220,7 @@ public class StockInController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteStockIn(@PathVariable Long id) {
+        Objects.requireNonNull(id, "id");
         if (stockInRepository.existsById(id)) {
             stockInRepository.deleteById(id);
             return ResponseEntity.ok().build();
@@ -229,6 +231,7 @@ public class StockInController {
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approveStockIn(@PathVariable Long id) {
+        Objects.requireNonNull(id, "id");
         Optional<StockIn> optionalStockIn = stockInRepository.findById(id);
         if (optionalStockIn.isPresent()) {
             StockIn stockIn = optionalStockIn.get();
@@ -247,7 +250,8 @@ public class StockInController {
             @RequestParam(defaultValue = "10") int size) {
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<StockIn> stockIns = stockInRepository.findByKeyword(keyword, pageable);
+            String safeKeyword = Objects.requireNonNullElse(keyword, "");
+            Page<StockIn> stockIns = stockInRepository.findByKeyword(safeKeyword, pageable);
             return ResponseEntity.ok(stockIns);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -265,7 +269,7 @@ public class StockInController {
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body("请选择要导入的文件");
         }
-        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
+        String filename = Objects.requireNonNullElse(file.getOriginalFilename(), "").toLowerCase();
         List<SimpleImportRow> rows = new ArrayList<>();
         try {
             if (filename.endsWith(".xls") || filename.endsWith(".xlsx")) {
@@ -511,7 +515,7 @@ public class StockInController {
             stockIn.getItems().addAll(validItems);
             
             stockIn.calculateTotalAmount();
-            StockIn saved = stockInRepository.save(stockIn);
+            stockInRepository.save(stockIn);
             // update inventory same as createStockIn
             for (StockInItem item : stockIn.getItems()) {
                 try {

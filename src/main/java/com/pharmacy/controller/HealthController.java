@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.Objects;
 
 import java.util.*;
 
@@ -173,6 +174,7 @@ public class HealthController {
 
     private boolean exists(String sql) {
         try {
+            Objects.requireNonNull(sql, "sql");
             jdbcTemplate.queryForObject(sql, Integer.class);
             return true;
         } catch (Exception e) {

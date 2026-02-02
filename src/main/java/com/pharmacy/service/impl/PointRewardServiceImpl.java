@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class PointRewardServiceImpl implements PointRewardService {
@@ -28,12 +29,15 @@ public class PointRewardServiceImpl implements PointRewardService {
     @Override
     @Transactional
     public PointReward createReward(PointReward reward) {
+        Objects.requireNonNull(reward, "reward");
         return pointRewardRepository.save(reward);
     }
 
     @Override
     @Transactional
     public PointReward updateReward(Long id, PointReward rewardDetails) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(rewardDetails, "rewardDetails");
         PointReward reward = pointRewardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reward not found"));
 
@@ -48,12 +52,14 @@ public class PointRewardServiceImpl implements PointRewardService {
     @Override
     @Transactional
     public void deleteReward(Long id) {
+        Objects.requireNonNull(id, "id");
         pointRewardRepository.deleteById(id);
     }
 
     @Override
     @Transactional
     public void toggleStatus(Long id) {
+        Objects.requireNonNull(id, "id");
         PointReward reward = pointRewardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reward not found"));
         reward.setIsActive(!reward.getIsActive());

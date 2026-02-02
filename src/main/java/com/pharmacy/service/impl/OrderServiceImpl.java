@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("null")
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
@@ -375,17 +376,6 @@ public class OrderServiceImpl implements OrderService {
             }
         } catch(Exception e){
             System.err.println("[MemberStats] 刷新会员消费统计失败:"+e.getMessage());
-        }
-    }
-
-    // 辅助方法：获取支付状态文本
-    private String getPaymentStatusText(Integer status) {
-        if (status == null) return "未知";
-        switch (status) {
-            case 0: return "待支付";
-            case 1: return "已支付";
-            case 2: return "已退款";
-            default: return "未知状态(" + status + ")";
         }
     }
 

@@ -15,11 +15,15 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <style>
     /* 统一主内容滚动样式 */
-    .main-content{flex:1 1 auto;padding:1.5rem;min-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin;}
+    .main-content{flex:1 1 auto;padding:1.75rem;min-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin;}
     .main-content::-webkit-scrollbar{width:8px}
     .main-content::-webkit-scrollbar-track{background:#f5f5f5;border-radius:4px}
     .main-content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
     .main-content::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+
+    /* 加宽主体内容区域 */
+    .container-fluid{max-width:100% !important;}
+    .app-shell{max-width:1440px;margin:0 auto;width:100%;}
 
     /* sr-only 样式 */
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
@@ -184,7 +188,7 @@
 
               <div id="notification-settings" class="space-y-4 pt-4 border-t border-gray-100">
                 <div id="email-settings" class="hidden">
-                  <h4 class="font-medium mb-3">邮件通知设��</h4>
+                  <h4 class="font-medium mb-3">邮件通知设置</h4>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="form-group">
                       <label class="block text-sm font-medium text-gray-700 mb-1">接收邮箱</label>
@@ -608,7 +612,7 @@
               <div class="p-4 border rounded-lg">
                 <h4 class="font-medium mb-3">自动备份设置</h4>
                 <div class="flex justify-between items-center mb-4">
-                  <p class="text-sm text-gray-500">开启后系统��自动定期备份数据</p>
+                  <p class="text-sm text-gray-500">开启后系统自动定期备份数据</p>
                   <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" value="" class="sr-only peer" checked id="auto-backup">
                     <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></span>
@@ -666,14 +670,17 @@
               <div class="p-4 border rounded-lg bg-amber-50 border-amber-100">
                 <h4 class="font-medium mb-2 text-amber-800">数据恢复</h4>
                 <p class="text-sm text-amber-700 mb-4">从备份文件恢复数据，此操作将覆盖当前数据，请谨慎操作</p>
-                <div class="flex gap-3">
-                  <label class="btn btn-outline border-amber-200 text-amber-800 hover:bg-amber-100 cursor-pointer">
-                    <i class="fa fa-upload"></i> 选择备份文件
-                    <input type="file" accept=".bak,.zip" class="hidden" id="backup-file">
-                  </label>
-                  <button type="button" class="btn btn-danger" id="restore-btn" disabled>
-                    <i class="fa fa-refresh"></i> 恢复数据
-                  </button>
+                <div class="space-y-2">
+                  <label class="block text-sm text-amber-800">选择要恢复的备份</label>
+                  <div class="flex gap-3 items-center">
+                    <select id="restore-backup-id" class="input min-w-[240px]">
+                      <option value="">请选择备份记录</option>
+                    </select>
+                    <button type="button" class="btn btn-danger" id="restore-btn" disabled>
+                      <i class="fa fa-refresh"></i> 恢复数据
+                    </button>
+                  </div>
+                  <p class="text-xs text-amber-700">可从上方备份历史中选择记录进行恢复</p>
                 </div>
               </div>
             </div>
@@ -836,9 +843,25 @@
 </script>
 <script>
     document.addEventListener('DOMContentLoaded',()=>{ initSettingsLoad(); });
+function getApiBase(){ return window.api?.BASE_URL || '/api'; }
+function getTenantId(){ return localStorage.getItem('selectedTenant') || localStorage.getItem('tenant') || 'wx'; }
+function buildHeaders(extra){ return { 'Content-Type':'application/json', 'X-Shop-Id': getTenantId(), ...(extra||{}) }; }
+function syncNotifyPanels(){
+  const notifyEmail = document.getElementById('notify-email');
+  const notifySms = document.getElementById('notify-sms');
+  const emailPanel = document.getElementById('email-settings');
+  const smsPanel = document.getElementById('sms-settings');
+  if(emailPanel) emailPanel.classList.toggle('hidden', !(notifyEmail && notifyEmail.checked));
+  if(smsPanel) smsPanel.classList.toggle('hidden', !(notifySms && notifySms.checked));
+}
+function syncFooterPanel(){
+  const printFooter = document.getElementById('print-footer');
+  const footerContainer = document.getElementById('footer-text-container');
+  if(footerContainer) footerContainer.classList.toggle('hidden', !(printFooter && printFooter.checked));
+}
 async function initSettingsLoad(){
   try {
-    const data = await (window.api?.settingAPI? window.api.settingAPI.get() : fetch('/api/settings').then(r=>r.json()));
+    const data = await (window.api?.settingAPI? window.api.settingAPI.get() : fetch(getApiBase() + '/settings', { headers: buildHeaders() }).then(r=>r.json()));
     fillBasicSettings(data);
   } catch(e){ console.error('加载设置失败',e); showTempMsg('加载设置失败:'+e.message,'error'); }
 }
@@ -848,11 +871,29 @@ function fillBasicSettings(d){
   setVal('store-phone', d.storePhone);
   setVal('store-address', d.storeAddress);
   setVal('store-desc', d.storeDesc);
+  setVal('open-time', d.openTime);
+  setVal('close-time', d.closeTime);
+  setVal('license-number', d.licenseNumber);
   setVal('low-stock-threshold', d.lowStockThreshold);
   setVal('points-rule', d.pointsRule);
   setVal('cash-rule', d.cashRule);
   setVal('expiry-warning-days', d.expiryWarningDays);
+  setChecked('notify-system', d.notifySystem);
+  setChecked('notify-email', d.notifyEmail);
+  setChecked('notify-sms', d.notifySms);
+  setVal('notify-email-address', d.notifyEmailAddress);
+  setVal('email-frequency', d.emailFrequency);
+  setVal('notify-phone', d.notifyPhone);
+  setVal('sms-frequency', d.smsFrequency);
+  setVal('inventory-check-cycle', d.inventoryCheckCycle);
+  setVal('normal-to-silver', d.normalToSilver);
+  setVal('normal-discount', d.normalDiscount);
+  setVal('silver-to-gold', d.silverToGold);
+  setVal('silver-discount', d.silverDiscount);
+  setVal('gold-to-platinum', d.goldToPlatinum);
+  setVal('gold-discount', d.goldDiscount);
   // 微信/支付宝等
+  setChecked('enable-cash', d.enableCash);
   setChecked('enable-wechat', d.enableWechat);
   setChecked('enable-alipay', d.enableAlipay);
   setChecked('enable-member-card', d.enableMemberCard);
@@ -880,36 +921,48 @@ function fillBasicSettings(d){
   setChecked('auto-backup', d.autoBackup);
   setVal('backup-cycle', d.backupCycle);
   setVal('backup-retention', d.backupRetention);
+  syncNotifyPanels();
+  syncFooterPanel();
 }
 function setVal(id,v){ const el=document.getElementById(id); if(el&&v!==undefined&&v!==null) el.value=v; }
-function setChecked(id,v){ const el=document.getElementById(id); if(el) el.checked= !!v; }
-// 保存表单（支付设置举例）
-const paymentForm = document.getElementById('payment-settings-form');
-if(paymentForm){ paymentForm.addEventListener('submit', async e=>{ e.preventDefault(); await saveSettings(); }); }
-const printForm = document.getElementById('print-settings-form');
-if(printForm){ printForm.addEventListener('submit', async e=>{ e.preventDefault(); await saveSettings(); }); }
+function setChecked(id,v){ const el=document.getElementById(id); if(el && v!==undefined && v!==null) el.checked= !!v; }
 async function saveSettings(){
   const btns = document.querySelectorAll('form button[type="submit"]');
   btns.forEach(b=>{ b.disabled=true; b.innerHTML='<i class="fa fa-spinner fa-spin"></i> 保存中'; });
   const payload = {
     storeName: gv('store-name'), storePhone: gv('store-phone'), storeAddress: gv('store-address'), storeDesc: gv('store-desc'),
-    lowStockThreshold: gv('low-stock-threshold'), pointsRule: gv('points-rule'), cashRule: gv('cash-rule'),
-    enableWechat: gc('enable-wechat'), enableAlipay: gc('enable-alipay'), enableMemberCard: gc('enable-member-card'),
+    openTime: gv('open-time'), closeTime: gv('close-time'), licenseNumber: gv('license-number'),
+    lowStockThreshold: parseInt(gv('low-stock-threshold')||'0', 10),
+    pointsRule: parseFloat(gv('points-rule')||'0'),
+    cashRule: parseInt(gv('cash-rule')||'0', 10),
+    notifySystem: gc('notify-system'), notifyEmail: gc('notify-email'), notifySms: gc('notify-sms'),
+    notifyEmailAddress: gv('notify-email-address'), emailFrequency: gv('email-frequency'),
+    notifyPhone: gv('notify-phone'), smsFrequency: gv('sms-frequency'),
+    inventoryCheckCycle: gv('inventory-check-cycle'),
+    normalToSilver: parseInt(gv('normal-to-silver')||'0', 10), normalDiscount: parseInt(gv('normal-discount')||'0', 10),
+    silverToGold: parseInt(gv('silver-to-gold')||'0', 10), silverDiscount: parseInt(gv('silver-discount')||'0', 10),
+    goldToPlatinum: parseInt(gv('gold-to-platinum')||'0', 10), goldDiscount: parseInt(gv('gold-discount')||'0', 10),
+    enableCash: gc('enable-cash'), enableWechat: gc('enable-wechat'), enableAlipay: gc('enable-alipay'), enableMemberCard: gc('enable-member-card'),
     wechatMchId: gv('wechat-mch-id'), wechatApiKey: gv('wechat-api-key'), alipayAppId: gv('alipay-app-id'), alipayPrivateKey: gv('alipay-private-key'),
     changeUnit: gv('change-unit'), defaultPrinter: gv('default-printer'), paperSize: gv('paper-size'),
     printLogo: gc('print-logo'), printQrcode: gc('print-qrcode'), printMember: gc('print-member'), printDrugDetail: gc('print-drug-detail'),
     printUsage: gc('print-usage'), printFooter: gc('print-footer'), footerText: gv('footer-text'),
-    receiptCopies: gv('receipt-copies'), prescriptionCopies: gv('prescription-copies'), enableLog: gc('enable-log'),
-    logRetention: gv('log-retention'), pwdExpiry: gv('pwd-expiry'), loginAttempts: gv('login-attempts'), enableIpRestrict: gc('enable-ip-restrict'),
-    autoBackup: gc('auto-backup'), backupCycle: gv('backup-cycle'), backupRetention: gv('backup-retention')
-    ,expiryWarningDays: parseInt(gv('expiry-warning-days')||'0', 10)
+    receiptCopies: parseInt(gv('receipt-copies')||'1', 10),
+    prescriptionCopies: parseInt(gv('prescription-copies')||'1', 10),
+    enableLog: gc('enable-log'),
+    logRetention: parseInt(gv('log-retention')||'0', 10),
+    pwdExpiry: parseInt(gv('pwd-expiry')||'0', 10),
+    loginAttempts: parseInt(gv('login-attempts')||'0', 10),
+    enableIpRestrict: gc('enable-ip-restrict'),
+    autoBackup: gc('auto-backup'), backupCycle: gv('backup-cycle'), backupRetention: parseInt(gv('backup-retention')||'0', 10),
+    expiryWarningDays: parseInt(gv('expiry-warning-days')||'0', 10)
   };
   try {
-    const api = window.api?.settingAPI; const resp = api? await api.update(payload) : await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json());
+    const api = window.api?.settingAPI; const resp = api? await api.update(payload) : await fetch(getApiBase() + '/settings',{method:'POST',headers:buildHeaders(),body:JSON.stringify(payload)}).then(r=>r.json());
     showTempMsg('设置保存成功','success');
   } catch(e){ showTempMsg('保存失败:'+e.message,'error'); }
   finally {
-    btns.forEach(b=>{ b.disabled=false; b.innerHTML='<i class="fa fa-save"></i> 保存设���'; });
+    btns.forEach(b=>{ b.disabled=false; b.innerHTML='<i class="fa fa-save"></i> 保存设置'; });
   }
 }
 function gv(id){ const el=document.getElementById(id); return el? el.value : null; }
@@ -958,21 +1011,13 @@ document.addEventListener('DOMContentLoaded', function(){
   // --- notification toggles (email / sms) ---
   const notifyEmail = document.getElementById('notify-email');
   const notifySms = document.getElementById('notify-sms');
-  function updateNotifyPanels(){
-    const emailPanel = document.getElementById('email-settings');
-    const smsPanel = document.getElementById('sms-settings');
-    if(emailPanel) emailPanel.classList.toggle('hidden', !(notifyEmail && notifyEmail.checked));
-    if(smsPanel) smsPanel.classList.toggle('hidden', !(notifySms && notifySms.checked));
-  }
-  if(notifyEmail) notifyEmail.addEventListener('change', updateNotifyPanels);
-  if(notifySms) notifySms.addEventListener('change', updateNotifyPanels);
-  updateNotifyPanels();
+  if(notifyEmail) notifyEmail.addEventListener('change', syncNotifyPanels);
+  if(notifySms) notifySms.addEventListener('change', syncNotifyPanels);
+  syncNotifyPanels();
 
   // --- print footer toggle ---
   const printFooter = document.getElementById('print-footer');
-  const footerContainer = document.getElementById('footer-text-container');
-  function updateFooter(){ if(footerContainer) footerContainer.classList.toggle('hidden', !(printFooter && printFooter.checked)); }
-  if(printFooter){ printFooter.addEventListener('change', updateFooter); updateFooter(); }
+  if(printFooter){ printFooter.addEventListener('change', syncFooterPanel); syncFooterPanel(); }
 
   // --- attach save handler to all forms so each section can save ---
   ['basic-settings-form','inventory-settings-form','member-settings-form','payment-settings-form','print-settings-form'].forEach(id=>{
@@ -1001,8 +1046,8 @@ document.addEventListener('DOMContentLoaded', function(){
       if(newPwd !== confirmPwd){ showTempMsg('两次输入的密码不一致','error'); return; }
       const loader = document.getElementById('pwd-loading'); try{
         loader && loader.classList.remove('hidden');
-        const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/users/change-password';
-        const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({oldPassword: oldPwd, newPassword: newPwd}) });
+        const url = getApiBase() + '/user/change-password';
+        const resp = await fetch(url, { method:'POST', headers: buildHeaders(), body: JSON.stringify({oldPassword: oldPwd, newPassword: newPwd, confirmPassword: newPwd}) });
         if(!resp.ok){ const txt = await resp.text().catch(()=>null); throw new Error(txt || resp.statusText); }
         showTempMsg('密码修改成功','success'); togglePwdModal(false);
       }catch(err){ showTempMsg('修改失败: '+ (err.message||err),'error'); }
@@ -1013,50 +1058,93 @@ document.addEventListener('DOMContentLoaded', function(){
   // --- view logs ---
   const viewLogBtn = document.getElementById('view-log-btn');
   if(viewLogBtn){ viewLogBtn.addEventListener('click', ()=>{
-    const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/logs'; window.open(url,'_blank');
+    const url = getApiBase() + '/logs'; window.open(url,'_blank');
   }); }
 
   // --- backup history load / actions ---
+  let restoreTargetId = null;
+  function setRestoreTarget(id){
+    restoreTargetId = id || null;
+    const sel = document.getElementById('restore-backup-id');
+    if(sel){ sel.value = restoreTargetId || ''; }
+    const btn = document.getElementById('restore-btn');
+    if(btn){ btn.disabled = !restoreTargetId; }
+  }
   async function loadBackupHistory(){
     const tbody = document.getElementById('backup-history'); if(!tbody) return;
     tbody.innerHTML = '<tr class="text-center"><td colspan="4">加载中...</td></tr>';
     try{
-      const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/list';
-      const resp = await fetch(url); if(!resp.ok){ const t=await resp.text().catch(()=>null); throw new Error(t||resp.statusText); }
+      const url = getApiBase() + '/backup/list';
+      const resp = await fetch(url, { headers: buildHeaders() }); if(!resp.ok){ const t=await resp.text().catch(()=>null); throw new Error(t||resp.statusText); }
       const json = await resp.json(); const list = json.data || json.backups || [];
       if(!list.length){ tbody.innerHTML = '<tr class="text-center"><td colspan="4" class="px-3 py-6 text-gray-500">暂无备份记录</td></tr>'; return; }
       tbody.innerHTML = '';
+      const restoreSelect = document.getElementById('restore-backup-id');
+      if(restoreSelect){ restoreSelect.innerHTML = '<option value="">请选择备份记录</option>'; }
       list.forEach(item=>{
         const tr = document.createElement('tr');
-        const date = item.createdAt || item.time || item.date || ''; const type = item.type || item.backupType || '自动'; const size = item.size || item.fileSize || '-'; const fname = item.file || item.name || '';
-        tr.innerHTML = `<td class="px-3 py-3 text-sm">${utils.formatDateTime(date)}</td><td class="px-3 py-3 text-sm">${type}</td><td class="px-3 py-3 text-sm">${size}</td><td class="px-3 py-3 text-right text-sm"><button class="btn btn-outline btn-sm" data-file="${fname}" data-action="download">下载</button> <button class="btn btn-danger btn-sm" data-file="${fname}" data-action="delete">删除</button></td>`;
+        const id = item.id || item.backupId || item.key || '';
+        const date = item.createTime || item.createdAt || item.time || item.date || '';
+        const type = item.type || item.backupType || '自动';
+        const size = item.size || item.fileSize || '-';
+        const fileName = item.fileName || item.file || item.name || '';
+        const fmt = window.api?.utils?.formatDateTime || (d=> (d? new Date(d).toLocaleString('zh-CN') : ''));
+        tr.innerHTML = `<td class="px-3 py-3 text-sm">${fmt(date)}</td><td class="px-3 py-3 text-sm">${type}</td><td class="px-3 py-3 text-sm">${size}</td><td class="px-3 py-3 text-right text-sm"><button class="btn btn-outline btn-sm" data-id="${id}" data-action="restore">恢复</button> <button class="btn btn-danger btn-sm" data-id="${id}" data-action="delete">删除</button></td>`;
         tbody.appendChild(tr);
+        if(restoreSelect && id){
+          const opt = document.createElement('option');
+          opt.value = id;
+          const fmt = window.api?.utils?.formatDateTime || (d=> (d? new Date(d).toLocaleString('zh-CN') : ''));
+          opt.textContent = `${fileName || id} (${fmt(date)})`;
+          restoreSelect.appendChild(opt);
+        }
       });
       tbody.querySelectorAll('button[data-action]').forEach(b=>{
-        b.addEventListener('click', async function(){ const action = this.getAttribute('data-action'); const file = this.getAttribute('data-file'); if(!file){ showTempMsg('无效文件标识','error'); return; }
-          if(action==='download'){ const dl = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/download?file=' + encodeURIComponent(file); window.open(dl,'_blank'); }
-          if(action==='delete'){ if(!confirm('确认删除该备份吗？')) return; try{ const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/delete?file=' + encodeURIComponent(file); const r = await fetch(url,{method:'POST'}); if(!r.ok) throw new Error(await r.text()); showTempMsg('删除成功','success'); await loadBackupHistory(); }catch(err){ showTempMsg('删除失败:'+ (err.message||err),'error'); } }
+        b.addEventListener('click', async function(){ const action = this.getAttribute('data-action'); const id = this.getAttribute('data-id'); if(!id){ showTempMsg('无效备份标识','error'); return; }
+          if(action==='restore'){ setRestoreTarget(id); document.getElementById('confirm-restore-modal').style.display='block'; document.getElementById('confirm-restore-backdrop').style.display='block'; }
+          if(action==='delete'){ if(!confirm('确认删除该备份吗？')) return; try{ const url = getApiBase() + '/backup/' + encodeURIComponent(id); const r = await fetch(url,{method:'DELETE', headers: buildHeaders()}); if(!r.ok) throw new Error(await r.text()); showTempMsg('删除成功','success'); await loadBackupHistory(); }catch(err){ showTempMsg('删除失败:'+ (err.message||err),'error'); } }
         });
       });
+      if(restoreTargetId && restoreSelect){
+        const exists = Array.from(restoreSelect.options).some(o=>o.value===restoreTargetId);
+        if(!exists) setRestoreTarget(null);
+      }
     }catch(err){ tbody.innerHTML = '<tr class="text-center"><td colspan="4" class="px-3 py-6 text-gray-500">加载失败</td></tr>'; console.warn(err); }
   }
   loadBackupHistory();
 
   // manual backup
   const manualBtn = document.getElementById('manual-backup-btn');
-  if(manualBtn){ manualBtn.addEventListener('click', async function(){ const loader = document.getElementById('backup-loading'); try{ loader && loader.classList.remove('hidden'); manualBtn.disabled=true; const url=(window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/manual'; const r = await fetch(url,{method:'POST'}); if(!r.ok) throw new Error(await r.text()); showTempMsg('备份已创建','success'); await loadBackupHistory(); }catch(err){ showTempMsg('备份失败:'+ (err.message||err),'error'); } finally{ loader && loader.classList.add('hidden'); manualBtn.disabled=false; } }); }
+  if(manualBtn){ manualBtn.addEventListener('click', async function(){ const loader = document.getElementById('backup-loading'); try{ loader && loader.classList.remove('hidden'); manualBtn.disabled=true; const url = getApiBase() + '/backup/create'; const r = await fetch(url,{method:'POST', headers: buildHeaders()}); if(!r.ok) throw new Error(await r.text()); showTempMsg('备份已创建','success'); await loadBackupHistory(); }catch(err){ showTempMsg('备份失败:'+ (err.message||err),'error'); } finally{ loader && loader.classList.add('hidden'); manualBtn.disabled=false; } }); }
 
   // restore flow
-  const backupFileInput = document.getElementById('backup-file'); const restoreBtn = document.getElementById('restore-btn'); let selectedFile = null;
-  if(backupFileInput){ backupFileInput.addEventListener('change', function(){ selectedFile = backupFileInput.files && backupFileInput.files[0] ? backupFileInput.files[0] : null; if(restoreBtn) restoreBtn.disabled = !selectedFile; }); }
-  if(restoreBtn){ restoreBtn.addEventListener('click', function(){ document.getElementById('confirm-restore-modal').style.display='block'; document.getElementById('confirm-restore-backdrop').style.display='block'; }); }
+  const restoreSelect = document.getElementById('restore-backup-id');
+  const restoreBtn = document.getElementById('restore-btn');
+  if(restoreSelect){ restoreSelect.addEventListener('change', function(){ setRestoreTarget(restoreSelect.value || null); }); }
+  if(restoreBtn){ restoreBtn.addEventListener('click', function(){ if(!restoreTargetId){ showTempMsg('请选择要恢复的备份','error'); return; } document.getElementById('confirm-restore-modal').style.display='block'; document.getElementById('confirm-restore-backdrop').style.display='block'; }); }
   document.getElementById('close-confirm-restore')?.addEventListener('click', function(){ document.getElementById('confirm-restore-modal').style.display='none'; document.getElementById('confirm-restore-backdrop').style.display='none'; });
   document.getElementById('cancel-restore')?.addEventListener('click', function(){ document.getElementById('confirm-restore-modal').style.display='none'; document.getElementById('confirm-restore-backdrop').style.display='none'; });
-  document.getElementById('confirm-restore-btn')?.addEventListener('click', async function(){ const adminPwd = gv('admin-pwd-confirm'); if(!adminPwd){ showTempMsg('请输入管理员密码','error'); return; } if(!selectedFile){ showTempMsg('请选择备份文件','error'); return; } const loader = document.getElementById('restore-loading'); try{ loader && loader.classList.remove('hidden'); const fd = new FormData(); fd.append('file', selectedFile); fd.append('adminPassword', adminPwd); const url = (window.api && window.api.BASE_URL ? window.api.BASE_URL : '/api') + '/backup/restore'; const r = await fetch(url,{method:'POST', body: fd}); if(!r.ok) throw new Error(await r.text()); showTempMsg('恢复任务已提交','success'); document.getElementById('confirm-restore-modal').style.display='none'; document.getElementById('confirm-restore-backdrop').style.display='none'; }catch(err){ showTempMsg('恢复失败:'+ (err.message||err),'error'); } finally{ loader && loader.classList.add('hidden'); } });
+  document.getElementById('confirm-restore-btn')?.addEventListener('click', async function(){ const adminPwd = gv('admin-pwd-confirm'); if(!adminPwd){ showTempMsg('请输入管理员密码','error'); return; } if(!restoreTargetId){ showTempMsg('请选择要恢复的备份','error'); return; } const loader = document.getElementById('restore-loading'); try{ loader && loader.classList.remove('hidden'); const url = getApiBase() + '/backup/restore/' + encodeURIComponent(restoreTargetId); const r = await fetch(url,{method:'POST', headers: buildHeaders()}); if(!r.ok) throw new Error(await r.text()); showTempMsg('恢复任务已提交','success'); document.getElementById('confirm-restore-modal').style.display='none'; document.getElementById('confirm-restore-backdrop').style.display='none'; }catch(err){ showTempMsg('恢复失败:'+ (err.message||err),'error'); } finally{ loader && loader.classList.add('hidden'); } });
 
   // allow closing modals by clicking backdrop
   document.getElementById('pwd-modal-backdrop')?.addEventListener('click', ()=>{ document.getElementById('pwd-modal').style.display='none'; document.getElementById('pwd-modal-backdrop').style.display='none'; });
   document.getElementById('confirm-restore-backdrop')?.addEventListener('click', ()=>{ document.getElementById('confirm-restore-modal').style.display='none'; document.getElementById('confirm-restore-backdrop').style.display='none'; });
+
+  // --- print test ---
+  const testPrintBtn = document.getElementById('test-print');
+  if(testPrintBtn){
+    testPrintBtn.addEventListener('click', ()=>{
+      const w = window.open('', '_blank', 'width=400,height=600');
+      if(!w){ showTempMsg('请允许弹窗以打印测试页','error'); return; }
+      const storeName = gv('store-name') || '智慧药房';
+      const now = new Date().toLocaleString('zh-CN');
+      w.document.write(`<!DOCTYPE html><html><head><title>打印测试页</title><style>body{font-family:Arial,sans-serif;padding:16px}h1{font-size:18px;margin:0 0 8px}p{margin:4px 0}hr{margin:12px 0}</style></head><body><h1>${storeName} - 打印测试</h1><p>时间：${now}</p><hr><p>本页用于测试打印机与纸张设置。</p><p>纸张：${gv('paper-size')||'POS'}</p><p>打印机：${gv('default-printer')||'本地打印机'}</p></body></html>`);
+      w.document.close();
+      w.focus();
+      w.print();
+      w.close();
+    });
+  }
 
 });
 </script>

@@ -65,7 +65,7 @@
 
         <!-- 新增：顶部搜索与筛选 -->
         <div class="card-modern p-6 mb-6">
-          <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 search-section-modern">
+          <div class="grid grid-cols-1 lg:grid-cols-6 gap-4 search-section-modern">
             <div class="flex flex-col">
               <label class="text-xs font-medium text-gray-700 mb-1" for="inv-search-keyword">药品关键字/条码</label>
               <input id="inv-search-keyword" class="input-modern" placeholder="输入名称、规格、厂家或条码" />
@@ -76,6 +76,15 @@
                 <option value="">全部</option>
                 <option value="gt0">库存>0</option>
                 <option value="eq0">库存=0</option>
+              </select>
+            </div>
+            <div class="flex flex-col">
+              <label class="text-xs font-medium text-gray-700 mb-1" for="inv-filter-expiry">效期筛选</label>
+              <select id="inv-filter-expiry" class="input-modern">
+                <option value="">全部</option>
+                <option value="1">到期 1 个月内</option>
+                <option value="3">到期 3 个月内</option>
+                <option value="6">到期 6 个月内</option>
               </select>
             </div>
             <div class="flex items-end gap-2 lg:col-span-2">
@@ -236,7 +245,27 @@
     function showLoading(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="16" class="px-6 py-6 text-center text-gray-500 text-sm"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</td></tr>'; }
     function showEmpty(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="16" class="px-6 py-8 text-center text-gray-500"><i class="fa fa-database text-4xl mb-2 text-gray-300"></i><div>暂无药品数据</div></td></tr>'; }
     async function fetchPage(page,size){ const tenant=localStorage.getItem('selectedTenant')||''; const url=`/api/inventory/page-current-stocks?page=${page}&size=${size}`; console.log('[inventory] 请求分页库存:', url,'tenant=',tenant); const r=await fetch(url,{headers:{'Accept':'application/json','X-Shop-Id':tenant}}); if(!r.ok){ throw new Error('HTTP '+r.status+': '+await r.text()); } const data=await r.json(); console.log('[inventory] 分页响应原始数据:', data); return data; }
-    function renderPage(resp){ const list = Array.isArray(resp)? resp : (resp.content||resp.data||resp.results||[]); console.log('[inventory] 解析后的列表长度:', list.length); if(!list.length){ showEmpty(); return; } pageBody.innerHTML=list.map((item, idx)=>{ const id=item.medicineId||''; const stock=item.stockQuantity??item.currentStock??item.stock??0; const gn=item.medicineGenericName||item.genericName||''; const tn=item.medicineTradeName||item.tradeName||''; const spec=item.medicineSpec||item.spec||''; const retailPrice=item.medicineRetailPrice??item.retailPrice??'0.00'; const purchasePrice=item.purchasePrice??'0.00'; const batchNo=item.batchNo||'-'; const barcode=item.medicineBarcode||item.barcode||'-'; const approvalNo=item.medicineApprovalNo||item.approvalNo||'-'; const expiryDate=item.expiryDate||'-'; const manufacturer=item.medicineManufacturer||item.manufacturer||'-'; const dosageForm=item.dosageForm||item.medicineDosageForm||'-'; const productCode=item.productCode||item.medicineProductCode||'-'; const profit = (parseFloat(retailPrice) - parseFloat(purchasePrice)).toFixed(2); const payload=encodeURIComponent(JSON.stringify({medicineId:id,genericName:gn,tradeName:tn,spec:spec,retailPrice:retailPrice,batchNo:batchNo}));
+    function filterByExpiry(list, months){
+      const m = parseInt(months||'0',10);
+      if(!m || m<=0) return list;
+      const now = new Date();
+      const threshold = new Date(now.getTime());
+      threshold.setMonth(threshold.getMonth() + m);
+      return list.filter(item=>{
+        const raw = item.expiryDate || item.medicineExpiryDate || item.expiredAt || '';
+        if(!raw) return false;
+        const d = new Date(raw);
+        if(Number.isNaN(d.getTime())) return false;
+        return d <= threshold;
+      });
+    }
+    function renderPage(resp){
+      let list = Array.isArray(resp)? resp : (resp.content||resp.data||resp.results||[]);
+      const expiryFilter = document.getElementById('inv-filter-expiry');
+      list = filterByExpiry(list, expiryFilter?.value || '');
+      console.log('[inventory] 解析后的列表长度:', list.length);
+      if(!list.length){ showEmpty(); return; }
+      pageBody.innerHTML=list.map((item, idx)=>{ const id=item.medicineId||''; const stock=item.stockQuantity??item.currentStock??item.stock??0; const gn=item.medicineGenericName||item.genericName||''; const tn=item.medicineTradeName||item.tradeName||''; const spec=item.medicineSpec||item.spec||''; const retailPrice=item.medicineRetailPrice??item.retailPrice??'0.00'; const purchasePrice=item.purchasePrice??'0.00'; const batchNo=item.batchNo||'-'; const barcode=item.medicineBarcode||item.barcode||'-'; const approvalNo=item.medicineApprovalNo||item.approvalNo||'-'; const expiryDate=item.expiryDate||'-'; const manufacturer=item.medicineManufacturer||item.manufacturer||'-'; const dosageForm=item.dosageForm||item.medicineDosageForm||'-'; const productCode=item.productCode||item.medicineProductCode||'-'; const profit = (parseFloat(retailPrice) - parseFloat(purchasePrice)).toFixed(2); const payload=encodeURIComponent(JSON.stringify({medicineId:id,genericName:gn,tradeName:tn,spec:spec,retailPrice:retailPrice,batchNo:batchNo}));
     // Format Expiry Date if it exists
     let expiryDisplay = expiryDate;
     if (expiryDate && expiryDate !== '-') {
@@ -387,16 +416,22 @@
     const btnReset=$('inv-btn-reset');
     const kw=$('inv-search-keyword');
     const filterStock=$('inv-filter-stock');
+    const filterExpiry=$('inv-filter-expiry');
 
     function showStatus(msg){ if(!status) return; status.classList.remove('hidden'); status.textContent=msg; }
     function clearStatus(){ if(!status) return; status.classList.add('hidden'); status.textContent=''; }
-    function showEmpty(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500"><i class="fa fa-database text-4xl mb-2 text-gray-300"></i><div>暂无匹配数据</div></td></tr>'; }
+    function showEmpty(){ if(pageBody) pageBody.innerHTML='<tr><td colspan="16" class="px-6 py-8 text-center text-gray-500"><i class="fa fa-database text-4xl mb-2 text-gray-300"></i><div>暂无匹配数据</div></td></tr>'; }
 
     async function searchAndRender(){
       const keyword=(kw?.value||'').trim();
       const tenant=localStorage.getItem('selectedTenant')||'';
       if(!pageBody) return;
-      pageBody.innerHTML='<tr><td colspan="7" class="px-6 py-6 text-center text-gray-500 text-sm"><i class="fa fa-spinner fa-spin mr-2"></i>搜索中...</td></tr>';
+      if(!keyword){
+        clearStatus();
+        window.loadPage && window.loadPage(document.getElementById('pageNo')?.value, document.getElementById('pageSize')?.value);
+        return;
+      }
+      pageBody.innerHTML='<tr><td colspan="16" class="px-6 py-6 text-center text-gray-500 text-sm"><i class="fa fa-spinner fa-spin mr-2"></i>搜索中...</td></tr>';
       try {
         const medResp = await window.api.medicineAPI.searchWithStock(keyword, '', 1, 100);
         const meds = Array.isArray(medResp?.data) ? medResp.data : [];
@@ -411,6 +446,19 @@
         const fs = filterStock?.value || '';
         if(fs==='gt0'){ content = content.filter(m => (m.stockQuantity ?? 0) > 0); }
         if(fs==='eq0'){ content = content.filter(m => (m.stockQuantity ?? 0) === 0); }
+        const expiryFilter = filterExpiry?.value || '';
+        if(expiryFilter){
+          const now = new Date();
+          const threshold = new Date(now.getTime());
+          threshold.setMonth(threshold.getMonth() + parseInt(expiryFilter,10));
+          content = content.filter(m=>{
+            const raw = m.expiryDate || m.medicineExpiryDate || m.expiredAt || '';
+            if(!raw) return false;
+            const d = new Date(raw);
+            if(Number.isNaN(d.getTime())) return false;
+            return d <= threshold;
+          });
+        }
 
         if(!content.length){ showEmpty(); showStatus('没有匹配结果'); return; }
         clearStatus();
@@ -441,7 +489,7 @@
 
     btnSearch?.addEventListener('click', searchAndRender);
     kw?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); searchAndRender(); }});
-    btnReset?.addEventListener('click', ()=>{ if(kw) kw.value=''; if(filterStock) filterStock.value=''; clearStatus(); window.loadPage && window.loadPage(document.getElementById('pageNo')?.value, document.getElementById('pageSize')?.value); });
+    btnReset?.addEventListener('click', ()=>{ if(kw) kw.value=''; if(filterStock) filterStock.value=''; if(filterExpiry) filterExpiry.value=''; clearStatus(); window.loadPage && window.loadPage(document.getElementById('pageNo')?.value, document.getElementById('pageSize')?.value); });
   })();
   </script>
 

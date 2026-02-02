@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList; // 添加这个导入
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,9 +22,6 @@ public class MemberService {
 
     @Autowired
     private MemberRepository memberRepository;
-
-    @Autowired
-    private com.pharmacy.repository.OrderRepository orderRepository; // 新增: 用于消费聚合
 
     // 改进的搜索方法 - 同时搜索所有条件并去重
     public List<Member> searchMembers(String keyword) {
@@ -102,6 +100,9 @@ public class MemberService {
 
     // 创建新会员
     public Member createMember(String memberId, String name, String phone) {
+        Objects.requireNonNull(memberId, "memberId");
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(phone, "phone");
         // 检查手机号是否已存在
         if (memberRepository.findByPhone(phone).isPresent()) {
             throw new RuntimeException("手机号已存在: " + phone);
@@ -114,11 +115,13 @@ public class MemberService {
 
     // 根据ID查找会员
     public Optional<Member> findById(String memberId) {
+        Objects.requireNonNull(memberId, "memberId");
         return memberRepository.findById(memberId);
     }
 
     // 根据手机号查找会员
     public Optional<Member> findByPhone(String phone) {
+        Objects.requireNonNull(phone, "phone");
         return memberRepository.findByPhone(phone);
     }
 
@@ -129,13 +132,17 @@ public class MemberService {
 
     // 更新会员信息
     public Member updateMember(Member member) {
-        if (!memberRepository.existsById(member.getMemberId())) {
-            throw new RuntimeException("会员不存在: " + member.getMemberId());
+        Objects.requireNonNull(member, "member");
+        String memberId = Objects.requireNonNull(member.getMemberId(), "memberId");
+        if (!memberRepository.existsById(memberId)) {
+            throw new RuntimeException("会员不存在: " + memberId);
         }
         return memberRepository.save(member);
     }
 
     public Member updateMember(String id, Member memberDetails) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(memberDetails, "memberDetails");
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
@@ -150,12 +157,14 @@ public class MemberService {
 
     // 删除会员
     public void deleteMember(String memberId) {
+        Objects.requireNonNull(memberId, "memberId");
         memberRepository.deleteById(memberId);
     }
 
 
     // 增加积分
     public boolean addPoints(String memberId, int points) {
+        Objects.requireNonNull(memberId, "memberId");
         Optional<Member> optionalMember = memberRepository.findById(memberId);
         if (optionalMember.isPresent()) {
             Member member = optionalMember.get();
@@ -168,6 +177,7 @@ public class MemberService {
 
     // 使用积分
     public boolean usePoints(String memberId, int points) {
+        Objects.requireNonNull(memberId, "memberId");
         Optional<Member> optionalMember = memberRepository.findById(memberId);
         if (optionalMember.isPresent()) {
             Member member = optionalMember.get();
@@ -182,6 +192,8 @@ public class MemberService {
 
     // 积分兑换
     public void exchangeReward(String memberId, Integer points) {
+        Objects.requireNonNull(memberId, "memberId");
+        Objects.requireNonNull(points, "points");
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("会员不存在"));
 
@@ -279,7 +291,9 @@ public class MemberService {
     @Transactional
     public boolean deleteMembers(List<String> memberIds) {
         try {
+            Objects.requireNonNull(memberIds, "memberIds");
             for (String memberId : memberIds) {
+                Objects.requireNonNull(memberId, "memberId");
                 memberRepository.deleteById(memberId);
             }
             return true;

@@ -3,6 +3,7 @@ package com.pharmacy.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class StockInDTO {
     private Long stockInId;
     private String stockInNo;

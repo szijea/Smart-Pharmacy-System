@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/suppliers")
@@ -23,6 +24,7 @@ public class SupplierController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Supplier> getSupplierById(@PathVariable Integer id) {
+        Objects.requireNonNull(id, "id");
         Optional<Supplier> supplier = supplierRepository.findById(id);
         return supplier.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -30,11 +32,14 @@ public class SupplierController {
 
     @PostMapping
     public Supplier createSupplier(@RequestBody Supplier supplier) {
+        Objects.requireNonNull(supplier, "supplier");
         return supplierRepository.save(supplier);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Supplier> updateSupplier(@PathVariable Integer id, @RequestBody Supplier supplierDetails) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(supplierDetails, "supplierDetails");
         Optional<Supplier> optionalSupplier = supplierRepository.findById(id);
         if (optionalSupplier.isPresent()) {
             Supplier supplier = optionalSupplier.get();
@@ -50,6 +55,7 @@ public class SupplierController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteSupplier(@PathVariable Integer id) {
+        Objects.requireNonNull(id, "id");
         if (supplierRepository.existsById(id)) {
             supplierRepository.deleteById(id);
             return ResponseEntity.ok().build();

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -32,6 +33,7 @@ public class HangOrderServiceImpl implements HangOrderService {
 
     @Override
     public HangOrder findById(String hangId) {
+        Objects.requireNonNull(hangId, "hangId");
         return hangOrderRepository.findById(hangId).orElse(null);
     }
 
@@ -79,6 +81,7 @@ public class HangOrderServiceImpl implements HangOrderService {
     @Override
     @Transactional
     public void delete(String hangId) {
+        Objects.requireNonNull(hangId, "hangId");
         // 先删除关联的挂单项
         hangOrderItemRepository.deleteByHangId(hangId);
         // 再删除挂单
@@ -88,6 +91,7 @@ public class HangOrderServiceImpl implements HangOrderService {
     @Override
     @Transactional
     public Object checkoutHangOrder(String hangId, Map<String, Object> checkoutData) {
+        Objects.requireNonNull(hangId, "hangId");
         HangOrder hangOrder = hangOrderRepository.findById(hangId)
                 .orElseThrow(() -> new RuntimeException("挂单不存在"));
 

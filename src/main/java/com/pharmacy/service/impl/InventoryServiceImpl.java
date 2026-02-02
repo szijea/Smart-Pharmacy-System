@@ -9,7 +9,6 @@ import com.pharmacy.service.InventoryService;
 import com.pharmacy.util.StockStatusUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +31,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public Inventory findById(Long id) {
         try {
+            Objects.requireNonNull(id, "id");
             return inventoryRepository.findById(id).orElse(null);
         } catch (Exception e) {
             System.err.println("查询库存失败 findById: " + e.getMessage());
@@ -232,11 +233,13 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public Inventory save(Inventory inventory) {
+        Objects.requireNonNull(inventory, "inventory");
         return inventoryRepository.save(inventory);
     }
 
     @Override
     public void deleteById(Long id) {
+        Objects.requireNonNull(id, "id");
         inventoryRepository.deleteById(id);
     }
 

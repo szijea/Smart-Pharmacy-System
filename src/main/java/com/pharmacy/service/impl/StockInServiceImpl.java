@@ -15,9 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 
 @Service
 @Transactional
+@SuppressWarnings("null")
 public class StockInServiceImpl implements StockInService {
 
     @Autowired
@@ -31,21 +33,25 @@ public class StockInServiceImpl implements StockInService {
 
     @Override
     public Page<StockIn> findAll(Pageable pageable) {
+        Objects.requireNonNull(pageable, "pageable");
         return stockInRepository.findAll(pageable);
     }
 
     @Override
     public Optional<StockIn> findById(Long id) {
+        Objects.requireNonNull(id, "id");
         return stockInRepository.findById(id);
     }
 
     @Override
     public StockIn save(StockIn stockIn) {
+        Objects.requireNonNull(stockIn, "stockIn");
         return stockInRepository.save(stockIn);
     }
 
     @Override
     public void deleteById(Long id) {
+        Objects.requireNonNull(id, "id");
         stockInRepository.deleteById(id);
     }
 
@@ -56,30 +62,37 @@ public class StockInServiceImpl implements StockInService {
 
     @Override
     public List<StockIn> findBySupplierId(Integer supplierId) {
+        Objects.requireNonNull(supplierId, "supplierId");
         return stockInRepository.findBySupplierSupplierId(supplierId);
     }
 
     @Override
     public List<StockIn> findByStatus(Integer status) {
+        Objects.requireNonNull(status, "status");
         return stockInRepository.findByStatus(status);
     }
 
     @Override
     public List<StockIn> findByStockInDateBetween(LocalDateTime startDate, LocalDateTime endDate) {
+        Objects.requireNonNull(startDate, "startDate");
+        Objects.requireNonNull(endDate, "endDate");
         return stockInRepository.findByStockInDateBetween(startDate, endDate);
     }
 
     @Override
     public Page<StockIn> searchByKeyword(String keyword, Pageable pageable) {
+        Objects.requireNonNull(pageable, "pageable");
         return stockInRepository.findByKeyword(keyword, pageable);
     }
 
     @Override
     @Transactional
     public StockIn createStockIn(StockIn stockIn) {
+        Objects.requireNonNull(stockIn, "stockIn");
         // 验证供应商是否存在
         if (stockIn.getSupplier() != null && stockIn.getSupplier().getSupplierId() != null) {
-            if (!supplierRepository.existsById(stockIn.getSupplier().getSupplierId())) {
+            Integer supplierId = stockIn.getSupplier().getSupplierId();
+            if (supplierId != null && !supplierRepository.existsById(supplierId)) {
                 throw new RuntimeException("供应商不存在");
             }
         }
@@ -108,6 +121,8 @@ public class StockInServiceImpl implements StockInService {
     @Override
     @Transactional
     public StockIn updateStockIn(Long id, StockIn stockInDetails) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(stockInDetails, "stockInDetails");
         Optional<StockIn> optionalStockIn = stockInRepository.findById(id);
         if (optionalStockIn.isEmpty()) {
             throw new RuntimeException("入库单不存在");
@@ -150,6 +165,7 @@ public class StockInServiceImpl implements StockInService {
 
     @Override
     public StockIn approveStockIn(Long id) {
+        Objects.requireNonNull(id, "id");
         Optional<StockIn> optionalStockIn = stockInRepository.findById(id);
         if (optionalStockIn.isEmpty()) {
             throw new RuntimeException("入库单不存在");
@@ -162,6 +178,7 @@ public class StockInServiceImpl implements StockInService {
 
     @Override
     public StockIn cancelStockIn(Long id) {
+        Objects.requireNonNull(id, "id");
         Optional<StockIn> optionalStockIn = stockInRepository.findById(id);
         if (optionalStockIn.isEmpty()) {
             throw new RuntimeException("入库单不存在");

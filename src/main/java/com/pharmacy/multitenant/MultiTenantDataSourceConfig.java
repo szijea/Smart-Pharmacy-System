@@ -63,14 +63,15 @@ public class MultiTenantDataSourceConfig {
     public DataSource routingDataSource(
             @Qualifier("defaultDataSource") DataSource defaultDataSource,
             @Qualifier("tenantDataSources") Map<String, DataSource> tenantDataSources) {
-        this.defaultDataSource = defaultDataSource;
+        this.defaultDataSource = Objects.requireNonNull(defaultDataSource, "defaultDataSource");
+        Objects.requireNonNull(tenantDataSources, "tenantDataSources");
         StoreRoutingDataSource routing = new StoreRoutingDataSource();
         this.currentRoutingDataSource = routing;
         Map<Object, Object> targetDataSources = new HashMap<>(tenantDataSources);
-        targetDataSources.put("default", defaultDataSource);
+        targetDataSources.put("default", this.defaultDataSource);
 
         routing.setTargetDataSources(targetDataSources);
-        routing.setDefaultTargetDataSource(defaultDataSource);
+        routing.setDefaultTargetDataSource((Object) Objects.requireNonNull(this.defaultDataSource, "defaultDataSource"));
         routing.afterPropertiesSet();
         System.out.println("[MultiTenant] Routing DataSources initialized: " + targetDataSources.keySet());
         return routing;
@@ -90,7 +91,7 @@ public class MultiTenantDataSourceConfig {
     @Bean(name = "tenantTransactionManager")
     public PlatformTransactionManager tenantTransactionManager(
             @Qualifier("tenantEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactory) {
-        return new JpaTransactionManager(entityManagerFactory.getObject());
+        return new JpaTransactionManager(Objects.requireNonNull(entityManagerFactory.getObject(), "entityManagerFactory"));
     }
 
     private List<Map<String, Object>> loadTenantsFromEnv() {

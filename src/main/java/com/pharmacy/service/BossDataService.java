@@ -166,8 +166,11 @@ public class BossDataService {
                     Map<String, Object> item = new HashMap<>();
                     inv.setMedicine(null); // Prevent LazyInitializationException
                     item.put("inventory", inv);
-                    Optional<Medicine> med = medicineRepository.findById(inv.getMedicineId());
-                    med.ifPresent(medicine -> item.put("medicine", medicine));
+                    String medId = inv.getMedicineId();
+                    if(medId != null){
+                        Optional<Medicine> med = medicineRepository.findById(medId);
+                        med.ifPresent(medicine -> item.put("medicine", medicine));
+                    }
                     displayItems.add(item);
                 }
             }

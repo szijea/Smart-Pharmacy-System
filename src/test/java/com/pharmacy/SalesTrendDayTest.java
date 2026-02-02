@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@SuppressWarnings("null")
 class SalesTrendDayTest {
 
     @Autowired

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ProductTransferLogService {
@@ -14,6 +15,7 @@ public class ProductTransferLogService {
     private ProductTransferLogRepository repository;
 
     public ProductTransferLog saveLog(ProductTransferLog log) {
+        Objects.requireNonNull(log, "log");
         return repository.save(log);
     }
 

@@ -2,9 +2,7 @@
 package com.pharmacy.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Pattern;
 
 @Entity
 @Table(name = "stock_in_item")
