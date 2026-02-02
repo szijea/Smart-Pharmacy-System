@@ -1,7 +1,11 @@
 // cashier.js - 收银页面逻辑
-// 依赖 common.js 中的 BASE_URL 以及 medicineAPI/memberAPI/orderAPI
+// 依赖 common.js 中的 window.api 以及 medicineAPI/memberAPI/orderAPI
 
 (function(){
+  const api = (window.api || {});
+  const medicineAPI = api.medicineAPI || window.medicineAPI;
+  const memberAPI = api.memberAPI || window.memberAPI;
+  const orderAPI = api.orderAPI || window.orderAPI;
   const cart = []; // { medicineId, name, spec, price, quantity }
   let selectedMember = null;
   let hangOrders = []; // 简单前端缓存挂单
