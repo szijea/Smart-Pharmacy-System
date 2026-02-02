@@ -1,7 +1,9 @@
 package com.pharmacy.service;
 
 import com.pharmacy.entity.Employee;
+import com.pharmacy.entity.Role;
 import com.pharmacy.repository.EmployeeRepository;
+import com.pharmacy.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,9 @@ public class AuthService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     public Map<String, Object> login(String username, String password) {
         Map<String, Object> result = new HashMap<>();
@@ -47,6 +52,17 @@ public class AuthService {
         userInfo.put("username", employee.getUsername());
         userInfo.put("name", employee.getName());
         userInfo.put("roleId", employee.getRoleId());
+        Role role = null;
+        try {
+            if (employee.getRoleId() != null) {
+                role = roleRepository.findById(employee.getRoleId()).orElse(null);
+            }
+        } catch (Exception ignored) {
+        }
+        if (role != null) {
+            userInfo.put("roleName", role.getRoleName());
+            userInfo.put("permissions", role.getPermissions());
+        }
         userInfo.put("phone", employee.getPhone());
 
         result.put("user", userInfo);

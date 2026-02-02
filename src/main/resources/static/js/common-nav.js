@@ -12,7 +12,9 @@
                 username: authUser.username || '未登录',
                 displayName: authUser.name || authUser.username || '未登录',
                 id: authUser.id,
-                roleId: authUser.roleId
+                roleId: authUser.roleId,
+                roleName: authUser.roleName,
+                permissions: authUser.permissions
             };
         }
 
@@ -32,6 +34,9 @@
         var authUserRaw = localStorage.getItem('authUser');
         var authUser = authUserRaw && parseJsonSafe(authUserRaw);
         var roleId = authUser && authUser.roleId ? String(authUser.roleId) : localStorage.getItem('userRoleId');
+        if(authUser && authUser.roleName){
+            return authUser.roleName;
+        }
 
         switch(roleId){
             case '1': return '管理员';
@@ -42,6 +47,28 @@
                 var info = getCurrentUserInfo();
                 return info.username === '未登录' ? '访客' : '店员';
         }
+    }
+    function normalizePermissions(perms){
+        if(!perms) return [];
+        if(Array.isArray(perms)) return perms.map(String);
+        if(typeof perms === 'string'){
+            try {
+                var parsed = JSON.parse(perms);
+                if(Array.isArray(parsed)) return parsed.map(String);
+            } catch(e){
+                return perms.split(',').map(function(p){ return String(p).trim(); }).filter(Boolean);
+            }
+        }
+        return [];
+    }
+    function isAdminUser(){
+        var authUserRaw = localStorage.getItem('authUser');
+        var authUser = authUserRaw && parseJsonSafe(authUserRaw);
+        var roleId = authUser && authUser.roleId ? String(authUser.roleId) : localStorage.getItem('userRoleId');
+        if(roleId === '1') return true;
+        if(authUser && authUser.roleName && authUser.roleName === '管理员') return true;
+        var perms = normalizePermissions(authUser && authUser.permissions);
+        return perms.indexOf('system') >= 0;
     }
     function buildNav(active){
         // 链接列表（新增 sales）
@@ -86,7 +113,7 @@
                      '</a>';
         });
         // 仅管理员显示系统管理
-        if(roleId === '1'){
+        if(isAdminUser()){
             aside += '      <p class="text-xs font-medium text-gray-500 px-4 mb-2 mt-6">系统管理</p>';
             adminLinks.forEach(function(l){
                 var isActive = (l.key === activeKey) ? ' sidebar-item active block' : ' sidebar-item block';
