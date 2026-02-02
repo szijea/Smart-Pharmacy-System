@@ -4,10 +4,10 @@ services:
     container_name: pharmacy-mysql
     command: ["--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
       MYSQL_DATABASE: rzt_db
     ports:
-      - "${MYSQL_PORT}:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql/init:/docker-entrypoint-initdb.d
@@ -20,16 +20,14 @@ services:
 
   app:
     image: pharmacy-system:v1.2.3
-    # build:
-    #   context: .
-    #   args:
-    #     APP_VERSION: 1.0.0
+    build:
+      context: .
     container_name: pharmacy-app
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - "${APP_PORT}:8080"
+      - "${APP_PORT:-8080}:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
       DB_HOST: db

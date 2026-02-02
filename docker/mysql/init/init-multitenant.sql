@@ -16,6 +16,18 @@ CREATE TABLE IF NOT EXISTS category (
   UNIQUE KEY uk_name(category_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+INSERT INTO category(category_id, category_name)
+SELECT 1, '默认分类'
+WHERE NOT EXISTS(SELECT 1 FROM category WHERE category_id = 1);
+
+INSERT INTO category(category_id, category_name)
+SELECT 1, '默认分类'
+WHERE NOT EXISTS(SELECT 1 FROM category WHERE category_id = 1);
+
+INSERT INTO category(category_id, category_name)
+SELECT 1, '默认分类'
+WHERE NOT EXISTS(SELECT 1 FROM category WHERE category_id = 1);
+
 CREATE TABLE IF NOT EXISTS role (
   role_id INT PRIMARY KEY AUTO_INCREMENT,
   role_name VARCHAR(50) NOT NULL,
