@@ -2,12 +2,13 @@ Fix scripts for wx / bht / rzt_db
 
 Overview
 
-This folder contains SQL scripts to detect and fix schema incompatibilities related to `medicine.medicine_id` across three tenant databases: `wx`, `bht`, and `rzt_db`.
+This folder contains SQL scripts to detect and fix schema incompatibilities and missing columns across three tenant databases: `wx`, `bht`, and `rzt_db`.
 
 Files
 - wx_fix.sql: recommended change set for `wx` (detection + conversion + verification)
 - bht_fix.sql: recommended change set for `bht`
 - rzt_db_fix.sql: recommended change set for `rzt_db`
+- fix_order_item_id_column.sql: repair script to add missing `id` (PRIMARY KEY) column to `order_item` table
 - generate_drop_fks.sql: helper script that prints ALTER TABLE ... DROP FOREIGN KEY ... statements for candidate FKs that must be dropped before conversions
 
 Safety notes
@@ -16,6 +17,24 @@ Safety notes
 3) Altering column types and converting collations may take time and incur locks on big tables; prefer low-traffic windows.
 
 Suggested workflow (PowerShell commands)
+
+### Fix missing order_item.id column (if needed)
+
+If you see error: "Unknown column 'oi1_0.id' in 'field list'", run:
+
+```powershell
+# Backup first (example for wx)
+mysqldump -uroot -p --single-transaction --set-gtid-purged=OFF wx > .\wx_backup.sql
+
+# Run the fix script
+mysql -uroot -p wx < db/fix-scripts/fix_order_item_id_column.sql
+
+# Repeat for other databases if needed
+mysql -uroot -p bht < db/fix-scripts/fix_order_item_id_column.sql
+mysql -uroot -p rzt_db < db/fix-scripts/fix_order_item_id_column.sql
+```
+
+### Fix medicine_id column type inconsistencies
 
 1) Generate candidate drop-FK statements (review before executing):
 
@@ -61,3 +80,4 @@ If you want, I can also produce an interactive PowerShell script that:
 - Produces a final verification report.
 
 Reply with "interactive" if you want that; otherwise run the scripts in test environment and paste back any errors or outputs you want me to interpret.
+

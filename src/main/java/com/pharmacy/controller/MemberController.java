@@ -251,9 +251,13 @@ public class MemberController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMember(@PathVariable String id) {
-        memberService.deleteMember(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> deleteMember(@PathVariable String id) {
+        try {
+            memberService.deleteMember(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e){
+            return ResponseEntity.badRequest().body(Map.of("code",400,"message", e.getMessage()));
+        }
     }
 
     @PostMapping("/{id}/exchange")
@@ -280,7 +284,7 @@ public class MemberController {
                 return ResponseEntity.badRequest().body("删除失败");
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("删除失败: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("code",400,"message","删除失败: "+e.getMessage()));
         }
     }
 

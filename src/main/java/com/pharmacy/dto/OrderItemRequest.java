@@ -15,6 +15,7 @@ public class OrderItemRequest {
     private BigDecimal memberPrice; // 会员价
     private String specification;
     private Boolean isRx;
+    private String batchNo;
 
 
     // 默认构造函数
@@ -83,4 +84,7 @@ public class OrderItemRequest {
     public void setIsRx(Boolean isRx) {
         this.isRx = isRx;
     }
+
+    public String getBatchNo() { return batchNo; }
+    public void setBatchNo(String batchNo) { this.batchNo = batchNo; }
 }

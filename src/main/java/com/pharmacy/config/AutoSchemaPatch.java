@@ -21,6 +21,10 @@ public class AutoSchemaPatch implements ApplicationRunner {
         patchColumn("medicine", "contraindication", "VARCHAR(255) NULL COMMENT '禁忌症'", null);
         patchColumn("medicine", "usage_dosage", "VARCHAR(255) NULL COMMENT '用法用量'", null);
 
+        // 修复 order_item 表缺失 id 列的问题
+        System.out.println("[AUTO SCHEMA PATCH] 开始检测 order_item 表...");
+        patchOrderItemIdColumn();
+
         System.out.println("[AUTO SCHEMA PATCH] 开始检测 system_settings 表缺失列...");
         if (tableExists("system_settings")) {
             patchColumn("system_settings", "store_name", "VARCHAR(255) NULL", null);
@@ -111,6 +115,68 @@ public class AutoSchemaPatch implements ApplicationRunner {
         } catch (Exception e){
             System.out.println("[AUTO SCHEMA PATCH] 检测表失败: " + table + ", " + e.getMessage());
             return false;
+        }
+    }
+
+    // 修复 order_item 表缺失主键问题
+    private void patchOrderItemIdColumn() {
+        try {
+            if (!tableExists("order_item")) {
+                System.out.println("[AUTO SCHEMA PATCH] order_item 表不存在");
+                return;
+            }
+
+            // 检查 item_id 列是否存在且是主键
+            Integer itemIdExists = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='order_item' AND COLUMN_NAME='item_id' AND COLUMN_KEY='PRI'",
+                    Integer.class);
+
+            if (itemIdExists != null && itemIdExists > 0) {
+                System.out.println("[AUTO SCHEMA PATCH] order_item 表已有 item_id 主键，无需修复");
+            } else {
+                System.out.println("[AUTO SCHEMA PATCH] order_item 表缺少正确的主键，开始修复...");
+                
+                try {
+                    // 检查是否存在 id 列（旧版本）
+                    Integer oldIdExists = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='order_item' AND COLUMN_NAME='id'",
+                            Integer.class);
+                    
+                    if (oldIdExists != null && oldIdExists > 0) {
+                        // 删除旧的 id 列（如果存在）
+                        try {
+                            jdbcTemplate.execute("ALTER TABLE `order_item` DROP COLUMN `id`");
+                            System.out.println("[AUTO SCHEMA PATCH] 已删除 order_item 表的旧 id 列");
+                        } catch (Exception e) {
+                            System.out.println("[AUTO SCHEMA PATCH] 删除旧 id 列失败: " + e.getMessage());
+                        }
+                    }
+                    
+                    // 确保 item_id 列存在
+                    Integer itemIdColumnExists = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='order_item' AND COLUMN_NAME='item_id'",
+                            Integer.class);
+                    
+                    if (itemIdColumnExists == null || itemIdColumnExists == 0) {
+                        // 添加 item_id 列
+                        jdbcTemplate.execute("ALTER TABLE `order_item` ADD COLUMN `item_id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST");
+                        System.out.println("[AUTO SCHEMA PATCH] 成功为 order_item 表添加 item_id 主键列");
+                    } else {
+                        // item_id 列存在但不是主键，设置为主键
+                        try {
+                            jdbcTemplate.execute("ALTER TABLE `order_item` DROP PRIMARY KEY");
+                        } catch (Exception e) {
+                            // 忽略
+                        }
+                        jdbcTemplate.execute("ALTER TABLE `order_item` MODIFY COLUMN `item_id` BIGINT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (`item_id`)");
+                        System.out.println("[AUTO SCHEMA PATCH] 已为 order_item 的 item_id 列设置为主键");
+                    }
+                } catch (Exception e) {
+                    System.out.println("[AUTO SCHEMA PATCH] 修复 order_item 表失败: " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[AUTO SCHEMA PATCH] 检测或修复 order_item 表异常: " + e.getMessage());
         }
     }
 }

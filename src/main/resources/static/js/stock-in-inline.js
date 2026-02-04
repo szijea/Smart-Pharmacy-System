@@ -219,7 +219,8 @@
     const drawer = qs('add-med-drawer');
     const backdrop = document.getElementById('drawer-backdrop');
     if(!drawer) return;
-    drawer.style.transform = 'translateX(0)';
+    drawer.classList.remove('hidden');
+    drawer.style.display = 'flex';
     if(backdrop) backdrop.style.display = 'block';
     const fields = ['fm-genericName','fm-tradeName','fm-spec','fm-manufacturer','fm-unit','fm-isRx','fm-approvalNo','fm-barcode','fm-retailPrice','fm-memberPrice','fm-categoryId','fm-batch','fm-production','fm-expiry','fm-qty','fm-unitPrice','fm-usageDosage','fm-contraindication'];
     fields.forEach(id=>{ const el = qs(id); if(el) el.value = ''; });
@@ -232,7 +233,7 @@
   function closeMedDrawer(){
     const drawer = qs('add-med-drawer');
     const backdrop = document.getElementById('drawer-backdrop');
-    if(drawer) drawer.style.transform = 'translateX(100%)';
+    if(drawer){ drawer.style.display = 'none'; drawer.classList.add('hidden'); }
     if(backdrop) backdrop.style.display = 'none';
   }
   async function submitMedForm(){

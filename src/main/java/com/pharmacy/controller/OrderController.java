@@ -89,6 +89,10 @@ public class OrderController {
                     itemReq.setProductId(productId);
                     itemReq.setQuantity(quantity);
                     itemReq.setUnitPrice(unitPrice);
+                    Object rawBatch = map.get("batchNo");
+                    if(rawBatch==null) rawBatch = map.get("batch_number");
+                    if(rawBatch==null) rawBatch = map.get("batch");
+                    if(rawBatch!=null) itemReq.setBatchNo(String.valueOf(rawBatch));
                     items.add(itemReq);
                 }
             }
@@ -131,6 +135,7 @@ public class OrderController {
                 for (OrderItem oi : orderItems) {
                     java.util.Map<String, Object> itemMap = new java.util.HashMap<>();
                     itemMap.put("medicineId", oi.getMedicineId());
+                    itemMap.put("batchNo", oi.getBatchNo());
                     itemMap.put("quantity", oi.getQuantity());
                     itemMap.put("unitPrice", oi.getUnitPrice());
                     itemMap.put("subtotal", oi.getSubtotal());

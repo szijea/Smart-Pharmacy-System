@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "item_id")
     private Long itemId;
 
     @Column(name = "order_id", length = 32, nullable = false)
@@ -16,6 +16,9 @@ public class OrderItem {
     // 将 medicineId 改为 String，与 Medicine.medicineId 对齐
     @Column(name = "medicine_id", nullable = false, length = 64)
     private String medicineId;
+
+    @Column(name = "batch_no", length = 64)
+    private String batchNo;
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
@@ -41,6 +44,9 @@ public class OrderItem {
 
     public String getMedicineId() { return medicineId; }
     public void setMedicineId(String medicineId) { this.medicineId = medicineId; }
+
+    public String getBatchNo() { return batchNo; }
+    public void setBatchNo(String batchNo) { this.batchNo = batchNo; }
 
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }

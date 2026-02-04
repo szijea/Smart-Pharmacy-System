@@ -31,6 +31,8 @@ public class InventoryDTO {
     private Integer medicineCategoryId; // 新增：药品分类ID
     private Boolean medicineIsRx;       // 新增：是否处方药
     private String medicineManufacturer; // 新增：药品生产厂家
+    private LocalDate medicineProductionDate; // 药品生产日期（来自 medicine 表）
+    private LocalDate medicineExpiryDate; // 药品到期日期（来自 medicine 表）
 
     // Constructor used by JPQL constructor projection
     public InventoryDTO(Long inventoryId, String batchNo, LocalDateTime createTime, LocalDate expiryDate,
@@ -38,7 +40,8 @@ public class InventoryDTO {
                         Integer stockQuantity, String supplier, LocalDateTime updateTime,
                         String medicineGenericName, String medicineTradeName, String medicineSpec, BigDecimal medicineRetailPrice,
                         String stockStatus, String expiryStatus, LocalDate earliestExpiryDate, Integer safetyStock,
-                        Integer medicineCategoryId, Boolean medicineIsRx, String medicineBarcode, String medicineManufacturer) {
+                        Integer medicineCategoryId, Boolean medicineIsRx, String medicineBarcode, String medicineManufacturer,
+                        LocalDate medicineProductionDate, LocalDate medicineExpiryDate) {
         this.inventoryId = inventoryId;
         this.batchNo = batchNo;
         this.createTime = createTime;
@@ -62,6 +65,8 @@ public class InventoryDTO {
         this.medicineIsRx = medicineIsRx;
         this.medicineBarcode = medicineBarcode;
         this.medicineManufacturer = medicineManufacturer;
+        this.medicineProductionDate = medicineProductionDate;
+        this.medicineExpiryDate = medicineExpiryDate;
     }
 
     // 兼容旧的 JPQL 构造投影（无状态字段）以及旧版构造器（如果还需要）
@@ -71,7 +76,7 @@ public class InventoryDTO {
                         String medicineGenericName, String medicineTradeName, String medicineSpec, BigDecimal medicineRetailPrice,
                         String stockStatus, String expiryStatus, LocalDate earliestExpiryDate, Integer safetyStock,
                         Integer medicineCategoryId, Boolean medicineIsRx, String medicineBarcode) {
-         this(inventoryId, batchNo, createTime, expiryDate, maxStock, medicineId, minStock, purchasePrice, stockQuantity, supplier, updateTime, medicineGenericName, medicineTradeName, medicineSpec, medicineRetailPrice, stockStatus, expiryStatus, earliestExpiryDate, safetyStock, medicineCategoryId, medicineIsRx, medicineBarcode, null);
+            this(inventoryId, batchNo, createTime, expiryDate, maxStock, medicineId, minStock, purchasePrice, stockQuantity, supplier, updateTime, medicineGenericName, medicineTradeName, medicineSpec, medicineRetailPrice, stockStatus, expiryStatus, earliestExpiryDate, safetyStock, medicineCategoryId, medicineIsRx, medicineBarcode, null, null, null);
     }
 
 
@@ -102,6 +107,10 @@ public class InventoryDTO {
         this.safetyStock = minStock;
         this.medicineCategoryId = null;
         this.medicineIsRx = null;
+        this.medicineBarcode = null;
+        this.medicineManufacturer = null;
+        this.medicineProductionDate = null;
+        this.medicineExpiryDate = null;
     }
 
     // Getters and Setters
@@ -173,4 +182,10 @@ public class InventoryDTO {
 
     public String getMedicineManufacturer() { return medicineManufacturer; }
     public void setMedicineManufacturer(String medicineManufacturer) { this.medicineManufacturer = medicineManufacturer; }
+
+    public LocalDate getMedicineProductionDate() { return medicineProductionDate; }
+    public void setMedicineProductionDate(LocalDate medicineProductionDate) { this.medicineProductionDate = medicineProductionDate; }
+
+    public LocalDate getMedicineExpiryDate() { return medicineExpiryDate; }
+    public void setMedicineExpiryDate(LocalDate medicineExpiryDate) { this.medicineExpiryDate = medicineExpiryDate; }
 }

@@ -55,7 +55,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
            "i.id, i.batchNo, i.createTime, i.expiryDate, i.maxStock, " +
            "i.medicineId, i.minStock, i.purchasePrice, i.stockQuantity, i.supplier, i.updateTime, " +
            "m.genericName, m.tradeName, m.spec, m.retailPrice, " +
-           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer) " +
+           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer, m.productionDate, m.expiryDate) " +
            "from Inventory i join i.medicine m")
     List<com.pharmacy.dto.InventoryDTO> findAllWithMedicine();
 
@@ -64,7 +64,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
            "i.id, i.batchNo, i.createTime, i.expiryDate, i.maxStock, " +
            "i.medicineId, i.minStock, i.purchasePrice, i.stockQuantity, i.supplier, i.updateTime, " +
            "m.genericName, m.tradeName, m.spec, m.retailPrice, " +
-           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer) " +
+           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer, m.productionDate, m.expiryDate) " +
            "from Inventory i join i.medicine m")
     org.springframework.data.domain.Page<com.pharmacy.dto.InventoryDTO> findAllWithMedicine(org.springframework.data.domain.Pageable pageable);
 
@@ -73,7 +73,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
            "i.id, i.batchNo, i.createTime, i.expiryDate, i.maxStock, " +
            "i.medicineId, i.minStock, i.purchasePrice, i.stockQuantity, i.supplier, i.updateTime, " +
            "m.genericName, m.tradeName, m.spec, m.retailPrice, " +
-           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer) " +
+           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer, m.productionDate, m.expiryDate) " +
            "from Inventory i join i.medicine m where i.id = :inventoryId")
     InventoryDTO findDTOById(@Param("inventoryId") Long inventoryId);
 
@@ -82,7 +82,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
            "i.id, i.batchNo, i.createTime, i.expiryDate, i.maxStock, " +
            "i.medicineId, i.minStock, i.purchasePrice, i.stockQuantity, i.supplier, i.updateTime, " +
            "m.genericName, m.tradeName, m.spec, m.retailPrice, " +
-           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer) " +
+           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer, m.productionDate, m.expiryDate) " +
            "from Inventory i join i.medicine m where i.medicineId = :medicineId")
     List<InventoryDTO> findDTOByMedicineId(@Param("medicineId") String medicineId);
 
@@ -95,7 +95,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
            "i.id, i.batchNo, i.createTime, i.expiryDate, i.maxStock, " +
            "i.medicineId, i.minStock, i.purchasePrice, i.stockQuantity, i.supplier, i.updateTime, " +
            "m.genericName, m.tradeName, m.spec, m.retailPrice, " +
-           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer) " +
+           "null, null, null, i.minStock, m.categoryId, m.isRx, m.barcode, m.manufacturer, m.productionDate, m.expiryDate) " +
            "from Inventory i join i.medicine m where i.batchNo = :batchNo")
     List<com.pharmacy.dto.InventoryDTO> findDTOByBatchNo(@Param("batchNo") String batchNo);
 

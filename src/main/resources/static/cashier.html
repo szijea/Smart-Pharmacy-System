@@ -54,61 +54,77 @@
         </div>
       </div>
 
-      <!-- 顶部搜索区 -->
+      <!-- 顶部搜索区+会员卡片+支付方式+购物车并排 -->
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6 cozy-grid cols-4" id="cashier-top-row">
         <!-- 药品扫码/搜索 -->
         <div class="card-modern p-6">
           <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fa fa-barcode text-primary"></i> 药品扫码/搜索</h3>
-<label for="barcode-input" class="sr-only">药品条码输入</label>
-<input id="barcode-input" class="input-modern" placeholder="扫码或输入条码" autocomplete="off" />
-<div class="relative mt-3">
-  <label for="medicine-search-input" class="sr-only">药品名称搜索</label>
-  <input id="medicine-search-input" class="input-modern" placeholder="输入药品名称/拼音/关键字" />
-  <div id="medicine-search-result" class="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow z-20 max-h-64 overflow-y-auto hidden"></div>
-</div>
-<div class="flex gap-2 mt-3">
-  <label for="medicine-category-filter" class="sr-only">药品分类筛选</label>
-  <select id="medicine-category-filter" class="input-modern text-sm">
-    <option value="">全部分类</option>
-    <option value="prescription">处方药</option>
-    <option value="otc">非处方药</option>
-    <option value="chinese">中药</option>
-  </select>
-  <button id="medicine-search-btn" class="btn btn-outline flex-shrink-0"><i class="fa fa-search"></i> 搜索</button>
-</div>
+          <label for="barcode-input" class="sr-only">药品条码输入</label>
+          <input id="barcode-input" class="input-modern" placeholder="扫码或输入条码" autocomplete="off" />
+          <div class="relative mt-3">
+            <label for="medicine-search-input" class="sr-only">药品名称搜索</label>
+            <input id="medicine-search-input" class="input-modern" placeholder="输入药品名称/拼音/关键字" />
+            <div id="medicine-search-result" class="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow z-20 max-h-64 overflow-y-auto hidden"></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <label for="medicine-category-filter" class="sr-only">药品分类筛选</label>
+            <select id="medicine-category-filter" class="input-modern text-sm">
+              <option value="">全部分类</option>
+              <option value="prescription">处方药</option>
+              <option value="otc">非处方药</option>
+              <option value="chinese">中药</option>
+            </select>
+            <button id="medicine-search-btn" class="btn btn-outline flex-shrink-0"><i class="fa fa-search"></i> 搜索</button>
+          </div>
         </div>
-        <!-- 会员选择 -->
+        <!-- 会员选择+支付方式+折扣合并 -->
         <div class="card-modern p-6">
-          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fa fa-user text-primary"></i> 会员选择</h3>
-<div class="space-y-3">
-  <div class="relative">
-    <label for="member-search-input" class="sr-only">会员搜索</label>
-    <input id="member-search-input" class="input-modern" placeholder="输入姓名/手机号/卡号" />
-    <div id="member-search-result" class="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow z-20 max-h-64 overflow-y-auto hidden"></div>
-  </div>
-  <div id="selected-member-info" class="text-sm text-gray-600 hidden"></div>
-  <button id="clear-member-btn" class="btn btn-outline text-xs hidden"><i class="fa fa-times"></i> 移除会员</button>
-</div>
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fa fa-user text-primary"></i> 会员/支付</h3>
+          <div class="space-y-3">
+            <div class="relative">
+              <label for="member-search-input" class="sr-only">会员搜索</label>
+              <input id="member-search-input" class="input-modern" placeholder="输入姓名/手机号/卡号" />
+              <div id="member-search-result" class="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow z-20 max-h-64 overflow-y-auto hidden"></div>
+            </div>
+            <div id="selected-member-info" class="text-sm text-gray-600 hidden"></div>
+            <button id="clear-member-btn" class="btn btn-outline text-xs hidden"><i class="fa fa-times"></i> 移除会员</button>
+            <div class="mt-3">
+              <label for="payment-method" class="sr-only">支付方式</label>
+              <select id="payment-method" class="input-modern">
+                <option value="CASH">现金支付</option>
+                <option value="WECHAT">微信支付</option>
+                <option value="ALIPAY">支付宝</option>
+                <option value="INSURANCE">医保支付</option>
+                <option value="CARD">银行卡</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2 mt-3">
+              <label for="discount-amount" class="sr-only">折扣金额</label>
+              <input id="discount-amount" type="number" min="0" step="0.01" class="input-modern" placeholder="折扣金额(可选)" />
+            </div>
+          </div>
         </div>
-        <!-- 支付与折扣 -->
-        <div class="card-modern p-6">
-          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fa fa-cny text-primary"></i> 支付与折扣</h3>
-<label for="payment-method" class="sr-only">支付方式</label>
-<select id="payment-method" class="input-modern">
-  <option value="CASH">现金支付</option>
-  <option value="WECHAT">微信支付</option>
-  <option value="ALIPAY">支付宝</option>
-  <option value="INSURANCE">医保支付</option>
-  <option value="CARD">银行卡</option>
-</select>
-<div class="flex items-center gap-2 mt-3">
-  <label for="discount-amount" class="sr-only">折扣金额</label>
-  <input id="discount-amount" type="number" min="0" step="0.01" class="input-modern" placeholder="折扣金额(可选)" />
-</div>
-<div class="flex items-center gap-2 mt-3">
-  <label for="use-points" class="sr-only">使用积分</label>
-  <input id="use-points" type="number" min="0" class="input-modern" placeholder="使用积分(可选)" />
-</div>
+        <!-- 购物车卡片 -->
+        <div class="card-modern p-6" id="cart-card">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold flex items-center gap-2"><i class="fa fa-shopping-cart"></i> 购物车</h3>
+            <button id="clear-cart-btn" class="btn btn-outline text-xs"><i class="fa fa-trash"></i> 清空</button>
+          </div>
+          <div class="overflow-y-auto" style="max-height: 300px;">
+            <table class="min-w-full divide-y divide-gray-200 text-xs table-modern-compact">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-2 py-2 text-left font-medium text-gray-600">药品</th>
+                  <th class="px-2 py-2 text-left font-medium text-gray-600">规格</th>
+                  <th class="px-2 py-2 text-left font-medium text-gray-600">单价</th>
+                  <th class="px-2 py-2 text-left font-medium text-gray-600">数量</th>
+                  <th class="px-2 py-2 text-left font-medium text-gray-600">操作</th>
+                </tr>
+              </thead>
+              <tbody id="cart-body" class="bg-white divide-y divide-gray-200"></tbody>
+            </table>
+          </div>
+          <div id="cart-empty" class="p-3 text-center text-gray-400 text-xs">暂无商品</div>
         </div>
         <!-- 订单汇总 -->
         <div class="card-modern p-6 flex flex-col" id="order-summary-card">
@@ -116,7 +132,6 @@
           <div class="space-y-2 text-sm">
             <div class="flex justify-between"><span>商品总额</span><span id="summary-original">¥0.00</span></div>
             <div class="flex justify-between"><span>折扣金额</span><span id="summary-discount">¥0.00</span></div>
-            <div class="flex justify-between"><span>积分抵扣</span><span id="summary-points">¥0.00</span></div>
             <div class="flex justify-between font-medium text-lg pt-2 border-t"><span>应付金额</span><span id="summary-payable">¥0.00</span></div>
           </div>
           <div class="mt-4 flex flex-col gap-2">
@@ -135,33 +150,6 @@
   <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">应付金额</p><h3 class="text-xl font-bold" id="kpi-order-payable">¥0.00</h3></div>
   <div class="card-modern p-4"><p class="text-xs text-gray-500 mb-1">会员使用积分</p><h3 class="text-xl font-bold" id="kpi-order-points">0</h3></div>
 </div>
-
-      <!-- 购物车与汇总 -->
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6 section-gap" id="cashier-cart-row">
-        <div class="card-modern xl:col-span-1 p-6" id="cart-card">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="font-bold flex items-center gap-2"><i class="fa fa-shopping-cart"></i> 购物车</h3>
-            <button id="clear-cart-btn" class="btn btn-outline text-xs"><i class="fa fa-trash"></i> 清空</button>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-sm table-modern-compact">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-4 py-2 text-left font-medium text-gray-600">药品</th>
-                  <th class="px-4 py-2 text-left font-medium text-gray-600">规格</th>
-                  <th class="px-4 py-2 text-left font-medium text-gray-600">单价</th>
-                  <th class="px-4 py-2 text-left font-medium text-gray-600">数量</th>
-                  <th class="px-4 py-2 text-left font-medium text-gray-600">小计</th>
-                  <th class="px-4 py-2 text-left font-medium text-gray-600">操作</th>
-                </tr>
-              </thead>
-              <tbody id="cart-body" class="bg-white divide-y divide-gray-200"></tbody>
-            </table>
-          </div>
-          <div id="cart-empty" class="p-6 text-center text-gray-400">暂无商品，请搜索添加</div>
-        </div>
-        <div class="hidden" id="order-summary-card-old"></div>
-      </div>
 
       <!-- 最近添加提示区域 -->
       <div id="recent-added-hint" class="hidden p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm mb-6"></div>

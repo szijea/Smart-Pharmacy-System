@@ -13,6 +13,7 @@ public class OrderItemResponse {
     private String productCode;
     private String dosageForm;
     private String barcode;
+    private String batchNo;
 
     // 默认构造函数
     public OrderItemResponse() {}
@@ -114,4 +115,7 @@ public class OrderItemResponse {
     public void setBarcode(String barcode) {
         this.barcode = barcode;
     }
+
+    public String getBatchNo() { return batchNo; }
+    public void setBatchNo(String batchNo) { this.batchNo = batchNo; }
 }

@@ -6,6 +6,7 @@
   const medicineAPI = api.medicineAPI || window.medicineAPI;
   const memberAPI = api.memberAPI || window.memberAPI;
   const orderAPI = api.orderAPI || window.orderAPI;
+  const inventoryAPI = api.inventoryAPI || window.inventoryAPI;
   const cart = []; // { medicineId, name, spec, price, quantity }
   let selectedMember = null;
   let hangOrders = []; // 简单前端缓存挂单
@@ -60,19 +61,14 @@
     safeInner(body, cart.map(item => {
       const subtotal = item.price * item.quantity;
       return `<tr data-id="${item.medicineId}">
-        <td class="px-4 py-2 whitespace-nowrap">${item.name || item.tradeName || item.genericName || item.medicineId}</td>
-        <td class="px-4 py-2 whitespace-nowrap">${item.spec || '-'}</td>
-        <td class="px-4 py-2 whitespace-nowrap">${formatMoney(item.price)}</td>
-        <td class="px-4 py-2 whitespace-nowrap">
-          <div class="flex items-center gap-1">
-            <button class="btn btn-outline text-xs px-2 py-1" data-action="dec" data-id="${item.medicineId}">-</button>
-            <input type="number" min="1" class="input w-16 text-center text-xs" data-action="qty" data-id="${item.medicineId}" value="${item.quantity}" />
-            <button class="btn btn-outline text-xs px-2 py-1" data-action="inc" data-id="${item.medicineId}">+</button>
-          </div>
+        <td class="px-2 py-2 whitespace-nowrap text-xs">${item.name || item.tradeName || item.genericName || item.medicineId}</td>
+        <td class="px-2 py-2 whitespace-nowrap text-xs">${item.spec || '-'}</td>
+        <td class="px-2 py-2 whitespace-nowrap text-xs">${formatMoney(item.price)}</td>
+        <td class="px-2 py-2 whitespace-nowrap">
+          <input type="number" min="1" class="input w-10 text-center text-xs" data-action="qty" data-id="${item.medicineId}" value="${item.quantity}" />
         </td>
-        <td class="px-4 py-2 whitespace-nowrap">${formatMoney(subtotal)}</td>
-        <td class="px-4 py-2 whitespace-nowrap">
-          <button class="btn btn-outline text-xs" data-action="remove" data-id="${item.medicineId}"><i class="fa fa-times"></i></button>
+        <td class="px-2 py-2 whitespace-nowrap">
+          <button class="btn btn-outline text-xs px-1 py-0" data-action="remove" data-id="${item.medicineId}"><i class="fa fa-times"></i></button>
         </td>
       </tr>`;
     }).join(''));
@@ -83,12 +79,9 @@
     const original = cart.reduce((sum,i)=> sum + i.price * i.quantity, 0);
     const discountInput = $('discount-amount');
     const discount = Number(discountInput && discountInput.value || 0);
-    // 禁用积分抵扣
-    const pointsAmount = 0;
-    const payable = Math.max(original - discount - pointsAmount, 0);
+    const payable = Math.max(original - discount, 0);
     safeInner($('summary-original'), formatMoney(original));
     safeInner($('summary-discount'), formatMoney(discount));
-    safeInner($('summary-points'), formatMoney(pointsAmount));
     safeInner($('summary-payable'), formatMoney(payable));
   }
 
@@ -109,6 +102,11 @@
     const baseRetail = Number(med.retailPrice || med.price || med.unitPrice || 0);
     const baseMember = med.memberPrice!=null ? Number(med.memberPrice) : null;
     const mult = levelMultiplier(selectedMember);
+    // 选取默认批号：batchNos > batches > batchNo
+    let chosenBatch = '';
+    if(Array.isArray(med.batchNos) && med.batchNos.length) chosenBatch = med.batchNos[0];
+    else if(Array.isArray(med.batches) && med.batches.length) chosenBatch = med.batches[0];
+    else if(med.batchNo) chosenBatch = med.batchNo;
     // 优先会员价；无会员价则按等级倍率折算零售价
     const chosenPrice = useMember ? (baseMember!=null ? baseMember : baseRetail * mult) : baseRetail;
     const existing = cart.find(i=> i.medicineId === med.medicineId);
@@ -122,8 +120,20 @@
         _retailPrice: baseRetail,
         _memberPrice: baseMember,
         usageDosage: med.usageDosage,
-        contraindication: med.contraindication
+        contraindication: med.contraindication,
+        batchNo: chosenBatch
       });
+      // 若初始无批号，尝试从库存接口补充一个批号再刷新显示
+      if(!chosenBatch && inventoryAPI && typeof inventoryAPI.getByMedicine === 'function'){
+        inventoryAPI.getByMedicine(med.medicineId).then(res => {
+          const list = res && res.data ? res.data : Array.isArray(res) ? res : [];
+          const found = (list.find(it => it.batchNo) || {}).batchNo;
+          if(found){
+            const item = cart.find(i => i.medicineId === med.medicineId);
+            if(item){ item.batchNo = found; renderCart(); }
+          }
+        }).catch(()=>{});
+      }
     }
     renderCart();
     showRecentAddedHint(med);
@@ -150,8 +160,6 @@
       const item = cart.find(i=> i.medicineId === id);
       if(!item) return;
       if(action === 'remove'){ cart.splice(cart.indexOf(item),1); renderCart(); }
-      if(action === 'inc'){ item.quantity += 1; renderCart(); }
-      if(action === 'dec'){ item.quantity = Math.max(1, item.quantity - 1); renderCart(); }
     });
     body.addEventListener('input', e => {
       const input = e.target;
@@ -220,6 +228,66 @@
         const id = itemDiv.getAttribute('data-id');
         // 简单再次查找单个药品详情
         medicineAPI.getById(id).then(m => { addToCart(m); }).catch(()=>{});
+      });
+    }
+    // 药品名称输入时自动搜索
+    const medicineInput = $('medicine-search-input');
+    if(medicineInput){
+      let searchTimer;
+      medicineInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        const keyword = medicineInput.value.trim();
+        if(keyword.length > 0){
+          searchTimer = setTimeout(searchMedicines, 300);
+        }
+      });
+    }
+    // 条码输入时自动搜索
+    const barcodeInput = $('barcode-input');
+    if(barcodeInput){
+      let barcodeTimer;
+      barcodeInput.addEventListener('input', () => {
+        clearTimeout(barcodeTimer);
+        const barcode = barcodeInput.value.trim();
+        if(barcode.length > 0){
+          barcodeTimer = setTimeout(() => {
+            const category = $('medicine-category-filter').value.trim();
+            const resultBox = $('medicine-search-result');
+            if(!resultBox) return;
+            resultBox.classList.remove('hidden');
+            safeInner(resultBox, '<div class="p-3 text-center text-gray-400"><i class="fa fa-spinner fa-spin"></i> 搜索中...</div>');
+            medicineAPI.searchWithStock(barcode, category, 1, 30).then(res => {
+              const list = res && res.data ? res.data : [];
+              if(list.length === 0){
+                safeInner(resultBox,'<div class="p-3 text-center text-gray-400">未找到匹配药品</div>');
+                return;
+              }
+              safeInner(resultBox, list.map(m => {
+                let batches = [];
+                if(Array.isArray(m.batchNos)) batches = m.batchNos;
+                else if(Array.isArray(m.batches)) batches = m.batches;
+                else if(m.batchNo) batches = [m.batchNo];
+                const batchInfo = (batches.length > 0)
+                  ? `<div class="mt-1 text-xs text-blue-600 font-mono break-all"><i class="fa fa-tag mr-1"></i>批号: ${batches.join(', ')}</div>`
+                  : '<div class="mt-1 text-xs text-gray-400 italic">暂无批号信息</div>';
+                return `<div class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-0" data-id="${m.medicineId}">
+        <div class="flex justify-between items-start">
+            <span class="font-medium text-gray-800">${m.genericName || m.tradeName || m.name}</span>
+            <span class="text-orange-600 font-bold whitespace-nowrap ml-2">${formatMoney(m.retailPrice || m.price)}</span>
+        </div>
+        <div class="text-xs text-gray-500 mt-1 flex items-center flex-wrap gap-1">
+            <span class="bg-gray-100 px-1 rounded">${m.spec || '-'}</span>
+            <span class="ml-1">${m.manufacturer || ''}</span>
+            ${typeof m.stockQuantity!== 'undefined' ? `<span class="ml-auto ${ (m.stockQuantity||0)<=0 ? 'text-red-500 font-bold' : 'text-green-600' }">库存:${m.stockQuantity ?? 0}</span>` : ''}
+        </div>
+        ${batchInfo}
+      </div>`;
+              }).join(''));
+            }).catch(err => {
+              safeInner(resultBox, `<div class='p-3 text-center text-red-500 text-xs'>搜索失败: ${err.message}</div>`);
+            });
+          }, 300);
+        }
       });
     }
     $('medicine-search-btn').addEventListener('click', searchMedicines);
@@ -304,7 +372,7 @@
       originalAmount: cart.reduce((s,i)=> s + i.price * i.quantity, 0),
       discountAmount: Number($('discount-amount').value || 0),
       totalAmount: cart.reduce((s,i)=> s + i.price * i.quantity, 0),
-      items: cart.map(i => ({ productId: i.medicineId, quantity: i.quantity, unitPrice: Number(i.price.toFixed? i.price.toFixed(2): i.price) }))
+      items: cart.map(i => ({ productId: i.medicineId, quantity: i.quantity, unitPrice: Number(i.price.toFixed? i.price.toFixed(2): i.price), batchNo: i.batchNo || '' }))
     };
     feedback('<i class="fa fa-spinner fa-spin"></i> 正在提交订单...', 'info');
     try {
@@ -428,10 +496,20 @@
     $('refresh-hang-btn').addEventListener('click', loadHangOrders);
   }
 
+  function bindClearCart(){
+    const btn = $('clear-cart-btn');
+    if(!btn) return;
+    btn.addEventListener('click', ()=>{
+      if(cart.length === 0){ feedback('购物车已为空', 'info'); return; }
+      cart.length = 0;
+      renderCart();
+      feedback('购物车已清空', 'info');
+    });
+  }
+
   function initDiscountAndPoints(){
-    // 只监听折扣，禁用积分输入
+    // 只监听折扣
     const el = $('discount-amount'); if(el){ el.addEventListener('input', updateSummary); }
-    const pts = $('use-points'); if(pts){ pts.value=''; pts.setAttribute('disabled','disabled'); }
   }
 
   function printPreview(){
@@ -555,6 +633,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     bindCartEvents();
+    bindClearCart();
     bindMedicineSearchEvents();
     bindMemberSearchEvents();
     bindHangEvents();

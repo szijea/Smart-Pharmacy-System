@@ -170,6 +170,7 @@ public class OrderServiceImpl implements OrderService {
                 // 确保商品ID为 String
                 String productId = String.valueOf(itemRequest.getProductId());
                 orderItem.setMedicineId(productId);
+                orderItem.setBatchNo(itemRequest.getBatchNo());
                 orderItem.setQuantity(itemRequest.getQuantity());
                 orderItem.setUnitPrice(itemRequest.getUnitPrice().doubleValue());
                 orderItem.setSubtotal(itemRequest.getUnitPrice().doubleValue() * itemRequest.getQuantity());
@@ -438,6 +439,7 @@ public class OrderServiceImpl implements OrderService {
         response.setQuantity(orderItem.getQuantity());
         response.setUnitPrice(java.math.BigDecimal.valueOf(orderItem.getUnitPrice()));
         response.setSubtotal(java.math.BigDecimal.valueOf(orderItem.getSubtotal()));
+        response.setBatchNo(orderItem.getBatchNo());
 
         return response;
     }

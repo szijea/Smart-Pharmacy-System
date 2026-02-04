@@ -23,6 +23,9 @@ public class MemberService {
     @Autowired
     private MemberRepository memberRepository;
 
+    @Autowired
+    private com.pharmacy.repository.OrderRepository orderRepository;
+
     // 改进的搜索方法 - 同时搜索所有条件并去重
     public List<Member> searchMembers(String keyword) {
         try {
@@ -158,6 +161,9 @@ public class MemberService {
     // 删除会员
     public void deleteMember(String memberId) {
         Objects.requireNonNull(memberId, "memberId");
+        if(!orderRepository.findByMemberId(memberId).isEmpty()){
+            throw new RuntimeException("该会员存在订单记录，无法删除");
+        }
         memberRepository.deleteById(memberId);
     }
 
@@ -294,6 +300,9 @@ public class MemberService {
             Objects.requireNonNull(memberIds, "memberIds");
             for (String memberId : memberIds) {
                 Objects.requireNonNull(memberId, "memberId");
+                if(!orderRepository.findByMemberId(memberId).isEmpty()){
+                    throw new RuntimeException("会员 "+memberId+" 存在订单记录，无法删除");
+                }
                 memberRepository.deleteById(memberId);
             }
             return true;

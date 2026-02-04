@@ -393,6 +393,7 @@ public class MultiTenantSchemaInitializer {
                     "id INT PRIMARY KEY AUTO_INCREMENT, " +
                     "order_id VARCHAR(32) NOT NULL, " +
                     "medicine_id VARCHAR(32) NOT NULL, " +
+                    "batch_no VARCHAR(64) NULL, " +
                     "prescription_id VARCHAR(32) NULL, " +
                     "quantity INT NOT NULL, " +
                     "unit_price DECIMAL(10,2) NOT NULL, " +
@@ -402,6 +403,7 @@ public class MultiTenantSchemaInitializer {
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
             try (Statement st = conn.createStatement()) { st.executeUpdate(ddl); System.out.println("[SchemaInit] 已创建表 order_item"); }
         } else {
+            addColumnIfMissing(conn, "order_item", "batch_no", "VARCHAR(64) NULL");
             addColumnIfMissing(conn, "order_item", "prescription_id", "VARCHAR(32) NULL");
         }
     }
