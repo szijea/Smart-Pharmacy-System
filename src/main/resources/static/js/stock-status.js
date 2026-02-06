@@ -1,7 +1,7 @@
 // stock-status.js
 // 统一库存与效期状态工具
 (function(){
-  const EXPIRY_WARNING_DAYS = 60;
+  const EXPIRY_WARNING_DAYS = 180; // 近效期阈值改为 6 个月
   function getStockStatus(rawCurrent, rawSafety){
     let current = Number(rawCurrent)||0;
     let safety = Number(rawSafety)||0;

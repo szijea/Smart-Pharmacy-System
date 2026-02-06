@@ -155,7 +155,37 @@
         </div>
 
         <!-- 图表区域 -->
-        <div class="dashboard-charts grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- 库存预警与效期提醒 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" id="alert-panels">
+                    <div class="card-modern p-6 bg-white border border-gray-100 shadow-sm" id="panel-lowstock">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800">库存预警</h3>
+                                <p class="text-xs text-gray-500">低库存 / 缺货列表</p>
+                            </div>
+                            <span class="text-xs text-primary bg-blue-50 px-3 py-1 rounded-full" id="lowstock-total">0 条</span>
+                        </div>
+                        <div id="lowstock-list" class="space-y-2 text-sm text-gray-700">
+                            <div class="text-gray-400 text-sm">正在加载库存预警...</div>
+                        </div>
+                    </div>
+
+                    <div class="card-modern p-6 bg-white border border-gray-100 shadow-sm" id="panel-expiry">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800">近效期 / 过期药品</h3>
+                                <p class="text-xs text-gray-500">效期小于 60 天或已过期</p>
+                            </div>
+                            <span class="text-xs text-orange-600 bg-orange-50 px-3 py-1 rounded-full" id="expiry-total">0 条</span>
+                        </div>
+                        <div id="expiry-list" class="space-y-2 text-sm text-gray-700">
+                            <div class="text-gray-400 text-sm">正在加载效期预警...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图表区域 -->
+                <div class="dashboard-charts grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <!-- 销售趋势图表 -->
             <div class="card-modern p-6 lg:col-span-2 overflow-hidden" id="sales-trend-card">
                 <div class="flex justify-between items-center mb-6">
@@ -277,7 +307,41 @@
           "<td class='px\x2d6 py\x2d4 text\x2dsm'>"+(p.totalRevenue? ('¥'+(p.totalRevenue.value||p.totalRevenue)) : '--')+"</td>"+
           "<td class='px\x2d6 py\x2d4 text\x2dxs'>"+renderStockBadge(p.currentStock)+"</td>"+
         "</tr>"; }).join(''); };
-        window.updateStockAlerts=function(list){};
+        window.updateStockAlerts=function(list){
+            var lowWrap = document.getElementById('lowstock-list');
+            var expWrap = document.getElementById('expiry-list');
+            var lowTotalEl = document.getElementById('lowstock-total');
+            var expTotalEl = document.getElementById('expiry-total');
+            var arr = Array.isArray(list) ? list : [];
+            var low = arr.filter(function(i){ return i && (i.type === 'LOW_STOCK' || i.type === 'OUT_OF_STOCK'); }).slice(0, 8);
+            var exp = arr.filter(function(i){ return i && (i.type === 'NEAR_EXPIRY' || i.type === 'EXPIRED'); }).slice(0, 8);
+
+            function render(items, wrap, emptyText){
+                if(!wrap) return;
+                if(!items.length){ wrap.innerHTML = '<div class="text-gray-400 text-sm">'+ emptyText +'</div>'; return; }
+                wrap.innerHTML = items.map(function(i){
+                    var name = i.genericName || i.tradeName || i.medicineId || '未知药品';
+                    var stock = i.currentStock == null ? 0 : i.currentStock;
+                    var badge;
+                    if(i.type === 'EXPIRED') badge = '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-600">已过期</span>';
+                    else if(i.type === 'NEAR_EXPIRY') badge = '<span class="px-2 py-1 rounded-full text-xs bg-orange-50 text-orange-600">近效期</span>';
+                    else if(i.type === 'OUT_OF_STOCK') badge = '<span class="px-2 py-1 rounded-full text-xs bg-red-50 text-red-600">缺货</span>';
+                    else badge = '<span class="px-2 py-1 rounded-full text-xs bg-orange-50 text-orange-600">低库存</span>';
+                    return '<div class="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2 bg-white">'
+                        + '<div class="flex-1 min-w-0">'
+                        +   '<div class="font-medium text-gray-800 truncate">'+ name +'</div>'
+                        +   '<div class="text-xs text-gray-500">库存：'+ stock +'</div>'
+                        + '</div>'
+                        + '<div class="ml-3">'+ badge +'</div>'
+                        + '</div>';
+                }).join('');
+            }
+
+            render(low, lowWrap, '暂无库存预警');
+            render(exp, expWrap, '暂无效期预警');
+            if(lowTotalEl) lowTotalEl.textContent = low.length + ' 条';
+            if(expTotalEl) expTotalEl.textContent = exp.length + ' 条';
+        };
         async function loadHotProducts(period){
             if(!period) period = (window.__hotProductsPeriod || 'day');
             window.__hotProductsPeriod = period;

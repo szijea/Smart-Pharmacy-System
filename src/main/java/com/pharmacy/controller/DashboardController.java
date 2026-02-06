@@ -148,7 +148,7 @@ public class DashboardController {
             else if(stock <= 10){ type = "LOW_STOCK"; }
             if(expiry != null){
                 if(expiry.isBefore(today)){ type = "EXPIRED"; }
-                else if(expiry.isBefore(today.plusDays(60))){ type = "NEAR_EXPIRY"; }
+                else if(expiry.isBefore(today.plusDays(180))){ type = "NEAR_EXPIRY"; }
             }
             if(type != null){
                 Map<String,Object> row = new HashMap<>();

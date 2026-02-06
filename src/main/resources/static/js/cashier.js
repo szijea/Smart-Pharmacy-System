@@ -172,6 +172,36 @@
   }
 
   // 药品搜索
+  // 精准拼音首字母提取：优先多音字表，再使用 Unicode 分段表，结果大写
+  const polyphonicInitials = {
+    '重':'C','长':'C','厦':'X','解':'X','曾':'Z','单':'S','查':'Z','区':'O','仇':'Q','朴':'P','繁':'P','缪':'M','乜':'N','覃':'Q','任':'R','沈':'S','石':'S','折':'Z','乐':'Y','翟':'Z','冼':'X','祭':'Z','藏':'Z','乘':'S'
+  };
+  const unicodeInitialBoundary = '阿芭擦搭蛾发噶哈机喀垃妈拿哦啪期然撒塌挖昔压匝'.split('').map(ch => ch.charCodeAt(0));
+  const initialsLetter = ['A','B','C','D','E','F','G','H','J','K','L','M','N','O','P','Q','R','S','T','W','X','Y','Z'];
+  const initialsCache = new Map();
+
+  function getInitialChar(ch){
+    if(!ch) return '';
+    const code = ch.charCodeAt(0);
+    if((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) return ch.toUpperCase();
+    if(polyphonicInitials[ch]) return polyphonicInitials[ch];
+    for(let i = unicodeInitialBoundary.length - 1; i >= 0; i--){
+      if(code >= unicodeInitialBoundary[i]) return initialsLetter[i] || '';
+    }
+    return '';
+  }
+  function getInitials(str){
+    if(!str) return '';
+    if(initialsCache.has(str)) return initialsCache.get(str);
+    let res = '';
+    for(const ch of str){
+      const init = getInitialChar(ch);
+      if(init) res += init;
+    }
+    initialsCache.set(str, res);
+    return res;
+  }
+
   async function searchMedicines(){
     const keyword = $('medicine-search-input').value.trim();
     const category = $('medicine-category-filter').value.trim();
@@ -179,10 +209,26 @@
     if(!resultBox) return;
     resultBox.classList.remove('hidden');
     safeInner(resultBox, '<div class="p-3 text-center text-gray-400"><i class="fa fa-spinner fa-spin"></i> 搜索中...</div>');
+    const isInitial = /^[a-zA-Z]+$/.test(keyword);
     try {
       // 使用包含库存的搜索接口，便于收银页展示库存相关信息
       const res = await medicineAPI.searchWithStock(keyword, category, 1, 30);
-      const list = res && res.data ? res.data : [];
+      let list = res && res.data ? res.data : [];
+      if(isInitial && list.length){
+        list = list.filter(m => {
+          const name = m.genericName || m.tradeName || m.name || '';
+          return getInitials(name).startsWith(keyword.toUpperCase());
+        });
+      }
+      if(isInitial && list.length === 0){
+        // 兜底：拉取一页全量再按首字母过滤
+        const fallback = await medicineAPI.searchWithStock('', category, 1, 300);
+        const all = fallback && fallback.data ? fallback.data : [];
+        list = all.filter(m => {
+          const name = m.genericName || m.tradeName || m.name || '';
+          return getInitials(name).startsWith(keyword.toUpperCase());
+        });
+      }
       if(list.length === 0){
         safeInner(resultBox,'<div class="p-3 text-center text-gray-400">未找到匹配药品</div>');
         return;

@@ -18,14 +18,14 @@
 
 /* 全局浅色覆盖：统一所有页面背景与底部区域样式 */
 html, body {
-  background: var(--lw-bg, linear-gradient(135deg, #f8fbff 0%, #f0f7ff 40%, #eef5ff 100%)) !important;
+  background: #ffffff !important;
   color: #334155 !important;
 }
 /* 禁用任何深色 premium 背景变量的应用 */
 body.enhanced-ui,
 body.theme-lightwide,
 body.modern-ui {
-  background: var(--lw-bg, linear-gradient(135deg, #f8fbff 0%, #f0f7ff 40%, #eef5ff 100%)) !important;
+  background: #ffffff !important;
 }
 /* 统一卡片与容器浅色 */
 .card,
@@ -33,7 +33,7 @@ body.modern-ui {
 .app-shell,
 .main-content,
 .section-gap {
-  background-color: #ffffff00; /* 透明以显示浅色渐变 */
+  background-color: #ffffff; /* 强制白底 */
 }
 /* 隐藏常见的底部黑色区域（固定底栏/页脚覆盖层） */
 .app-footer,
