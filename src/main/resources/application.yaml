@@ -1,7 +1,8 @@
 spring:
   datasource:
     # 使用环境变量 DB_HOST, 默认 localhost；容器中通过 -e DB_HOST=db 指向 mysql 服务
-    url: jdbc:mysql://${DB_HOST:localhost}:3306/rzt_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    # 默认数据源改指向仓库库（warehouse）而不是 rzt_db，避免与门店库混用
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/warehouse_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
